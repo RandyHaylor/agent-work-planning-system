@@ -53,10 +53,55 @@ Tests
 - Depth trigger proven by direct SQL insert
 
 
-## Awaiting user review - builder judgment calls
+## Decided 2026-11-05 - hollow before full
 
-Escalation answers restricted to node owner or root
-- PLAN said "parent"; owner is the parent in practice
+Every node is built hollow before it is built full
+- Exists, reachable, testable from outside, returns a placeholder
+- Skeleton tests written first, green against stubs
+- Those tests are the rails; dev agents never redefine them
+
+The whole skeleton is proven before any delegation
+- Delegates fill, never add bones
+- A missing bone escalates to the user
+
+TDD applies at the interface and module level
+- Those tests are the rails
+- Micro TDD inside a module: dev agent's discretion, basic
+  - Agents are not good at it; few humans are either
+
+Hollow is NOT a node state, NOT a gate
+- A node isn't a node until it has its scaffolding
+- Planning creates nodes already hollow
+- The spawned dev agent is told to finish it
+
+
+## Decided 2026-11-05 - packaged as a skill for any harness
+
+The planning agent runs the process from the skill
+- Stands up or connects to the server
+- Plans with the user, proposes the hollow per project
+- Mints scoped tokens, hands dev agents the skill file
+- Answers escalations, escalates to the user
+
+Requirements sorted into three bands with the user
+- Firm up front: interfaces, types, contracts, modules, names
+- Design notes: recorded, not binding
+- Dev agent discretion: inside the module, within parameters
+
+Dev agents see the project stack
+- An `instruction` doc on the project's top node
+- Readable by every descendant under the existing ancestor rule
+- A new dependency is an escalation
+
+
+## Decided 2026-11-05 - escalation path
+
+Worker escalates to its parent, the node owner
+- Planner and dev manager escalate to the user, who owns their nodes
+- Server rule stands: owner or root answers
+
+
+## Awaiting user review - builder judgment calls
 
 `question` docs are owner-only
 - PLAN did not list a write rule

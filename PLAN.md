@@ -90,3 +90,59 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
   - Before building a large chunk on any platform, a small spike proving the platform is required. Example: a spinning 3D hello-world text running in three.js on the planned stack.
   - Proof is demonstrated: screenshots attached or referenced in the spike doc. Where the AI cannot honestly validate the result (video, motion, feel), the spike asks for human validation and says so.
 - Write rule: same as `report`.
+
+## Added 2026-11-05: escalation path (clarified)
+- A worker escalates to its parent, the owner of its node.
+- Planner and dev manager escalate to the user, because the user owns their nodes.
+- Server rule stands: the node owner, or root, answers an escalation.
+
+## Added 2026-11-05: hollow before full
+"If we can't solve the big picture first, how can we hope to build the details?"
+- Every node is built hollow before it is built full.
+- Hollow means: exists, reachable from its parent, testable from the outside, returns a placeholder.
+  - Module: folder, types, init, stub that returns something.
+  - Document: empty sections, each named.
+  - Any design: its named parts.
+- A section whose content is unknown still exists. Its body says what must be researched to fill it.
+- The skeleton has tests, written first, that pass against the stubs. Hollow = those tests are green.
+  - Those tests are the rails for every dev agent beneath. Dev agents may add tests, never redefine these.
+- Not every question is answered up front. Placeholders, interfaces, types, and contracts are.
+- The whole skeleton is built and proven before any work is delegated beneath it.
+- Filling is the delegated work. Delegates fill; they never add bones.
+- A missing bone found later is a structural change. Escalates to the top, with the user.
+- Precedent: walking skeleton (Cockburn), tracer bullet (Pragmatic Programmer), TDD stubs, state machines mapped before bodies.
+- Hollow is NOT a node state and NOT a server gate. It is the starting condition of every node.
+  - A node isn't a node until it has its basic scaffolding: interfaces, types, placeholders.
+  - The planning phase that defines the nodes creates them already hollow.
+  - The dev agent spawned for a node is told to finish it.
+
+## Added 2026-11-05: where TDD applies
+- Real TDD at the interface and module level. These tests are the skeleton's rails, written before delegation.
+- Micro TDD inside a module is at the dev agent's discretion, basic and where it makes sense.
+  - Reason: agents are not good or efficient at the micro TDD humans describe, because few humans do it well and no agent is trained on it done right.
+- Integration tests stay fully real, per the standing rules.
+
+## Added 2026-11-05: packaging as a skill
+- The system ships as a skill usable by any agent harness. Not tied to Claude.
+- The planning agent, following the skill:
+  - Stands up the server (compose, bootstrap) or connects to a running one.
+  - Plans the project with the user.
+  - Builds and proves the hollow skeleton.
+  - Mints scoped tokens and hands them to dev agents with the skill file.
+  - Answers escalations; escalates to the user.
+
+## Added 2026-11-05: hollow is proposed per project
+- The planning agent proposes the hollow for each project. The user approves it.
+- With the user, it sorts requirements into three bands:
+  - Firm up front: interfaces, types, contracts, modules, names. Built into the skeleton.
+  - Design notes: less consequential details, recorded but not binding.
+  - Dev agent discretion: decided inside the module, within the parameters above.
+- Only the firm band is part of hollow.
+
+## Added 2026-11-05: shared stack visibility
+- Dev agents must see the project's tech stack, dependencies, and shared assets.
+  - Reason: reuse shared assets instead of bringing in parallel tools. Not three math packages and four UI approaches.
+- Where it lives: an `instruction` doc on the project's top node, written by the planner.
+  - Every descendant can read it under the existing rule (ancestors are readable).
+  - No schema change needed.
+- Rule for dev agents: check the project stack before adding any dependency. A new dependency is an escalation.
