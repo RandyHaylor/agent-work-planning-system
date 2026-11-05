@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     token_hash      TEXT NOT NULL UNIQUE,
     scope_node_id   BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     parent_token_id BIGINT REFERENCES tokens(id),
-    can_spawn       BOOLEAN NOT NULL DEFAULT false,
+    role            TEXT NOT NULL CHECK (role IN ('planner', 'worker')),
     revoked         BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -27,7 +27,7 @@ ALTER TABLE nodes
 CREATE TABLE IF NOT EXISTS docs (
     id          BIGSERIAL PRIMARY KEY,
     node_id     BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    role        TEXT NOT NULL CHECK (role IN ('summary', 'instruction', 'report', 'spike', 'escalation', 'question', 'kb_proposal')),
+    role        TEXT NOT NULL CHECK (role IN ('summary', 'instruction', 'environment', 'report', 'spike', 'escalation', 'question', 'kb_proposal')),
     body        TEXT NOT NULL,
     author      BIGINT NOT NULL REFERENCES tokens(id),
     answer      TEXT,

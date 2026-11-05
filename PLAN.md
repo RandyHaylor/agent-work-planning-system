@@ -146,3 +146,69 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
   - Every descendant can read it under the existing rule (ancestors are readable).
   - No schema change needed.
 - Rule for dev agents: check the project stack before adding any dependency. A new dependency is an escalation.
+
+## Added 2026-11-05: planner must specify formatting
+- Found in the first live test: the planner asserted exact table text in tests without ever stating how header cells are padded. Tests disagreed; a dev agent guessed.
+- Rule: the planning agent must specify formatting for everything that has a form.
+  - Responses and outputs of the thing being built: whitespace, alignment, line endings, trailing newline, header vs body, error message shape.
+  - Work products: file layout, naming, commit shape.
+  - Documentation: README sections, report structure.
+  - Server entries: what a report, escalation, spike, question doc contains, in what order.
+- A format the planner does not want to decide is declared dev discretion in the instruction, by name. Never silent.
+- Goes into the skill file as a planner step before delegation.
+
+## Added 2026-11-05: planning spikes before approval
+- Planning has a sketch step before the formal plan: the planner sketches the solution and identifies what must be proven first.
+  - Something in the existing repo: does it do this?
+  - A new concept: does it work locally at all?
+- Those proofs are tech spikes, done before the plan is approved and before any scaffold exists.
+  - Throwaway code. Never the start of the real build.
+  - Done in isolation, each in its own space.
+- Structure: the project node gets a `planning spikes` child node (level 2). Each spike is a child beneath it (level 3), with its own instruction and a `spike` doc for the result.
+- The planner may spawn agents for spikes, one per spike node, with scoped tokens, same as dev agents.
+- Results feed the plan. The plan is not approved until every spike it depends on has reported.
+- Only after approval: the formal scaffold, the hollow nodes, and delegation.
+- If no spike is needed, the planner says so in the project summary and why.
+
+## Added 2026-11-05: two roles replace owner-based permissions
+- Found in both live tests: owner-based rules blocked the planner from logging questions on the project node, and planners fell back to the root token.
+- Tokens carry a role. Permissions come from the role and the scope, not from node ownership.
+- Planner / dev manager: full rights on every node in its scope. Reads and writes everything: summaries, instructions, questions, state, children, tokens.
+- Dev worker: reads only its own node and what is beneath it. Writes reports, escalations, spikes, kb proposals on its node, and creates nodes beneath it. Nothing else.
+- The user does not access the server directly. The user works through the planner.
+- Root token exists only to bootstrap and mint the first planner token.
+- Ownership stays as a record of who created a node, not as a permission source.
+
+## Added 2026-11-05: the environment doc
+- Dev workers do not see the project. They see one shared doc from above: the environment.
+- New doc role `environment`, on the project node, written by the planner.
+  - Contents: a generic project summary, tech stack, dependencies, shared assets, conventions.
+  - Framing, stated in the doc itself: this is the larger environment you are working within. You are not building it.
+- Read rule for dev workers: own node and beneath, plus every `environment` doc on an ancestor. No other ancestor docs: no summaries, instructions, questions, reports, escalations.
+- The planner keeps the stack there, in one place, instead of copying it into every instruction.
+
+## Added 2026-11-05: planner is never blocked by its workers
+- Spawning a dev worker never blocks the planner. The planner stays live and polls `/escalations` throughout a run.
+- The blocking seen in the two live tests was a harness artifact: the planner was itself a nested subagent. Not a system rule.
+- Future tests run the planner as a top-level session.
+
+## Added 2026-11-05: an escalation is a blocker
+- A dev worker escalates only when it is blocked. By definition the worker stops and waits for the answer.
+- No tiers of escalation. A question that does not block is not an escalation; the worker proceeds within its instruction and discretion and notes the call in its report.
+
+## Added 2026-11-05: planning order, with the reference run required
+1. Informal outline with the user.
+2. Identify anything tricky or unique that needs proving. Spike only those. Not fishing for spikes; most projects need none.
+3. Formal plan: work, DoD, interfaces, bands, modules, names, formatting. User approves.
+4. Skeleton: hollow nodes, rails, acceptance tests with exact values.
+5. Reference run, required: a throwaway implementation of the rules, outside the workspace, never delivered. Every acceptance test passes against it. Any failure is a wrong expected value or a missing rule; fix before commit.
+6. Skeleton commit. The diff baseline.
+7. Delegate.
+
+## Added 2026-11-05: node closure
+- DoD is defined by the planner and the user, in the plan.
+- A worker never closes its node. When a worker stops, the planner sees it and checks the node's state against the DoD with real tests.
+- Planner approves closure: node set done, and the planner starts the next dependent node(s).
+- Or the planner re-engages the worker to continue, because the work does not meet the requirements.
+- The same applies to the project node: the planner closes it when every node beneath meets its DoD.
+- The standing-rules review is part of the planner's closure check. No separate review agent for now.

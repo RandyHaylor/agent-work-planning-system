@@ -11,7 +11,7 @@ def main():
         root = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (NULL, 'root') RETURNING id").fetchone()["id"]
         raw = db.new_token()
         tok = conn.execute(
-            "INSERT INTO tokens (label, token_hash, scope_node_id, can_spawn) VALUES ('root', %s, %s, true) RETURNING id",
+            "INSERT INTO tokens (label, token_hash, scope_node_id, role) VALUES ('root', %s, %s, 'planner') RETURNING id",
             (db.hash_token(raw), root),
         ).fetchone()["id"]
         conn.execute("UPDATE nodes SET owner = %s WHERE id = %s", (tok, root))

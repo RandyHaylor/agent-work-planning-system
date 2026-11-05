@@ -41,13 +41,14 @@ Nothing in existing code counts as understood
 
 A node is a plain container
 - Title, owner, state, parent
-- One summary doc, always, written by the owner
+- One summary doc, always, written by the planner
+- Not a node until it has its scaffolding: planning creates it hollow
 
 Owning a node means delegating its work
 - Never doing it
 
 Everything else is an attached doc
-- `instruction`, `report`, `spike`
+- `instruction`, `environment`, `report`, `spike`
 - `escalation`, `question`, `kb_proposal`
 
 Single tree, two fixed roots
@@ -55,17 +56,21 @@ Single tree, two fixed roots
 - `plans` - projects
 
 
-## The permissions - the actual product
+## The permissions - two roles, the actual product
 
-Each agent holds a bearer token scoped to one subtree
+Each agent holds a bearer token with a role and a scope subtree
 
-Read: your node, its ancestors, its descendants
-- Nothing else
+Planner: full rights on everything in scope
+- Writes summaries, instructions, environment, questions, state
+- Mints and revokes tokens beneath it
+- The user works through the planner, never the server
 
-Write: only beneath your node
-- Your own instruction is read-only to you
+Worker: its own node and beneath, nothing above
+- Plus every `environment` doc above it: the stack it works within, not builds
+- Writes reports, escalations, spikes, kb proposals; creates children
+- Cannot set state, cannot mint, cannot see ancestors
 
-Knowledge base: everyone reads, only the user writes
+Knowledge base: everyone reads, only root writes
 - Agents propose changes as `kb_proposal` docs
 
 Enforced server-side on every request
@@ -105,11 +110,22 @@ Proof is shown, not claimed
   - Video, motion, feel
 
 
-## Escalation - no agent changes the plan
+## The planning order - prove the skeleton before delegating
 
-Dev agent asks its parent
-- Parent answers within its scope
-- Or escalates to the user
+1. Informal outline with the user, one thread at a time
+2. Spikes only for what is tricky or unique
+3. Formal plan: work, DoD, interfaces, three bands, names, formatting
+4. Plan written to the server
+5. Hollow skeleton: rails green on stubs, acceptance tests expected-fail
+6. Reference run: a throwaway proves every expected value
+7. Skeleton commit is the diff baseline; delegate
+
+
+## Escalation - a blocker, and no agent changes the plan
+
+Worker is blocked: it posts the escalation and stops
+- Planner answers within scope, or escalates to the user
+- A question that does not block is a discretion call, recorded in the report
 
 Every question is logged
 - Context for the next plan
@@ -117,6 +133,10 @@ Every question is logged
 
 Can't build to spec? Stop
 - Never substitute something else
+
+Planner closes nodes
+- Checks each stopped worker against the DoD with real tests
+- Closes and starts the next, or re-engages
 
 
 ## Run it - compose, bootstrap, serve
@@ -141,7 +161,7 @@ curl -sk https://localhost:8787/nodes/1/tree -H "$H"
 curl -sk https://localhost:8787/nodes -H "$H" -H 'content-type: application/json' \
   -d '{"parent_id":3,"title":"plan A","summary":"..."}'
 curl -sk https://localhost:8787/tokens -H "$H" -H 'content-type: application/json' \
-  -d '{"label":"planner","scope_node_id":4,"can_spawn":true}'
+  -d '{"label":"planner","role":"planner","scope_node_id":3}'
 ```
 
 Give the agent the token plus `skill/SKILL.md`
@@ -168,13 +188,13 @@ POST /nodes/5/docs  {"role":"report","body":"what was built and proven"}
 | POST | `/nodes/{id}/docs` | Attach doc |
 | PATCH | `/docs/{id}` | Edit body, or answer escalation |
 | GET | `/escalations` | Unresolved in my scope |
-| POST | `/tokens` | Mint child token |
+| POST | `/tokens` | Mint token with role and scope |
 | DELETE | `/tokens/{id}` | Revoke |
 
-Errors: 401 bad token, 403 outside scope, 404 unknown, 409 depth
+Errors: 401 bad token, 403 outside role, 404 unknown or hidden, 409 depth
 
 
-## Tests - 33 pass from a clean state, no mocks
+## Tests - green from a clean state, no mocks
 
 ```
 scripts/test_all.sh      # fresh volume, bootstrap, serve, test, stop

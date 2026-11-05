@@ -1,156 +1,135 @@
 # Dev Plan
 
-As of 2026-11-05. The prototype is built and green. This doc holds what is decided, what the prototype does, the judgment calls awaiting review, and what is still open. Design detail lives in `PLAN.md`; process and rules in `agent-planning-system.md`.
+As of 2026-11-05, after two live tests with Opus planners. This doc holds what is decided, what is built, and what is open. Design detail lives in `PLAN.md`; process and rules in `agent-planning-system.md`.
 
 
 ## Decided - the shape of the system
 
 One base node type, no kinds
 - Plain container: title, owner, state, parent
-- One summary doc per node, written by the owner
+- One summary doc per node, written by the planner
 - Everything else attaches as a doc with a role
+
+A node isn't a node until it has its scaffolding
+- Planning creates nodes already hollow
+- Hollow is the starting condition, not a state and not a gate
 
 Owning a node means delegating its work
 - The owner never does the work of a node it owns
-- Delegates write beneath
 
 Single tree
 - Fixed roots `kb` and `plans`
 - A project is a direct child of `plans`
 
-Token scope is a subtree
-- Read: node, ancestors, descendants
-- Write: beneath only
-- Own instruction and summary never writable by the holder
-
 Depth limit enforced in the database
 - Level 4 flagged `needs_review`
-- Level 5 refused; branch becomes its own project
-
-Tech spikes are docs
-- Role `spike`
-- Architectural spikes at project top, coordinated with the user
-- Hello-world proof required before building large on a platform
+- Level 5 refused; the branch becomes its own project
 
 
-## Built - prototype, 33 tests green from a clean state
+## Decided - two roles, not ownership
 
-Server
-- FastAPI, psycopg, uvicorn
-- Postgres 16 in docker compose, port 5433
-- HTTPS 8787, self-signed cert generated at first run
-- Isolated permissions module with its own unit tests
+Tokens carry a role
+- Permissions come from role and scope, never from who created a node
 
-Ten endpoints, flat JSON
-- Nodes, docs, tokens, escalations, me
+Planner / dev manager
+- Full read and write on every node in its scope
+- Mints and revokes tokens beneath it
+- The user works through the planner and never touches the server
 
-Skill file for agents
-- `skill/SKILL.md`, curl-based
+Dev worker
+- Reads only its own node and beneath, plus every `environment` doc above it
+- Writes reports, escalations, spikes, kb proposals; creates children
+- Cannot see ancestors, cannot set state, cannot mint
 
-Tests
-- Real HTTPS against real Postgres
-- Every endpoint, every rule, every denial
-- Depth trigger proven by direct SQL insert
+The environment doc
+- One shared doc on the project node: generic summary, stack, dependencies, shared assets
+- Framed as the environment workers are within, not building
+- The only thing from above a worker can see
 
-
-## Decided 2026-11-05 - hollow before full
-
-Every node is built hollow before it is built full
-- Exists, reachable, testable from outside, returns a placeholder
-- Skeleton tests written first, green against stubs
-- Those tests are the rails; dev agents never redefine them
-
-The whole skeleton is proven before any delegation
-- Delegates fill, never add bones
-- A missing bone escalates to the user
-
-TDD applies at the interface and module level
-- Those tests are the rails
-- Micro TDD inside a module: dev agent's discretion, basic
-  - Agents are not good at it; few humans are either
-
-Hollow is NOT a node state, NOT a gate
-- A node isn't a node until it has its scaffolding
-- Planning creates nodes already hollow
-- The spawned dev agent is told to finish it
+Root token
+- Bootstrap and the first planner token only
 
 
-## Decided 2026-11-05 - packaged as a skill for any harness
+## Decided - how planning runs
 
-The planning agent runs the process from the skill
-- Stands up or connects to the server
-- Plans with the user, proposes the hollow per project
-- Mints scoped tokens, hands dev agents the skill file
-- Answers escalations, escalates to the user
+Seven steps, in order
+1. Informal outline with the user, one thread at a time
+2. Spikes only for what is tricky or unique; not fishing for them
+3. Formal plan: work, DoD, interfaces, three bands, modules, names, formatting, delegation order
+4. Plan written to the server: project node, environment doc, one node per module
+5. Skeleton: hollow nodes, rails green on stubs, acceptance tests under strict expected-fail
+6. Reference run, required: a throwaway implementation proves every acceptance value before commit
+7. Skeleton commit is the diff baseline; then delegate
 
-Requirements sorted into three bands with the user
+The three bands
 - Firm up front: interfaces, types, contracts, modules, names
 - Design notes: recorded, not binding
-- Dev agent discretion: inside the module, within parameters
+- Dev discretion: named item by item, never silent
 
-Dev agents see the project stack
-- An `instruction` doc on the project's top node
-- Readable by every descendant under the existing ancestor rule
-- A new dependency is an escalation
+Planner specifies formatting for everything with a form
+- Outputs, errors, work products, documents, server entries
+- Found in test one: exact table text asserted with no header padding rule
 
-
-## Decided 2026-11-05 - escalation path
-
-Worker escalates to its parent, the node owner
-- Planner and dev manager escalate to the user, who owns their nodes
-- Server rule stands: owner or root answers
+TDD at the interface and module level
+- Rails and acceptance tests are the rails
+- Micro TDD inside a module is dev discretion
 
 
-## Awaiting user review - builder judgment calls
+## Decided - how work runs
 
-`question` docs are owner-only
-- PLAN did not list a write rule
+An escalation is a blocker
+- The worker posts it and stops; it never picks
+- A non-blocking question is a discretion call, recorded in the report
 
-`kb_proposal` is written in the agent's own scope node
-- `kb` subtree is root-only
+Escalation path
+- Worker to planner; planner to user
+- No agent changes scope, interfaces, or the plan
+
+Planner is never blocked by its workers
+- Stays live, polls escalations throughout
+- Blocking seen in tests was a nested-subagent artifact
+
+Node closure
+- DoD defined by planner and user
+- Worker stops; planner checks against DoD with real tests
+- Planner closes and starts the next dependent node, or re-engages the worker
+- Standing-rules review is part of that check
+
+
+## Built - prototype, green from a clean state
+
+Server
+- FastAPI, psycopg, uvicorn; Postgres 16 in compose on 5433; HTTPS 8787
+- Isolated permissions module with its own unit tests
+- Ten endpoints, flat JSON; skill file for agents
+
+Two live tests with Opus planners, scored on dev worker deviations
+- csvmd, five modules: zero deviations; one spec hole filled by a worker instead of escalated
+- linedupe, three modules: zero deviations; planner caught its own wrong expected value in the reference run
 
 
 ## Open - left to plan, decide, or discuss
 
-Who deploys dev agents
-- Planning agent, or a dedicated dev manager agent
-
-Where escalations surface to the user
-- Currently polled via `GET /escalations`
-- No push, no notification
+Who or what notifies the planner that a worker stopped
+- In a harness, the spawn completion; on the server, nothing yet
 
 How a knowledge base proposal is applied
 - Hand-off exists as a doc; the apply step does not
 
-How permission is granted for sub-agent spawning
-- `can_spawn` on the token today
-- Delegated internal design calls not represented
-
 How mock or partial test approvals are recorded
 
-Who performs the standing-rules review step
+Where proven understanding from a survey is recorded
 
-Where proven understanding from the survey is recorded
+Marker design
+- Deletion should leave clean code: no orphan import
 
-A name for the real-world tests
-- If "integration test" is not strong enough
-
-Node content format
-- Markdown body today; JSON structure not revisited
+Packaging as an installable skill
+- Today the skill is a file in the repo; nothing registers it with a harness
 
 
 ## Next - in order
 
-1. User reviews the three judgment calls above
+1. Run a third test with the planner as a top-level session, not a nested agent
 2. Viewer: slide-like read-only rendering of a node and its subtree
-3. Standing-rules review step, and who runs it
-4. Doc version history
-5. Push or notify on escalation
-
-
-## Out of scope for the prototype
-
-- Viewer UI
-- Notifications to agents
-- Standing-rules review step
-- Versioned doc history
+3. Doc version history
+4. Skill packaging for a harness
