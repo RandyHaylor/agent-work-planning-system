@@ -1,9 +1,13 @@
+import os
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Optional
 
 import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
+from server import backup as B
 from server import db
 from server import permissions as P
 
@@ -11,11 +15,25 @@ app = FastAPI(title="Agent Planning Server", version="0.1.0")
 
 ROLES = ("summary", "instruction", "environment", "report", "spike", "escalation", "question", "kb_proposal")
 STATES = ("open", "blocked", "done")
+BACKUP_DIR = Path(os.environ.get("PLANNER_BACKUP_DIR", Path(__file__).resolve().parent.parent / "backups"))
 
 
 class Ctx:
-    def __init__(self, conn, principal: P.Principal, kb_root: int):
-        self.conn, self.p, self.kb, self.anc = conn, principal, kb_root, db.ancestors_fn(conn)
+    def __init__(self, conn, principal: P.Principal, kb_root: int, plans_root: int):
+        self.conn, self.p, self.kb, self.plans, self.anc = conn, principal, kb_root, plans_root, db.ancestors_fn(conn)
+
+    @contextmanager
+    def write(self, node_id: int):
+        """One transaction around a write touching node_id, then a synchronous backup of
+        that node's project (or kb) subtree. Any failure, including backup, rolls back."""
+        with self.conn.transaction():
+            yield
+            root = B.backup_root_for(self.anc(node_id), self.plans, self.kb)
+            if root is not None:
+                try:
+                    B.backup_subtree(self.conn, root, BACKUP_DIR, self.kb)
+                except B.BackupError as e:
+                    raise HTTPException(500, f"backup failed, write rolled back: {e}")
 
 
 def ctx(authorization: Optional[str] = Header(default=None)):
@@ -23,14 +41,25 @@ def ctx(authorization: Optional[str] = Header(default=None)):
         raise HTTPException(401, "missing bearer token")
     conn = db.connect()
     try:
-        row = conn.execute("SELECT * FROM tokens WHERE token_hash = %s AND NOT revoked", (db.hash_token(authorization[7:]),)).fetchone()
-        if not row:
-            conn.close()
+        # A token is revoked if it, or any token in its minting chain, is revoked.
+        row = conn.execute(
+            """
+            WITH RECURSIVE chain AS (
+                SELECT t.*, t.revoked AS any_revoked FROM tokens t WHERE token_hash = %s
+                UNION ALL
+                SELECT p.*, (c.any_revoked OR p.revoked) FROM tokens p JOIN chain c ON p.id = c.parent_token_id
+            ) SELECT (SELECT bool_or(any_revoked) FROM chain) AS dead, * FROM chain
+            WHERE token_hash = %s
+            """,
+            (db.hash_token(authorization[7:]), db.hash_token(authorization[7:])),
+        ).fetchone()
+        if not row or row["dead"]:
             raise HTTPException(401, "bad token")
         root_tok = int(db.meta_get(conn, "root_token_id"))
         kb = int(db.meta_get(conn, "kb_node_id"))
+        plans = int(db.meta_get(conn, "plans_node_id"))
         p = P.Principal(token_id=row["id"], scope_node_id=row["scope_node_id"], role=row["role"], is_root=row["id"] == root_tok)
-        yield Ctx(conn, p, kb)
+        yield Ctx(conn, p, kb, plans)
     finally:
         conn.close()
 
@@ -101,10 +130,11 @@ def create_node(body: NodeIn, c: Ctx = Depends(ctx)):
     if not P.can_create_child(c.p, body.parent_id, c.anc, c.kb):
         raise HTTPException(403, "cannot create here")
     try:
-        n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (body.parent_id, body.title, c.p.token_id)).fetchone()
+        with c.write(body.parent_id):
+            n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (body.parent_id, body.title, c.p.token_id)).fetchone()
+            c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', %s, %s)", (n["id"], body.summary, c.p.token_id))
     except psycopg.errors.CheckViolation as e:
         raise HTTPException(409, e.diag.message_primary)
-    c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', %s, %s)", (n["id"], body.summary, c.p.token_id))
     out = node_out(n)
     if n["needs_review"]:
         out["warning"] = "level 4 node: needs_review is set. Review this branch with the user."
@@ -122,7 +152,8 @@ def set_state(node_id: int, body: StateIn, c: Ctx = Depends(ctx)):
     get_node(c, node_id)
     if not P.can_set_state(c.p, node_id, c.anc, c.kb):
         raise HTTPException(403, "cannot set state")
-    n = c.conn.execute("UPDATE nodes SET state = %s WHERE id = %s RETURNING *", (body.state, node_id)).fetchone()
+    with c.write(node_id):
+        n = c.conn.execute("UPDATE nodes SET state = %s WHERE id = %s RETURNING *", (body.state, node_id)).fetchone()
     return node_out(n)
 
 
@@ -140,7 +171,8 @@ def create_doc(node_id: int, body: DocIn, c: Ctx = Depends(ctx)):
         raise HTTPException(403, "cannot write this doc role here")
     if body.role == "summary":
         raise HTTPException(409, "summary exists; edit it via PATCH /docs/{id}")
-    d = c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, %s, %s, %s) RETURNING *", (node_id, body.role, body.body, c.p.token_id)).fetchone()
+    with c.write(node_id):
+        d = c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, %s, %s, %s) RETURNING *", (node_id, body.role, body.body, c.p.token_id)).fetchone()
     return doc_out(d)
 
 
@@ -160,11 +192,13 @@ def patch_doc(doc_id: int, body: DocPatch, c: Ctx = Depends(ctx)):
             raise HTTPException(422, "answer/resolved apply to escalations only")
         if not P.can_answer_escalation(c.p, d["node_id"], c.anc):
             raise HTTPException(403, "only a planner answers escalations")
-        c.conn.execute("UPDATE docs SET answer = COALESCE(%s, answer), resolved = COALESCE(%s, resolved), updated_at = now() WHERE id = %s", (body.answer, body.resolved, doc_id))
-    if body.body is not None:
-        if not P.can_edit_doc(c.p, d["node_id"], d["role"], d["author"], c.anc, c.kb):
-            raise HTTPException(403, "cannot edit this doc")
-        c.conn.execute("UPDATE docs SET body = %s, updated_at = now() WHERE id = %s", (body.body, doc_id))
+    if body.body is not None and not P.can_edit_doc(c.p, d["node_id"], d["role"], d["author"], c.anc, c.kb):
+        raise HTTPException(403, "cannot edit this doc")
+    with c.write(d["node_id"]):
+        if body.answer is not None or body.resolved is not None:
+            c.conn.execute("UPDATE docs SET answer = COALESCE(%s, answer), resolved = COALESCE(%s, resolved), updated_at = now() WHERE id = %s", (body.answer, body.resolved, doc_id))
+        if body.body is not None:
+            c.conn.execute("UPDATE docs SET body = %s, updated_at = now() WHERE id = %s", (body.body, doc_id))
     return doc_out(c.conn.execute("SELECT * FROM docs WHERE id = %s", (doc_id,)).fetchone())
 
 
@@ -204,12 +238,35 @@ def mint(body: TokenIn, c: Ctx = Depends(ctx)):
     return {"token_id": t["id"], "token": raw, "scope_node_id": body.scope_node_id, "role": body.role}
 
 
+def token_out(t):
+    return {k: t[k] for k in ("id", "label", "role", "scope_node_id", "parent_token_id", "revoked", "created_at")}
+
+
+@app.get("/tokens")
+def list_tokens(c: Ctx = Depends(ctx)):
+    """Tokens whose scope lies within the caller's scope. Planner only."""
+    if not P.can_list_tokens(c.p):
+        raise HTTPException(403, "planner only")
+    rows = c.conn.execute(
+        """
+        WITH RECURSIVE sub AS (
+            SELECT id FROM nodes WHERE id = %s
+            UNION ALL SELECT n.id FROM nodes n JOIN sub s ON n.parent_id = s.id
+        ) SELECT t.* FROM tokens t JOIN sub ON t.scope_node_id = sub.id ORDER BY t.id
+        """,
+        (c.p.scope_node_id,),
+    ).fetchall()
+    return [token_out(t) for t in rows]
+
+
 @app.delete("/tokens/{token_id}", status_code=204)
 def revoke(token_id: int, c: Ctx = Depends(ctx)):
-    t = c.conn.execute("SELECT parent_token_id FROM tokens WHERE id = %s", (token_id,)).fetchone()
-    if not t:
+    t = c.conn.execute("SELECT scope_node_id FROM tokens WHERE id = %s", (token_id,)).fetchone()
+    if not t or not P.can_read(c.p, t["scope_node_id"], c.anc, c.kb):
         raise HTTPException(404, "token not found")
-    if not P.can_revoke(c.p, t["parent_token_id"]):
-        raise HTTPException(403, "only the minting token can revoke")
+    if token_id == c.p.token_id:
+        raise HTTPException(409, "a token cannot revoke itself")
+    if not P.can_revoke(c.p, t["scope_node_id"], c.anc):
+        raise HTTPException(403, "only a planner whose scope contains the token's scope can revoke")
     c.conn.execute("UPDATE tokens SET revoked = true WHERE id = %s", (token_id,))
     return None

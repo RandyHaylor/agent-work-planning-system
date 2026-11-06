@@ -195,9 +195,78 @@ def test_revoke_rules(world):
     p, w = world["planner"], world["worker"]
     t = p.post("/tokens", json={"label": "tmp", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
     assert w.delete(f"/tokens/{t['token_id']}").status_code == 403
-    assert world["root"].delete(f"/tokens/{t['token_id']}").status_code == 403
-    assert p.delete(f"/tokens/{t['token_id']}").status_code == 204
+    # a planner scoped to the sibling project cannot see, let alone revoke, this token
+    sib = p.post("/tokens", json={"label": "sib2", "scope_node_id": world["other"]["id"], "role": "planner"}).json()
+    assert client(sib["token"]).delete(f"/tokens/{t['token_id']}").status_code == 404
+    # root did not mint it, but its scope contains the token's scope: allowed
+    assert world["root"].delete(f"/tokens/{t['token_id']}").status_code == 204
     assert client(t["token"]).get("/me").status_code == 401
+    assert p.delete(f"/tokens/{world['planner_tok']['token_id']}").status_code == 409
+
+
+def test_revoke_cascades_through_minting_chain(world):
+    p = world["planner"]
+    sub = p.post("/tokens", json={"label": "sub-pl", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    grand = client(sub["token"]).post("/tokens", json={"label": "grand-w", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
+    assert client(grand["token"]).get("/me").status_code == 200
+    assert p.delete(f"/tokens/{sub['token_id']}").status_code == 204
+    assert client(sub["token"]).get("/me").status_code == 401
+    assert client(grand["token"]).get("/me").status_code == 401
+    listed = {t["id"]: t for t in p.get("/tokens").json()}
+    assert listed[sub["token_id"]]["revoked"] is True
+    assert listed[grand["token_id"]]["revoked"] is False  # own flag untouched; dead via chain
+
+
+def test_list_tokens(world):
+    p, w = world["planner"], world["worker"]
+    assert w.get("/tokens").status_code == 403
+    rows = p.get("/tokens").json()
+    ids = {t["id"] for t in rows}
+    assert world["planner_tok"]["token_id"] in ids and world["worker_tok"]["token_id"] in ids
+    assert all(set(t) >= {"id", "label", "role", "scope_node_id", "revoked"} for t in rows)
+    sub = p.post("/tokens", json={"label": "scoped", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    sub_ids = {t["id"] for t in client(sub["token"]).get("/tokens").json()}
+    assert world["worker_tok"]["token_id"] in sub_ids and world["planner_tok"]["token_id"] not in sub_ids
+
+
+def _backup_dir():
+    d = os.environ.get("PLANNER_BACKUP_DIR")
+    if not d:
+        pytest.skip("PLANNER_BACKUP_DIR not set")
+    from pathlib import Path
+    return Path(d)
+
+
+def test_backup_written_on_every_write(world):
+    import json
+    base = _backup_dir()
+    pid, tid = world["project"]["id"], world["task"]["id"]
+    proj_dir = next(p for p in base.iterdir() if p.name.startswith(f"{pid}-"))
+    assert proj_dir.name == f"{pid}-project-a"
+    tree = {n["id"]: n for n in json.loads((proj_dir / "tree.json").read_text())}
+    assert pid in tree and tid in tree and tree[tid]["parent_id"] == pid
+    r = world["worker"].post(f"/nodes/{tid}/docs", json={"role": "report", "body": "first draft "}).json()
+    f = proj_dir / "docs" / f"{tid}-report-{r['id']}.md"
+    assert f.exists()
+    assert f.read_text(encoding="utf-8").endswith("\n\nfirst draft ")
+    assert "author: worker" in f.read_text(encoding="utf-8")
+    world["worker"].patch(f"/docs/{r['id']}", json={"body": "second draft"})
+    assert f.read_text(encoding="utf-8").endswith("\n\nsecond draft")
+    e = world["worker"].post(f"/nodes/{tid}/docs", json={"role": "escalation", "body": "q"}).json()
+    world["planner"].patch(f"/docs/{e['id']}", json={"answer": "a", "resolved": True})
+    ef = (proj_dir / "docs" / f"{tid}-escalation-{e['id']}.md").read_text(encoding="utf-8")
+    assert "answer: a" in ef and "resolved: true" in ef
+    world["planner"].patch(f"/nodes/{tid}", json={"state": "done"})
+    assert {n["id"]: n for n in json.loads((proj_dir / "tree.json").read_text())}[tid]["state"] == "done"
+    world["planner"].patch(f"/nodes/{tid}", json={"state": "open"})
+
+
+def test_backup_kb_and_not_for_fixed_roots(world):
+    base = _backup_dir()
+    page = world["root"].post("/nodes", json={"parent_id": world["kb"], "title": "Glossary", "summary": "terms"}).json()
+    assert (base / "kb" / "tree.json").exists()
+    assert any(p.name.startswith(f"{page['id']}-summary-") for p in (base / "kb" / "docs").iterdir())
+    assert not any(p.name.startswith("1-") or p.name.startswith("3-") for p in base.iterdir())
 
 
 def test_spike_same_rule_as_report(world):

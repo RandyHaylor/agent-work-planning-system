@@ -1,6 +1,8 @@
 # Agent Planning Server
 
-Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. A planner agent plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Process and rules: `agent-planning-system.md`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
+Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. A planner agent plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
+
+**Scope at this stage.** A local tool for one developer's machine, running next to an agent harness that can spawn multiple agents. Tokens are lane-keeping, not security: they stop a dev agent from reading or writing outside its node. There is no threat model beyond that, so the self-signed cert and `curl -k` are fine. It is not an internet service.
 
 ## Data model
 
@@ -39,7 +41,8 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | PATCH | `/docs/{id}` | `{body}` or `{answer, resolved}` |
 | GET | `/escalations` | unresolved escalations in scope |
 | POST | `/tokens` | `{label, role, scope_node_id}` → plaintext token |
-| DELETE | `/tokens/{id}` | revoke |
+| GET | `/tokens` | tokens in scope (planner) |
+| DELETE | `/tokens/{id}` | revoke; any planner whose scope contains the token's scope. Revocation cascades to tokens minted beneath |
 
 Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth, 422 bad value.
 
@@ -52,7 +55,9 @@ uv run python -m server bootstrap    # schema, root/kb/plans, prints ROOT_TOKEN 
 uv run python -m server              # HTTPS on 8787; cert generated into certs/
 ```
 
-Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`. Reset with `docker compose down -v`.
+Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
+
+Backup: every write under `plans` or `kb` rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json` plus `docs/<node>-<role>-<doc>.md`, inside the same transaction. A backup failure rolls the write back.
 
 First use: mint a planner token scoped to `plans` with the root token, then work with that.
 
@@ -77,7 +82,7 @@ uv run python scripts/test_all.py    # clean volume, bootstrap, serve, pytest, s
 uv run pytest server                 # permissions unit tests only
 ```
 
-Integration tests run over real HTTPS against real Postgres: every endpoint, every permission rule and denial, depth trigger via direct SQL. Runner is Python and needs docker compose, uv, Python 3.10+. Verified on Linux; macOS and Windows untested.
+Integration tests run over real HTTPS against real Postgres: every endpoint, every permission rule and denial, depth trigger via direct SQL, backup files on every write, revocation cascade. The runner uses its own compose project `planner-test` on DB port 5434 and a temp backup dir, so the live database is never touched. It refuses to start if `PLANNER_PORT` is in use. Needs docker compose, uv, Python 3.10+. Verified on Linux; macOS and Windows untested.
 
 ## Layout
 

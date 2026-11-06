@@ -217,3 +217,20 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - Nothing about a system is known to work the way we think until a real integration test or actual use proves it. No agent moves forward on that knowledge until it is proven.
 - The same proof is required before work is called done. Unit tests passing means it is time to integration test.
 - Added to the standing rules in agent-planning-system.md and to both halves of skill/SKILL.md. Worker reports must carry the real proof; planner closure checks it.
+
+## Added 2026-11-06: what this tool is, at this stage
+- A local tool, run on a developer's machine alongside an AI agent harness that can run multiple agents.
+- Not an internet service. Not a security product.
+- Tokens are lane-keeping, not security. They exist so that dev agents can only see and write their own node. Nobody is defending against a hostile agent or a network attacker.
+  - So: self-signed cert and `curl -k` are fine. No cert pinning. No threat model beyond "keep agents in their lane".
+  - Revocation still matters for lane-keeping: a finished worker should lose its lane. Cascading revocation is wanted for that reason, not for security.
+
+## Added 2026-11-06: backup to disk on every write
+- The database is the working store. The record of a project must also exist on disk.
+- After every write that touches a project (node create, state change, doc create, doc edit, escalation answer), the server writes that project's full subtree to disk.
+- Layout: `PLANNER_BACKUP_DIR/<project-id>-<slug>/`
+  - `tree.json`: nodes with ids, parents, titles, states, flags.
+  - `docs/<node-id>-<role>-<doc-id>.md`: one file per doc, body verbatim, header with author, timestamps, answer and resolved where present.
+- `kb` is backed up the same way as its own folder.
+- Default dir: `backups/` under the repo, gitignored. Configurable.
+- Synchronous, in the request. A failed backup fails the write.

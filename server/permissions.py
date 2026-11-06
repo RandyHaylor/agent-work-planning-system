@@ -101,5 +101,10 @@ def can_mint(p: Principal, scope_node_id: int, child_role: str, ancestors: Ances
     return in_subtree(scope_node_id, p.scope_node_id, ancestors)
 
 
-def can_revoke(p: Principal, token_parent_id: Optional[int]) -> bool:
-    return token_parent_id == p.token_id
+def can_revoke(p: Principal, token_scope_node_id: int, ancestors: Ancestors) -> bool:
+    """Any planner whose scope contains the token's scope may revoke it (lane-keeping)."""
+    return p.role == PLANNER and in_subtree(token_scope_node_id, p.scope_node_id, ancestors)
+
+
+def can_list_tokens(p: Principal) -> bool:
+    return p.role == PLANNER

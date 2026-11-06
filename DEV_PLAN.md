@@ -26,6 +26,41 @@ Depth limit enforced in the database
 - Level 5 refused; the branch becomes its own project
 
 
+## Decided 2026-11-06 - scope at this stage
+
+A local tool on a developer's machine
+- Runs beside an agent harness that spawns multiple agents
+- Not an internet service, not a security product
+
+Tokens are lane-keeping, not security
+- They keep a dev agent inside its node
+- Self-signed cert and `curl -k` are fine; no cert pinning
+- Cascading revocation is wanted so a finished worker loses its lane
+
+Every write is mirrored to disk per project
+- `backups/<project>/tree.json` plus one markdown file per doc
+- Synchronous; a failed backup fails the write
+
+
+## Cold review 2026-11-06 - what it found and what we did
+
+Fixed now
+- Revocation did not cascade; no token listing
+- Test runner wiped the live database; now an isolated compose project
+- Node creation was not transactional
+
+Clarified, not changed
+- TLS is `curl -k`: acceptable for a local lane-keeping tool
+- Depth trigger is insert-only; nothing reparents today
+
+Still open
+- `needs_review` cannot be cleared or listed
+- Planners can edit worker reports in place; no doc history
+- `PLAN.md` carries superseded sections; "no nesting limits" contradicts the depth rule
+- Sibling interfaces travel only by the planner copying them into instructions
+- Nothing checks the server plan matches what the user approved in chat
+
+
 ## Decided - two roles, not ownership
 
 Tokens carry a role

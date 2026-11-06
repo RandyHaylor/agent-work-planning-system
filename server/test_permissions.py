@@ -108,6 +108,14 @@ def test_mint():
     assert not P.can_mint(planner, 4, "admin", anc)
 
 
-def test_revoke_only_minted():
-    assert P.can_revoke(planner, planner.token_id)
-    assert not P.can_revoke(worker, planner.token_id)
+def test_revoke_any_planner_whose_scope_contains_token_scope():
+    assert P.can_revoke(planner, 4, anc)
+    assert P.can_revoke(planner, 6, anc)
+    assert P.can_revoke(root, 6, anc)
+    assert not P.can_revoke(planner, 7, anc)
+    assert not P.can_revoke(worker, 6, anc)
+
+
+def test_list_tokens_planner_only():
+    assert P.can_list_tokens(planner)
+    assert not P.can_list_tokens(worker)

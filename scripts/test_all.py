@@ -1,25 +1,37 @@
-"""Clean-state end-to-end on any platform: fresh DB, bootstrap, start server, unit + integration tests, stop.
+"""Clean-state end-to-end on any platform, isolated from the live planning database.
 
     uv run python scripts/test_all.py
 
-Env: PLANNER_PORT overrides the port (default 8787). Requires docker compose, uv, and Python 3.10+.
+Uses its own compose project (`planner-test`) and its own DB host port, so the live
+`docker compose` project, its volume, and its backups directory are never touched.
+Starts a fresh Postgres, bootstraps, starts the server, runs unit + integration tests,
+then stops the server and tears the test compose project down with its volume.
+
+Env:
+  PLANNER_PORT      HTTPS port for the server under test (default 8787)
+  PLANNER_DB_PORT   host port for the test Postgres (default 5434; live default is 5433)
+Requires docker compose, uv, Python 3.10+.
 """
 import os
 import re
 import ssl
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PORT = os.environ.get("PLANNER_PORT", "8787")
+DB_PORT = os.environ.get("PLANNER_DB_PORT", "5434")
 URL = f"https://localhost:{PORT}"
+DSN = f"postgresql://planner:planner@localhost:{DB_PORT}/planner"
+COMPOSE = ["docker", "compose", "-p", "planner-test"]
 
 
-def run(*args: str, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
-    return subprocess.run(list(args), cwd=ROOT, check=check, text=True, capture_output=capture)
+def run(args: list[str], env: dict, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(args, cwd=ROOT, env=env, check=check, text=True, capture_output=capture)
 
 
 def wait_for_server(timeout: float = 20.0) -> None:
@@ -38,32 +50,42 @@ def wait_for_server(timeout: float = 20.0) -> None:
     raise SystemExit(f"server did not answer on {URL}")
 
 
-def main() -> int:
-    run("docker", "compose", "down", "-v", check=False)
-    run("docker", "compose", "up", "-d", "--wait")
-    run("uv", "sync", "--extra", "test", "--quiet")
-    out = run("uv", "run", "python", "-m", "server", "bootstrap", capture=True).stdout
-    print(out, end="")
-    m = re.search(r"^ROOT_TOKEN=(\S+)$", out, re.M)
-    if not m:
-        raise SystemExit("bootstrap did not print ROOT_TOKEN")
-    token = m.group(1)
+def port_free(port: int) -> bool:
+    import socket
+    with socket.socket() as s:
+        return s.connect_ex(("127.0.0.1", port)) != 0
 
-    env = dict(os.environ, PLANNER_PORT=PORT)
+
+def main() -> int:
+    if not port_free(int(PORT)):
+        raise SystemExit(f"port {PORT} is already in use; set PLANNER_PORT to a free port so the tests hit the server under test")
+    backup_dir = tempfile.mkdtemp(prefix="planner-test-backups-")
+    env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DSN=DSN, PLANNER_PORT=PORT,
+               PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir)
+    run(COMPOSE + ["down", "-v"], env, check=False)
+    run(COMPOSE + ["up", "-d", "--wait"], env)
+    server = None
     log = open(ROOT / "planner-server.log", "w")
-    server = subprocess.Popen(["uv", "run", "python", "-m", "server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
     try:
+        run(["uv", "sync", "--extra", "test", "--quiet"], env)
+        out = run(["uv", "run", "python", "-m", "server", "bootstrap"], env, capture=True).stdout
+        print(out, end="")
+        m = re.search(r"^ROOT_TOKEN=(\S+)$", out, re.M)
+        if not m:
+            raise SystemExit("bootstrap did not print ROOT_TOKEN")
+        env["PLANNER_ROOT_TOKEN"] = m.group(1)
+        server = subprocess.Popen(["uv", "run", "python", "-m", "server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
         wait_for_server()
-        test_env = dict(os.environ, PLANNER_URL=URL, PLANNER_ROOT_TOKEN=token)
-        result = subprocess.run(["uv", "run", "pytest", "-q", "server", "tests"], cwd=ROOT, env=test_env)
-        return result.returncode
+        return subprocess.run(["uv", "run", "pytest", "-q", "server", "tests"], cwd=ROOT, env=env).returncode
     finally:
-        server.terminate()
-        try:
-            server.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            server.kill()
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                server.kill()
         log.close()
+        run(COMPOSE + ["down", "-v"], env, check=False)
 
 
 if __name__ == "__main__":
