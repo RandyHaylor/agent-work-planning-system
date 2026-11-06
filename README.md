@@ -1,221 +1,89 @@
 # Agent Planning Server
 
-A process for humans and agents to plan work together, with a hosted server that enforces who may read and write what. The prototype runs today: Postgres, a small HTTPS API, 33 real tests, no mocks.
+Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. A planner agent plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Process and rules: `agent-planning-system.md`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
 
+## Data model
 
-## The problem - agents drift, context leaks, tools don't hold
+- `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans`.
+- `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `report`, `spike`, `escalation`, `question`, `kb_proposal`.
+- `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
 
-Agents drift on long projects
-- Scope creep
-- Invented interfaces
-- "Close enough" tests
+Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
 
-Context leaks
-- Every agent sees everything
-- Nobody owns anything
+## Permissions
 
-Existing tools fail one requirement each
-- Shallow nesting
-- Permissions don't hold
-- Not fully open source
-
-
-## The system - a process, not an AI product
-
-Works for any mix of humans and agents
-- Rules stand either way
-- Not tied to Claude or any harness
-
-The user writes requirements and interfaces, never code
-
-Design happens up front, never on the fly
-- Modules
-- Interfaces
-- Names
-
-Nothing in existing code counts as understood
-- Until a real test proves it
-
-
-## The tree - one node type, infinite nesting
-
-A node is a plain container
-- Title, owner, state, parent
-- One summary doc, always, written by the planner
-- Not a node until it has its scaffolding: planning creates it hollow
-
-Owning a node means delegating its work
-- Never doing it
-
-Everything else is an attached doc
-- `instruction`, `environment`, `report`, `spike`
-- `escalation`, `question`, `kb_proposal`
-
-Single tree, two fixed roots
-- `kb` - knowledge base
-- `plans` - projects
-
-
-## The permissions - two roles, the actual product
-
-Each agent holds a bearer token with a role and a scope subtree
-
-Planner: full rights on everything in scope
-- Writes summaries, instructions, environment, questions, state
-- Mints and revokes tokens beneath it
-- The user works through the planner, never the server
-
-Worker: its own node and beneath, nothing above
-- Plus every `environment` doc above it: the stack it works within, not builds
-- Writes reports, escalations, spikes, kb proposals; creates children
-- Cannot set state, cannot mint, cannot see ancestors
-
-Knowledge base: everyone reads, only root writes
-- Agents propose changes as `kb_proposal` docs
-
-Enforced server-side on every request
-- A wall, not a convention
-
-
-## The limits - four levels, then a new project
-
-Project = direct child of `plans` = level 1
-
-Level 4 is a warning
-- Node created with `needs_review = true`
-- Response carries a `warning`
-- Triggers review with the user
-
-Level 5 is refused by a Postgres trigger
-- API returns 409
-- Open a separate project under `plans` for that branch
-- Same procedure, its own plan
-
-`kb` and the fixed roots are exempt
-
-
-## The spikes - prove the platform before building on it
-
-Doc role `spike`, attachable to any node
-
-Architectural spikes attach at the project's top node
-- Coordinated with the user
-
-A hello-world proof is required before building large
-- Example: spinning 3D text in three.js on the planned stack
-
-Proof is shown, not claimed
-- Screenshots attached or referenced
-- Human validation requested where the AI can't honestly judge
-  - Video, motion, feel
-
-
-## The planning order - prove the skeleton before delegating
-
-1. Informal outline with the user, one thread at a time
-2. Spikes only for what is tricky or unique
-3. Formal plan: work, DoD, interfaces, three bands, names, formatting
-4. Plan written to the server
-5. Hollow skeleton: rails green on stubs, acceptance tests expected-fail
-6. Reference run: a throwaway proves every expected value
-7. Skeleton commit is the diff baseline; delegate
-
-
-## Escalation - a blocker, and no agent changes the plan
-
-Worker is blocked: it posts the escalation and stops
-- Planner answers within scope, or escalates to the user
-- A question that does not block is a discretion call, recorded in the report
-
-Every question is logged
-- Context for the next plan
-- Audit trail
-
-Can't build to spec? Stop
-- Never substitute something else
-
-Planner closes nodes
-- Checks each stopped worker against the DoD with real tests
-- Closes and starts the next, or re-engages
-
-
-## Run it - compose, bootstrap, serve
-
-```
-docker compose up -d                 # Postgres on 5433
-uv sync --extra test
-uv run python -m server bootstrap    # prints ROOT_TOKEN once; keep it
-uv run python -m server              # HTTPS on 8787, self-signed cert in certs/
-```
-
-Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`
-
-Reset: `docker compose down -v`, then bootstrap again
-
-
-## Use it - mint a token, hand over the skill file
-
-```
-H="Authorization: Bearer $ROOT_TOKEN"
-curl -sk https://localhost:8787/nodes/1/tree -H "$H"
-curl -sk https://localhost:8787/nodes -H "$H" -H 'content-type: application/json' \
-  -d '{"parent_id":3,"title":"plan A","summary":"..."}'
-curl -sk https://localhost:8787/tokens -H "$H" -H 'content-type: application/json' \
-  -d '{"label":"planner","role":"planner","scope_node_id":3}'
-```
-
-Give the agent the token plus `skill/SKILL.md`
-
-A dev agent's session
-```
-GET  /me                          -> scope_node_id = 5
-GET  /nodes/5                     -> summary + instruction (read-only)
-POST /nodes/5/docs  {"role":"escalation","body":"..."}
-GET  /nodes/5                     -> escalation answered, resolved
-POST /nodes/5/docs  {"role":"report","body":"what was built and proven"}
-```
-
-
-## The API - ten endpoints, flat JSON
-
-| Method | Path | Does |
+| | planner | worker |
 |---|---|---|
-| GET | `/me` | Token label, scope, can_spawn |
-| GET | `/nodes/{id}` | Node + docs |
-| GET | `/nodes/{id}/tree` | Nested titles + state |
-| POST | `/nodes` | Create child, owner = caller |
-| PATCH | `/nodes/{id}` | Set state |
-| POST | `/nodes/{id}/docs` | Attach doc |
-| PATCH | `/docs/{id}` | Edit body, or answer escalation |
-| GET | `/escalations` | Unresolved in my scope |
-| POST | `/tokens` | Mint token with role and scope |
-| DELETE | `/tokens/{id}` | Revoke |
+| read | scope subtree + ancestors + `kb` | scope subtree + `kb` + `environment` docs on ancestors |
+| write docs | any role, any node in scope | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
+| edit docs | any in scope | own docs only |
+| create nodes | in scope | beneath scope |
+| set state, answer escalations | yes | no |
+| mint / revoke tokens | in scope | no |
+| write `kb` | root only | no |
 
-Errors: 401 bad token, 403 outside role, 404 unknown or hidden, 409 depth
+Ancestor nodes return 404 to workers. Rules live in `server/permissions.py`, pure, with unit tests.
 
+## API
 
-## Tests - green from a clean state, no mocks
+Bearer auth. JSON bodies. Self-signed cert by default.
+
+| Method | Path | Body / returns |
+|---|---|---|
+| GET | `/me` | `role, scope_node_id, label` |
+| GET | `/nodes/{id}` | node, docs, `environment` (ancestor env docs) |
+| GET | `/nodes/{id}/tree` | nested `id, title, state` |
+| POST | `/nodes` | `{parent_id, title, summary}`; level 4 adds `warning` |
+| PATCH | `/nodes/{id}` | `{state}` |
+| POST | `/nodes/{id}/docs` | `{role, body}` |
+| PATCH | `/docs/{id}` | `{body}` or `{answer, resolved}` |
+| GET | `/escalations` | unresolved escalations in scope |
+| POST | `/tokens` | `{label, role, scope_node_id}` → plaintext token |
+| DELETE | `/tokens/{id}` | revoke |
+
+Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth, 422 bad value.
+
+## Run
 
 ```
-uv run python scripts/test_all.py      # fresh volume, bootstrap, serve, test, stop
+docker compose up -d                 # Postgres 16 on 5433
+uv sync --extra test
+uv run python -m server bootstrap    # schema, root/kb/plans, prints ROOT_TOKEN once
+uv run python -m server              # HTTPS on 8787; cert generated into certs/
 ```
 
-Runs on Linux, macOS, and Windows
-- Needs docker compose, uv, Python 3.10+
-- Server code is pure Python: cert generation, no shell calls, no fixed paths
-- Verified on Linux only so far
+Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`. Reset with `docker compose down -v`.
 
-Unit: `uv run pytest server`
-- Permissions module, pure, isolated
+First use: mint a planner token scoped to `plans` with the root token, then work with that.
 
-Integration: `PLANNER_ROOT_TOKEN=pln_... uv run pytest tests`
-- Real HTTPS, real Postgres
-- Every endpoint, every permission rule, every denial
-- Depth limit proven by direct SQL insert, bypassing the API
+```
+curl -sk https://localhost:8787/tokens -H "Authorization: Bearer $ROOT_TOKEN" \
+  -H 'content-type: application/json' -d '{"label":"planner","role":"planner","scope_node_id":3}'
+```
 
+## Process summary
 
-## Read more
+1. Planner outlines with the user, one thread at a time. Spikes only for what must be proven.
+2. Formal plan: work, definition of done, interfaces, three bands (firm / design notes / dev discretion, each named), modules, names, formatting of every output and document.
+3. Plan written to the server: project node with `summary`, `instruction`, `environment`; one child per module.
+4. Hollow skeleton: stubs, rails tests green, acceptance tests under strict xfail. Reference run against a throwaway implementation before commit.
+5. Delegate: one worker token per node. Worker finishes its node, posts a `report`, stops. Escalation = blocked; the worker posts and stops.
+6. Planner verifies against the definition of done, commits, revokes the token, sets `done`, starts dependents.
 
-- `DEV_PLAN.md` - what is decided, what is built, what is next
-- `agent-planning-system.md` - the full process and rules
-- `skill/SKILL.md` - how an agent uses the server
+## Tests
+
+```
+uv run python scripts/test_all.py    # clean volume, bootstrap, serve, pytest, stop
+uv run pytest server                 # permissions unit tests only
+```
+
+Integration tests run over real HTTPS against real Postgres: every endpoint, every permission rule and denial, depth trigger via direct SQL. Runner is Python and needs docker compose, uv, Python 3.10+. Verified on Linux; macOS and Windows untested.
+
+## Layout
+
+```
+server/   app.py permissions.py schema.sql bootstrap.py db.py tls.py __main__.py
+tests/    test_api.py
+skill/    SKILL.md
+scripts/  test_all.py
+```
