@@ -30,6 +30,10 @@ Hard rules that apply without being restated each time.
 - Nested modules: same paradigms, within reason.
   - Planned up front when obvious.
   - For known or obvious kinds of things, the caller can explicitly grant permission to make internal design calls within an approved interface and spec. Standing rules still apply.
+- Proof before reliance, proof before done (added 2026-11-05):
+  - Nothing about a system is known to work the way we think until a real integration test or actual use proves it. No agent moves forward on an assumption about existing behavior; it proves it first.
+  - The same level of proof is required before any work is called done. Unit tests passing means it is time to integration test, not that the work is finished.
+  - "Real" means the way the end consumer uses it: real entry points, real services, real data. Anything mocked or partial needs explicit approval and does not count as proof.
 
 ## Decided: definition of done and testing
 Definition of done varies by task, but it always includes:

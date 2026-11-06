@@ -212,3 +212,8 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - Or the planner re-engages the worker to continue, because the work does not meet the requirements.
 - The same applies to the project node: the planner closes it when every node beneath meets its DoD.
 - The standing-rules review is part of the planner's closure check. No separate review agent for now.
+
+## Added 2026-11-05: proof before reliance, proof before done (standing rule)
+- Nothing about a system is known to work the way we think until a real integration test or actual use proves it. No agent moves forward on that knowledge until it is proven.
+- The same proof is required before work is called done. Unit tests passing means it is time to integration test.
+- Added to the standing rules in agent-planning-system.md and to both halves of skill/SKILL.md. Worker reports must carry the real proof; planner closure checks it.

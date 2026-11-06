@@ -53,8 +53,14 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 - Then poll `GET /nodes/{scope}` and wait for `answer` and `resolved` on that doc.
 - A question that does not block you is not an escalation. Make the call within your discretion and record it in your report.
 
+## Proof before reliance, proof before done
+- Nothing about the existing system is known until a real integration test or actual use proves it. Do not build on an assumption about how something behaves; prove it first, through the real entry point.
+- Unit tests passing means it is time to integration test, not that you are done. Done requires the same real proof: run it the way the end consumer would, and put the command and its output in your report.
+- Mocked or partial proof does not count unless your instruction explicitly approves it.
+
 ## When you are done
 - Every acceptance test for your node passes, rails still pass, your instruction's definition of done is met.
+- The real integration proof above is in your report.
 - Your report is complete: Status / Built / Tests (exact commands and the pytest summary line verbatim) / Deviations / Discretion calls / Open items.
 - Stop. You do not close your node. The planner checks it against the definition of done and closes it or re-engages you.
 
@@ -108,8 +114,11 @@ Carry the standing rules verbatim. Include: a contradiction between tests, or be
 - Scope change, interface change, conflict, or a new bone: bring it to the user. You do not change scope, interfaces, or the plan.
 - Note obvious non-scope decisions as questions for later review, without stopping work.
 
+## Proof before reliance
+Before planning on top of anything that already exists, prove it does what you think through a real integration test or actual use. Reading code gives "it seems to". Record the proof on the project node. If that needs a spike, it is one of the spikes in step 2.
+
 ## Closing a node
-When a worker stops, check its node against the definition of done with real tests. Diff the protected files against the baseline: the only allowed change is the marker deletions. Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Close the project node when every node beneath meets its definition of done.
+When a worker stops, check its node against the definition of done with real tests, including the real integration proof the worker's report must carry. Unit tests passing is not done. Diff the protected files against the baseline: the only allowed change is the marker deletions. Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Close the project node when every node beneath meets its definition of done.
 
 ## Known pitfalls
 - Fixtures: byte-check with `od` whenever whitespace, line endings, or encoding matter. File-writing tools can drop trailing spaces silently.
