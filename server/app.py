@@ -13,7 +13,7 @@ from server import permissions as P
 
 app = FastAPI(title="Agent Planning Server", version="0.1.0")
 
-ROLES = ("summary", "instruction", "environment", "report", "spike", "escalation", "question", "kb_proposal")
+ROLES = ("summary", "instruction", "environment", "report", "spike", "escalation", "question", "kb_proposal", "survey", "approval", "review")
 STATES = ("open", "blocked", "done")
 BACKUP_DIR = Path(os.environ.get("PLANNER_BACKUP_DIR", Path(__file__).resolve().parent.parent / "backups"))
 

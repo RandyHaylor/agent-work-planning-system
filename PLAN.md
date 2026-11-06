@@ -234,3 +234,14 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - `kb` is backed up the same way as its own folder.
 - Default dir: `backups/` under the repo, gitignored. Configurable.
 - Synchronous, in the request. A failed backup fails the write.
+
+## Added 2026-11-06: gaps against the initial design notes, closed
+- Survey step for existing systems: kb and user first, targeted checks, proof by real test committed at the matching layer, recorded as a `survey` doc. Deep dive only with permission, offered as a `kb_proposal`.
+- Formal plan adds flow and user story, and on existing systems: what changes, what is added, what is improved first.
+- The user approves the plan as written on the server, not only in chat.
+- `approval` doc: the record of any mock or partial test, planner-written after user approval. No approval doc, no mock.
+- Roadblock stops everything: node `blocked`, dependents not started, user decides.
+- Knowledge base apply path: planner applies a `kb_proposal` only after the user approves; `kb` is writable by planners.
+- Closure review records a standing-rules pass as a `review` doc: naming, generic modules, isolation, approvals.
+- "The user" is whoever called the planner.
+- Closed: the old "append vs beneath" question. Docs on the node and children beneath it.

@@ -6,6 +6,7 @@ node ids, ancestor chains, and a small Principal record. The caller supplies an
 
 Two roles:
 - planner: full rights on every node in its scope subtree. Reads ancestors too.
+  Any planner may write anywhere in the ``kb`` subtree.
 - worker: reads only its scope node and descendants. Writes only reports,
   escalations, spikes, kb proposals there, and creates nodes beneath.
   Sees ancestor docs of role ``environment`` only (see ``sees_env_doc``).
@@ -20,7 +21,7 @@ Ancestors = Callable[[int], list[int]]
 PLANNER, WORKER = "planner", "worker"
 ROLES = frozenset({PLANNER, WORKER})
 
-PLANNER_ONLY_DOC_ROLES = frozenset({"summary", "instruction", "environment", "question"})
+PLANNER_ONLY_DOC_ROLES = frozenset({"summary", "instruction", "environment", "question", "survey", "approval", "review"})
 WORKER_DOC_ROLES = frozenset({"report", "spike", "escalation", "kb_proposal"})
 ENV_ROLE = "environment"
 
@@ -60,19 +61,20 @@ def sees_env_doc(p: Principal, doc_node_id: int, ancestors: Ancestors) -> bool:
 
 def can_create_child(p: Principal, parent_id: int, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
     if is_kb(parent_id, ancestors, kb_root):
-        return p.is_root
+        return p.role == PLANNER
     return in_subtree(parent_id, p.scope_node_id, ancestors)
 
 
 def can_set_state(p: Principal, node_id: int, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
     if is_kb(node_id, ancestors, kb_root):
-        return p.is_root
+        return p.role == PLANNER
     return p.role == PLANNER and in_subtree(node_id, p.scope_node_id, ancestors)
 
 
 def can_write_doc(p: Principal, node_id: int, role: str, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
+    """kb is writable by any planner (workers read-only); elsewhere scope applies."""
     if is_kb(node_id, ancestors, kb_root):
-        return p.is_root
+        return p.role == PLANNER and role in PLANNER_ONLY_DOC_ROLES | WORKER_DOC_ROLES
     if not in_subtree(node_id, p.scope_node_id, ancestors):
         return False
     if p.role == PLANNER:
@@ -83,7 +85,7 @@ def can_write_doc(p: Principal, node_id: int, role: str, ancestors: Ancestors, k
 def can_edit_doc(p: Principal, node_id: int, role: str, author: int,
                  ancestors: Ancestors, kb_root: Optional[int]) -> bool:
     if is_kb(node_id, ancestors, kb_root):
-        return p.is_root
+        return p.role == PLANNER
     if not in_subtree(node_id, p.scope_node_id, ancestors):
         return False
     if p.role == PLANNER:

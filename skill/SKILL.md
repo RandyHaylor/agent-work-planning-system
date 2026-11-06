@@ -56,7 +56,7 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 ## Proof before reliance, proof before done
 - Nothing about the existing system is known until a real integration test or actual use proves it. Do not build on an assumption about how something behaves; prove it first, through the real entry point.
 - Unit tests passing means it is time to integration test, not that you are done. Done requires the same real proof: run it the way the end consumer would, and put the command and its output in your report.
-- Mocked or partial proof does not count unless your instruction explicitly approves it.
+- Mocked or partial proof does not count unless an `approval` doc on your node covers it. No approval doc, no mock. If you think one is needed, escalate.
 
 ## When you are done
 - Every acceptance test for your node passes, rails still pass, your instruction's definition of done is met.
@@ -84,21 +84,34 @@ The root token exists only to bootstrap and mint the first planner.
 - Full read and write on every node in your scope: summaries, instructions, environment, questions, state, children, tokens.
 - `kb` is read-only to you. Propose changes as `kb_proposal` docs handed to the user.
 
+"The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
+
 ## Planning order
 1. Informal outline with the user. One thread at a time, brief, slide-like. Propose, never decide. Nothing is approved until the user says so.
-2. Identify anything tricky or unique that needs proving. Spike only those: a `planning spikes` child under the project, one node per spike, one agent per node, throwaway code. Not fishing for spikes; most projects need none, and you say so in the project summary. The plan is not approved until every spike it depends on has reported.
-3. Formal plan with the user:
+2. Survey what exists, when the work touches an existing system. Reading code gives only "it seems to".
+   - Start from the knowledge base (`kb` subtree) and the user: "does it do this?"
+   - Targeted checks only. No sweeping the codebase.
+   - Prove each claim with a real test through the real entry point: an existing integration test, an edited one, or a new one, including a small test app if needed. Survey tests are committed to the repo at the matching layer of the stack.
+   - Record the proven understanding as a `survey` doc on the project node. Unproven claims are listed as unproven.
+   - A time-intensive deep dive only with the user's permission. Its result is documented and offered to the user as a `kb_proposal`.
+3. Identify anything tricky or unique that needs proving. Spike only those: a `planning spikes` child under the project, one node per spike, one agent per node, throwaway code. Not fishing for spikes; most projects need none, and you say so in the project summary. The plan is not approved until every spike it depends on has reported.
+4. Formal plan with the user:
    - The work and its definition of done.
+   - Flow and user story: how the thing is used, start to finish, in a few lines.
    - Interfaces and types.
+   - On an existing system: what changes, what is added, and what is improved first. Nothing else changes.
    - The three bands. Firm up front: interfaces, types, contracts, modules, names. Design notes: recorded, not binding. Dev discretion: named item by item, never silent.
    - Modules and names. Nothing is named for its implementation. Every module that can stand alone does, with its own docs and tests.
    - Formatting of everything that has a form: every output, error, work product, document, and server entry. Whitespace, line endings, header versus body, message shapes, file layout, section order. A format you leave undecided is declared dev discretion by name.
    - Delegation order, where nodes depend on each other.
-4. Write the plan to the server. Project node under `plans` with `summary`, `instruction`, and an `environment` doc (generic project summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`.
-5. Build every node hollow. A node is not a node until it has its scaffolding: folders, types, stubs returning something, rails tests green against the stubs, acceptance tests with exact values under a strict expected-fail marker. Documentation exists as named sections marked to be filled.
-6. Reference run, required. Implement the rules once as a throwaway outside the workspace, never delivered. Every acceptance test must pass against it. A failure is a wrong expected value or a missing rule. Fix before commit. Then walk every exact value and name the rule it follows from.
-7. Commit the skeleton. That commit is the diff baseline. Name it in every instruction the same way.
-8. Delegate.
+5. Write the plan to the server. Project node under `plans` with `summary`, `instruction` (including flow and user story), and an `environment` doc (generic project summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the project node's docs as written on the server; that text is what the user approves.
+6. Build every node hollow. A node is not a node until it has its scaffolding: folders, types, stubs returning something, rails tests green against the stubs, acceptance tests with exact values under a strict expected-fail marker. Documentation exists as named sections marked to be filled.
+7. Reference run, required. Implement the rules once as a throwaway outside the workspace, never delivered. Every acceptance test must pass against it. A failure is a wrong expected value or a missing rule. Fix before commit. Then walk every exact value and name the rule it follows from.
+8. Commit the skeleton. That commit is the diff baseline. Name it in every instruction the same way.
+9. Delegate.
+
+## Approvals for anything not fully real
+Mocked, partial, or propped-up tests need explicit approval from the user. Record each one as an `approval` doc on the node it applies to: what is not real, why, who approved, and what real test replaces it later if any. A worker with no approval doc on its node mocks nothing.
 
 ## Instruction doc, per module
 Sections in this order: Goal / Interface (firm) / Files you own / Tests (which rails, which acceptance file, which marker line to delete) / Design notes / Your discretion / Definition of done / Report format / Rules.
@@ -113,12 +126,23 @@ Carry the standing rules verbatim. Include: a contradiction between tests, or be
 - Answer within your scope: `PATCH /docs/{id}` `{"answer":"...","resolved":true}`. Log it: `{"role":"question","body":"From node / Question / Answer / Answered by / Scope"}` on the project node.
 - Scope change, interface change, conflict, or a new bone: bring it to the user. You do not change scope, interfaces, or the plan.
 - Note obvious non-scope decisions as questions for later review, without stopping work.
+- A roadblock stops everything: a conflict, or a spec that cannot be built. Set the node `blocked`, do not start dependent nodes, and wait for the user. Work already running on independent nodes continues.
+
+## Knowledge base
+- `kb` is the record of the product, the company, and the broader context. Read it in the survey step.
+- Workers propose changes as `kb_proposal` docs. You hand them to the user.
+- You apply a proposal to `kb` only after the user approves it. Record the approval by resolving the proposal doc with the answer, then write the change into `kb`.
 
 ## Proof before reliance
 Before planning on top of anything that already exists, prove it does what you think through a real integration test or actual use. Reading code gives "it seems to". Record the proof on the project node. If that needs a spike, it is one of the spikes in step 2.
 
 ## Closing a node
-When a worker stops, check its node against the definition of done with real tests, including the real integration proof the worker's report must carry. Unit tests passing is not done. Diff the protected files against the baseline: the only allowed change is the marker deletions. Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Close the project node when every node beneath meets its definition of done.
+When a worker stops, check its node against the definition of done with real tests, including the real integration proof the worker's report must carry. Unit tests passing is not done. Diff the protected files against the baseline: the only allowed change is the marker deletions. Then run the standing-rules review and record it as a `review` doc on the node:
+- Names describe what a thing does, not how or for whom.
+- A generic module knows nothing of the project or its consumers.
+- Isolated modules have their own docs, unit tests, and real integration tests.
+- Nothing mocked without an `approval` doc.
+Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Close the project node when every node beneath meets its definition of done.
 
 ## Known pitfalls
 - Fixtures: byte-check with `od` whenever whitespace, line endings, or encoding matter. File-writing tools can drop trailing spaces silently.

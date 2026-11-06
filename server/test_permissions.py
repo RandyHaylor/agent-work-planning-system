@@ -47,11 +47,15 @@ def test_worker_sees_env_doc_on_ancestors_only():
     assert not P.sees_env_doc(worker, 7, anc)
 
 
-def test_kb_write_root_only():
+def test_kb_writable_by_any_planner_not_workers():
     assert P.can_write_doc(root, 5, "summary", anc, KB)
-    assert not P.can_write_doc(planner, 5, "report", anc, KB)
-    assert not P.can_create_child(planner, 2, anc, KB)
+    assert P.can_write_doc(planner, 5, "instruction", anc, KB)
+    assert P.can_create_child(planner, 2, anc, KB)
     assert P.can_create_child(root, 2, anc, KB)
+    assert P.can_edit_doc(planner, 5, "summary", 99, anc, KB)
+    assert not P.can_write_doc(worker, 5, "report", anc, KB)
+    assert not P.can_create_child(worker, 2, anc, KB)
+    assert not P.can_edit_doc(worker, 5, "report", worker.token_id, anc, KB)
 
 
 def test_create_child_in_scope_only():
@@ -62,7 +66,8 @@ def test_create_child_in_scope_only():
 
 
 def test_planner_writes_every_role_in_scope():
-    for role in ("summary", "instruction", "environment", "question", "report", "spike", "escalation", "kb_proposal"):
+    for role in ("summary", "instruction", "environment", "question", "survey", "approval", "review",
+                 "report", "spike", "escalation", "kb_proposal"):
         assert P.can_write_doc(planner, 4, role, anc, KB), role
     assert not P.can_write_doc(planner, 7, "question", anc, KB)
 
@@ -72,7 +77,7 @@ def test_worker_writes_only_worker_roles_in_scope():
         assert P.can_write_doc(worker, 4, role, anc, KB), role
         assert P.can_write_doc(worker, 6, role, anc, KB), role
         assert not P.can_write_doc(worker, 3, role, anc, KB), role
-    for role in ("summary", "instruction", "environment", "question"):
+    for role in ("summary", "instruction", "environment", "question", "survey", "approval", "review"):
         assert not P.can_write_doc(worker, 4, role, anc, KB), role
         assert not P.can_write_doc(worker, 6, role, anc, KB), role
 

@@ -118,7 +118,7 @@ def test_planner_edits_any_doc_in_scope(world):
 
 def test_worker_cannot_write_planner_roles(world):
     w, tid = world["worker"], world["task"]["id"]
-    for role in ("instruction", "summary", "environment", "question"):
+    for role in ("instruction", "summary", "environment", "question", "survey", "approval", "review"):
         assert w.post(f"/nodes/{tid}/docs", json={"role": role, "body": "x"}).status_code == 403, role
     assert w.patch(f"/docs/{world['instr']['id']}", json={"body": "hacked"}).status_code == 403
     assert w.patch(f"/nodes/{tid}", json={"state": "done"}).status_code == 403
@@ -169,15 +169,31 @@ def test_escalation_flow(world):
     assert all(x["id"] != e["id"] for x in p.get("/escalations").json())
 
 
-def test_kb_root_only(world):
+def test_kb_planner_writable_worker_read_only(world):
     kb = world["kb"]
-    assert world["planner"].post("/nodes", json={"parent_id": kb, "title": "p", "summary": "s"}).status_code == 403
-    assert world["planner"].post(f"/nodes/{kb}/docs", json={"role": "instruction", "body": "x"}).status_code == 403
-    assert world["worker"].post(f"/nodes/{kb}/docs", json={"role": "report", "body": "x"}).status_code == 403
-    page = world["root"].post("/nodes", json={"parent_id": kb, "title": "Product", "summary": "What the product is"})
+    page = world["planner"].post("/nodes", json={"parent_id": kb, "title": "Product", "summary": "What the product is"})
     assert page.status_code == 201
+    assert world["planner"].post(f"/nodes/{kb}/docs", json={"role": "instruction", "body": "x"}).status_code == 201
+    assert world["root"].post("/nodes", json={"parent_id": kb, "title": "Glossary", "summary": "terms"}).status_code == 201
     assert world["worker"].get(f"/nodes/{page.json()['id']}").status_code == 200
+    assert world["worker"].post(f"/nodes/{kb}/docs", json={"role": "report", "body": "x"}).status_code == 403
+    assert world["worker"].post("/nodes", json={"parent_id": kb, "title": "w", "summary": "s"}).status_code == 403
     assert world["worker"].post(f"/nodes/{world['task']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
+
+
+def test_survey_approval_review_planner_only_worker_reads(world):
+    p, w, tid = world["planner"], world["worker"], world["task"]["id"]
+    ids = {}
+    for role in ("survey", "approval", "review"):
+        r = p.post(f"/nodes/{tid}/docs", json={"role": role, "body": f"{role} body"})
+        assert r.status_code == 201, role
+        ids[role] = r.json()["id"]
+        assert w.post(f"/nodes/{tid}/docs", json={"role": role, "body": "x"}).status_code == 403, role
+        assert w.patch(f"/docs/{ids[role]}", json={"body": "hacked"}).status_code == 403, role
+    docs = w.get(f"/nodes/{tid}").json()["docs"]
+    approval = [d for d in docs if d["role"] == "approval"]
+    assert approval and approval[0]["body"] == "approval body"
+    assert p.patch(f"/docs/{ids['review']}", json={"body": "edited"}).status_code == 200
 
 
 def test_mint_rules(world):

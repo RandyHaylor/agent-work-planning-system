@@ -60,7 +60,7 @@ Nothing about the existing system counts as understood until a real test proves 
 - Dev agents don't get the broader context.
 - The planning agent (lead / orchestrator) holds the broader context and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
 - Dev agents are encouraged to escalate questions.
-- Knowledge base: read-only to planning and working agents. Agents can propose changes or additions as a document handed off to the user, and can never edit it directly.
+- Knowledge base: read-only to working agents. Agents propose changes or additions as a document handed off to the user. The planning agent applies a proposal only after the user approves it (added 2026-11-06).
 - Plan scope builds on the knowledge base (product definition, rules, term definitions, deliverables). It must mesh with existing reality and changes only what the plan explicitly says is added or changed.
 
 ## Decided: escalation and authority
@@ -119,7 +119,7 @@ Nothing about the existing system counts as understood until a real test proves 
 ## Left to plan, decide, or discuss
 - Exact contents of a node. Earlier proposal, liked in principle and not finalized: purpose, interfaces/types, DoD, test expectations, seams, plus a separate flow node.
 - Whether node content is JSON. JSON was mentioned before the move to Postgres.
-- Whether an assigned agent can append to its assigned node, or write only beneath it. Both were said at different points.
+- Closed 2026-11-06: an assigned agent writes its own docs (report, escalation, spike, proposal) on its node and creates nodes beneath it. It never edits the planner's docs on that node.
 - Who deploys dev agents: the planning agent, or a dedicated dev manager agent.
 - Whether there is a handwritten server, and what it does.
 - How auth tokens are issued and scoped (Postgres role vs app token).

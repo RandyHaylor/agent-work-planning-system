@@ -7,7 +7,7 @@ Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with ro
 ## Data model
 
 - `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans`.
-- `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `report`, `spike`, `escalation`, `question`, `kb_proposal`.
+- `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
 - `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
@@ -22,7 +22,7 @@ Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `need
 | create nodes | in scope | beneath scope |
 | set state, answer escalations | yes | no |
 | mint / revoke tokens | in scope | no |
-| write `kb` | root only | no |
+| write `kb` | yes, after user approval of a `kb_proposal` | no |
 
 Ancestor nodes return 404 to workers. Rules live in `server/permissions.py`, pure, with unit tests.
 
@@ -68,12 +68,12 @@ curl -sk https://localhost:8787/tokens -H "Authorization: Bearer $ROOT_TOKEN" \
 
 ## Process summary
 
-1. Planner outlines with the user, one thread at a time. Spikes only for what must be proven.
-2. Formal plan: work, definition of done, interfaces, three bands (firm / design notes / dev discretion, each named), modules, names, formatting of every output and document.
+1. Planner outlines with the user, one thread at a time. On an existing system: survey it, prove each claim with a real test, record a `survey` doc. Spikes only for what must be proven.
+2. Formal plan: work, definition of done, flow and user story, interfaces, what changes vs is added, three bands (firm / design notes / dev discretion, each named), modules, names, formatting of every output and document. User approves the text as written on the server.
 3. Plan written to the server: project node with `summary`, `instruction`, `environment`; one child per module.
 4. Hollow skeleton: stubs, rails tests green, acceptance tests under strict xfail. Reference run against a throwaway implementation before commit.
 5. Delegate: one worker token per node. Worker finishes its node, posts a `report`, stops. Escalation = blocked; the worker posts and stops.
-6. Planner verifies against the definition of done, commits, revokes the token, sets `done`, starts dependents.
+6. Planner verifies against the definition of done, runs the standing-rules review (`review` doc), commits, revokes the token, sets `done`, starts dependents. A roadblock sets `blocked` and halts dependents until the user decides. Mocks exist only under an `approval` doc.
 
 ## Tests
 
