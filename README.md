@@ -197,8 +197,13 @@ Errors: 401 bad token, 403 outside role, 404 unknown or hidden, 409 depth
 ## Tests - green from a clean state, no mocks
 
 ```
-scripts/test_all.sh      # fresh volume, bootstrap, serve, test, stop
+uv run python scripts/test_all.py      # fresh volume, bootstrap, serve, test, stop
 ```
+
+Runs on Linux, macOS, and Windows
+- Needs docker compose, uv, Python 3.10+
+- Server code is pure Python: cert generation, no shell calls, no fixed paths
+- Verified on Linux only so far
 
 Unit: `uv run pytest server`
 - Permissions module, pure, isolated
