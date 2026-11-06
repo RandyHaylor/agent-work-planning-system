@@ -16,9 +16,9 @@ Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `need
 
 | | planner | worker |
 |---|---|---|
-| read | scope subtree + ancestors + `kb` | scope subtree + `kb` + `environment` docs on ancestors |
-| write docs | any role, any node in scope | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
-| edit docs | any in scope | own docs only |
+| read | everything: `plans`, `kb`, all projects | scope subtree + `kb` + `environment` docs on ancestors |
+| write docs | any role, any node | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
+| edit docs | any | docs it authored |
 | create nodes | in scope | beneath scope |
 | set state, answer escalations | yes | no |
 | mint / revoke tokens | in scope | no |
@@ -49,15 +49,18 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 ## Run
 
 ```
-docker compose up -d                 # Postgres 16 on 5433
 uv sync --extra test
+uv run python -m server init-env     # random DB password into .env (gitignored), once per machine
+docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
 uv run python -m server bootstrap    # schema, root/kb/plans, prints ROOT_TOKEN once
-uv run python -m server              # HTTPS on 8787; cert generated into certs/
+uv run python -m server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
 ```
+
+Server and database bind to localhost. No default password. The planner is the admin: it sees and writes everything. Tokens keep workers in their lane; the server does not gate process steps such as `done` on reports or reviews.
 
 Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
 
-Backup: every write under `plans` or `kb` rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json` plus `docs/<node>-<role>-<doc>.md`, inside the same transaction. A backup failure rolls the write back.
+Backup: every write under `plans` or `kb` rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json` plus `docs/<node>-<role>-<doc>.md`. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
 
 First use: mint a planner token scoped to `plans` with the root token, then work with that.
 

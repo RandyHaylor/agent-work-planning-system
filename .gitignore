@@ -3,6 +3,6 @@ certs/
 __pycache__/
 *.pyc
 .pytest_cache/
-uv.lock
 planner-server.log
 backups/
+.env

@@ -245,3 +245,11 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - Closure review records a standing-rules pass as a `review` doc: naming, generic modules, isolation, approvals.
 - "The user" is whoever called the planner.
 - Closed: the old "append vs beneath" question. Docs on the node and children beneath it.
+
+## Added 2026-11-06: clarifications after the second blind review
+- The planner is the admin. It reads and writes everything in `plans` and `kb`. Planners are never blind to sibling projects or the larger environment. Any test or rule implying otherwise is wrong and is removed.
+- Backup is one at a time per project. A write that arrives while a backup is running waits its turn. Implemented as a per-project database lock held for the write and its backup.
+- Bootstrap is all-or-nothing.
+- Token listing shows whether a token actually works, including tokens dead because a parent was revoked.
+- Workers cannot edit the docs that define their task. That is the design. Workers write their own docs on their node and beneath it, and may edit docs they authored, including the summary of a sub-node they created. The planner reviews those notes at closure and folds them into the final work docs or the kb as approved.
+- No default database password. Bootstrap generates one into a gitignored local env file that compose and the server read. Server and database bind to localhost only.

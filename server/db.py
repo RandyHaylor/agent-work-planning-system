@@ -6,12 +6,46 @@ from pathlib import Path
 import psycopg
 from psycopg.rows import dict_row
 
-DSN = os.environ.get("PLANNER_DSN", "postgresql://planner:planner@localhost:5433/planner")
+REPO = Path(__file__).resolve().parent.parent
+ENV_FILE = REPO / ".env"
 SCHEMA = Path(__file__).with_name("schema.sql")
 
 
+def read_env_file(path: Path = ENV_FILE) -> dict:
+    out = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                out[k.strip()] = v.strip()
+    return out
+
+
+def get_dsn() -> str:
+    """PLANNER_DSN from the environment, else from the repo's .env (written by init-env)."""
+    dsn = os.environ.get("PLANNER_DSN") or read_env_file().get("PLANNER_DSN")
+    if not dsn:
+        raise SystemExit("no PLANNER_DSN: run `uv run python -m server init-env` first (writes .env), or set PLANNER_DSN")
+    return dsn
+
+
+def write_env_file(db_port: str, path: Path = ENV_FILE) -> dict:
+    """Generate a random DB password and write .env. Refuses to overwrite an existing file."""
+    if path.exists():
+        raise SystemExit(f"{path} already exists; delete it to generate a new password (the DB volume must be reset too)")
+    password = secrets.token_urlsafe(24)
+    values = {
+        "PLANNER_DB_PASSWORD": password,
+        "PLANNER_DB_PORT": db_port,
+        "PLANNER_DSN": f"postgresql://planner:{password}@127.0.0.1:{db_port}/planner",
+    }
+    path.write_text("".join(f"{k}={v}\n" for k, v in values.items()), encoding="utf-8")
+    return values
+
+
 def connect():
-    return psycopg.connect(DSN, row_factory=dict_row, autocommit=True)
+    return psycopg.connect(get_dsn(), row_factory=dict_row, autocommit=True)
 
 
 def hash_token(raw: str) -> str:

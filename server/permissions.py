@@ -5,11 +5,11 @@ node ids, ancestor chains, and a small Principal record. The caller supplies an
 ``ancestors(node_id)`` function returning the chain [node, parent, ..., root].
 
 Two roles:
-- planner: full rights on every node in its scope subtree. Reads ancestors too.
-  Any planner may write anywhere in the ``kb`` subtree.
+- planner: the admin. Reads every node in the tree. Full write rights on every
+  node in its scope subtree. Any planner may write anywhere in the ``kb`` subtree.
 - worker: reads only its scope node and descendants. Writes only reports,
-  escalations, spikes, kb proposals there, and creates nodes beneath.
-  Sees ancestor docs of role ``environment`` only (see ``sees_env_doc``).
+  escalations, spikes, kb proposals there, and creates nodes beneath. Edits only
+  docs it authored. Sees ancestor docs of role ``environment`` (the API gathers them).
 
 Node ownership is a record, never a permission source.
 """
@@ -44,19 +44,12 @@ def is_kb(node_id: int, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
 
 
 def can_read(p: Principal, node_id: int, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
+    """Planners read everything. Workers read their scope subtree and kb."""
+    if p.role == PLANNER:
+        return True
     if in_subtree(node_id, p.scope_node_id, ancestors):
         return True
-    if is_kb(node_id, ancestors, kb_root):
-        return True
-    if p.role == PLANNER and node_id in ancestors(p.scope_node_id):
-        return True
-    return False
-
-
-def sees_env_doc(p: Principal, doc_node_id: int, ancestors: Ancestors) -> bool:
-    """A worker may see an ``environment`` doc on any ancestor of its scope.
-    (Planners read ancestors fully via ``can_read``.)"""
-    return doc_node_id in ancestors(p.scope_node_id)
+    return is_kb(node_id, ancestors, kb_root)
 
 
 def can_create_child(p: Principal, parent_id: int, ancestors: Ancestors, kb_root: Optional[int]) -> bool:
@@ -90,7 +83,9 @@ def can_edit_doc(p: Principal, node_id: int, role: str, author: int,
         return False
     if p.role == PLANNER:
         return True
-    return author == p.token_id and role in WORKER_DOC_ROLES
+    # A worker edits what it authored (its reports, and the summary of a node it created).
+    # Planner-authored docs stay locked to it.
+    return author == p.token_id
 
 
 def can_answer_escalation(p: Principal, node_id: int, ancestors: Ancestors) -> bool:

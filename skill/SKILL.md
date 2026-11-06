@@ -42,7 +42,8 @@ Your scope node is your assignment. You finish it. You do not plan it, extend it
 - Build to spec. If a piece cannot be built to spec, leave it incomplete. Never substitute.
 - Touch only the files your instruction lists, plus your scratch folder: `<workspace>/scratch/<node-slug>/`.
 - Do not commit. The planner commits after verifying your node.
-- Report: `POST /nodes/{scope}/docs` `{"role":"report","body":"..."}`, in the format your instruction gives. Edit it in place with `PATCH /docs/{id}` `{"body":"..."}` as you go.
+- Report: `POST /nodes/{scope}/docs` `{"role":"report","body":"..."}`, in the format your instruction gives. Edit it in place with `PATCH /docs/{id}` `{"body":"..."}` as you go. You may edit any doc you authored, never the planner's.
+- Notes about your work go on your node or on sub-nodes you create beneath it. The planner reads them at closure and folds what matters into the final work docs or the knowledge base.
 - Spike: `{"role":"spike","body":"..."}` with proof attached or referenced. If you cannot honestly validate the result, say so and ask for human validation in the doc.
 - Propose a knowledge-base change: `{"role":"kb_proposal","body":"..."}`. You cannot write in `kb`.
 
@@ -72,17 +73,19 @@ Owning a node means you delegate its work. You never do the work of a node you o
 
 ## Stand up the server
 ```
-docker compose up -d
 uv sync --extra test
+uv run python -m server init-env       # generates the database password into .env (once per machine)
+docker compose up -d --wait
 uv run python -m server bootstrap      # prints ROOT_TOKEN once
-uv run python -m server                # HTTPS on 8787
+uv run python -m server                # HTTPS on 127.0.0.1:8787
 ```
+Server and database listen on localhost only. There is no default password.
 Mint yourself a planner token scoped to `plans` with the root token, and work with that from then on.
 The root token exists only to bootstrap and mint the first planner.
 
 ## Your rights
-- Full read and write on every node in your scope: summaries, instructions, environment, questions, state, children, tokens.
-- `kb` is read-only to you. Propose changes as `kb_proposal` docs handed to the user.
+- You are the admin. Full read and write on every node in `plans` and `kb`: summaries, instructions, environment, questions, state, children, tokens. You see every project and the larger environment.
+- `kb` changes are made only after the user approves them. Proposals arrive as `kb_proposal` docs; you hand them to the user.
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 

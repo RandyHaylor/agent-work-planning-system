@@ -2,10 +2,11 @@
 
     uv run python scripts/test_all.py
 
-Uses its own compose project (`planner-test`) and its own DB host port, so the live
-`docker compose` project, its volume, and its backups directory are never touched.
-Starts a fresh Postgres, bootstraps, starts the server, runs unit + integration tests,
-then stops the server and tears the test compose project down with its volume.
+Uses its own compose project (`planner-test`), its own DB host port, its own random DB
+password and a temp backup dir, so the live `docker compose` project, its volume, its
+.env and its backups directory are never touched. Starts a fresh Postgres, bootstraps,
+starts the server, runs unit + integration tests, then stops the server and tears the
+test compose project down with its volume.
 
 Env:
   PLANNER_PORT      HTTPS port for the server under test (default 8787)
@@ -14,6 +15,7 @@ Requires docker compose, uv, Python 3.10+.
 """
 import os
 import re
+import secrets
 import ssl
 import subprocess
 import sys
@@ -26,7 +28,8 @@ ROOT = Path(__file__).resolve().parent.parent
 PORT = os.environ.get("PLANNER_PORT", "8787")
 DB_PORT = os.environ.get("PLANNER_DB_PORT", "5434")
 URL = f"https://localhost:{PORT}"
-DSN = f"postgresql://planner:planner@localhost:{DB_PORT}/planner"
+PASSWORD = secrets.token_urlsafe(16)
+DSN = f"postgresql://planner:{PASSWORD}@127.0.0.1:{DB_PORT}/planner"
 COMPOSE = ["docker", "compose", "-p", "planner-test"]
 
 
@@ -60,8 +63,8 @@ def main() -> int:
     if not port_free(int(PORT)):
         raise SystemExit(f"port {PORT} is already in use; set PLANNER_PORT to a free port so the tests hit the server under test")
     backup_dir = tempfile.mkdtemp(prefix="planner-test-backups-")
-    env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DSN=DSN, PLANNER_PORT=PORT,
-               PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir)
+    env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DB_PASSWORD=PASSWORD, PLANNER_DSN=DSN,
+               PLANNER_PORT=PORT, PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir)
     run(COMPOSE + ["down", "-v"], env, check=False)
     run(COMPOSE + ["up", "-d", "--wait"], env)
     server = None

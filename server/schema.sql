@@ -50,11 +50,14 @@ DECLARE
     plans_id BIGINT := (SELECT value::bigint FROM meta WHERE key = 'plans_node_id');
     lvl INT := 0;
     cur BIGINT := p_parent;
+    hops INT := 0;
 BEGIN
     IF plans_id IS NULL THEN RETURN -1; END IF;
     WHILE cur IS NOT NULL LOOP
         IF cur = plans_id THEN RETURN lvl + 1; END IF;
         lvl := lvl + 1;
+        hops := hops + 1;
+        IF hops > 64 THEN RETURN -1; END IF;  -- cycle guard: treat as exempt rather than hang
         SELECT parent_id INTO cur FROM nodes WHERE id = cur;
     END LOOP;
     RETURN -1;

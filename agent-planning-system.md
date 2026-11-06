@@ -4,7 +4,7 @@ As of 2026-11-04
 ## Goal and scope of this doc
 Goal: a Postgres-based hosted server that agents use to follow the process below.
 - The server hosts:
-  - Knowledge base: product, company, broader context. Read-only to planning and working agents. Changes go through a document handed off to the user.
+  - Knowledge base: product, company, broader context. Read-only to working agents. Changes go through a document handed off to the user; the planning agent applies them once approved.
   - Tasks: planned by a planning agent with the user, per the rules below.
   - Instruction docs: one per piece of work, read-only to the assigned dev agent. The dev agent writes its own docs underneath.
 - This doc covers only what was stated or decided. Anything unsettled is in "Left to plan, decide, or discuss".
@@ -57,8 +57,8 @@ Nothing about the existing system counts as understood until a real test proves 
 - Tests built here are added to the codebase, aligned to the layers of the application stack.
 
 ## Decided: context control and knowledge base
-- Dev agents don't get the broader context.
-- The planning agent (lead / orchestrator) holds the broader context and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
+- Dev agents don't get the broader context. They see their own node, what is beneath it, the knowledge base, and the project's environment doc.
+- The planning agent (lead / orchestrator) is the admin. It holds the broader context, sees every project, and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
 - Dev agents are encouraged to escalate questions.
 - Knowledge base: read-only to working agents. Agents propose changes or additions as a document handed off to the user. The planning agent applies a proposal only after the user approves it (added 2026-11-06).
 - Plan scope builds on the knowledge base (product definition, rules, term definitions, deliverables). It must mesh with existing reality and changes only what the plan explicitly says is added or changed.
@@ -116,19 +116,19 @@ Nothing about the existing system counts as understood until a real test proves 
 - SSH/SFTP access to files: too much.
 - Plain files over FTPS: considered, then superseded by the Postgres direction.
 
-## Left to plan, decide, or discuss
-- Exact contents of a node. Earlier proposal, liked in principle and not finalized: purpose, interfaces/types, DoD, test expectations, seams, plus a separate flow node.
-- Whether node content is JSON. JSON was mentioned before the move to Postgres.
-- Closed 2026-11-06: an assigned agent writes its own docs (report, escalation, spike, proposal) on its node and creates nodes beneath it. It never edits the planner's docs on that node.
-- Who deploys dev agents: the planning agent, or a dedicated dev manager agent.
-- Whether there is a handwritten server, and what it does.
-- How auth tokens are issued and scoped (Postgres role vs app token).
-- Where escalations live: as nodes in the tree, or a separate queue.
-- How questions and noted decisions are surfaced to the user for later review.
+## Settled since this doc was written (see PLAN.md for detail)
+- Node contents: a plain container with one summary doc; everything else is an attached doc with a role. Bodies are markdown, not JSON.
+- An assigned agent writes its own docs on its node and creates nodes beneath it. It never edits the planner's docs.
+- The planning agent deploys dev agents. A dev manager is the same role.
+- A handwritten FastAPI server in front of Postgres issues app tokens with a role and a scope.
+- Escalations are docs on the worker's node, answered in place by the planner; `GET /escalations` lists the open ones.
+- Questions and noted decisions are `question` docs on the project node.
+- A knowledge base proposal is a `kb_proposal` doc; the planner applies it after the user approves.
+- Sub-agent spawning: a planner mints tokens; workers do not. Delegated design calls are the named dev-discretion band in each instruction.
+- Mock or partial test approvals are `approval` docs on the node.
+- The standing-rules review is the planner's closure check, recorded as a `review` doc.
+- Proven understanding from the survey is a `survey` doc on the project node.
+
+## Still open
 - How the user reviews nodes in the slide-like form (the viewer).
-- How a knowledge base change proposal is handed off and applied.
-- How permission is granted for sub-agent spawning and for delegated internal design calls.
-- How mock or partial test approvals are recorded.
-- Who or what performs the standing-rules review step.
-- Where the proven understanding from the survey is recorded.
 - A name for the real-world tests, if "integration test" isn't strong enough.

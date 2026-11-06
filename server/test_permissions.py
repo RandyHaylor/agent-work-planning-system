@@ -29,22 +29,14 @@ def test_worker_reads_scope_and_descendants_only():
     assert not P.can_read(worker, 7, anc, KB)
 
 
-def test_planner_reads_scope_and_ancestors_not_siblings():
-    assert P.can_read(planner, 3, anc, KB)
-    assert P.can_read(planner, 6, anc, KB)
-    assert P.can_read(planner, 1, anc, KB)
-    assert not P.can_read(planner, 7, anc, KB)
+def test_planner_reads_everything():
+    for n in PARENT:
+        assert P.can_read(planner, n, anc, KB), n
 
 
 def test_kb_readable_by_everyone():
     assert P.can_read(worker, 5, anc, KB)
     assert P.can_read(planner, 5, anc, KB)
-
-
-def test_worker_sees_env_doc_on_ancestors_only():
-    assert P.sees_env_doc(worker, 3, anc)
-    assert P.sees_env_doc(worker, 1, anc)
-    assert not P.sees_env_doc(worker, 7, anc)
 
 
 def test_kb_writable_by_any_planner_not_workers():
@@ -84,8 +76,10 @@ def test_worker_writes_only_worker_roles_in_scope():
 
 def test_edit_rules():
     assert P.can_edit_doc(worker, 4, "report", worker.token_id, anc, KB)
+    assert P.can_edit_doc(worker, 6, "summary", worker.token_id, anc, KB)  # summary of a node it created
     assert not P.can_edit_doc(worker, 4, "report", planner.token_id, anc, KB)
-    assert not P.can_edit_doc(worker, 4, "instruction", worker.token_id, anc, KB)
+    assert not P.can_edit_doc(worker, 4, "instruction", planner.token_id, anc, KB)
+    assert not P.can_edit_doc(worker, 3, "report", worker.token_id, anc, KB)  # out of scope
     assert P.can_edit_doc(planner, 4, "report", worker.token_id, anc, KB)
     assert P.can_edit_doc(planner, 4, "instruction", root.token_id, anc, KB)
     assert not P.can_edit_doc(planner, 7, "report", planner.token_id, anc, KB)

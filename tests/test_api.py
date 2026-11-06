@@ -86,12 +86,17 @@ def test_worker_sees_ancestor_environment_doc(world):
     assert all(d["role"] != "environment" for d in n["docs"])
 
 
-def test_planner_reads_ancestors_not_siblings_of_scope(world):
+def test_planner_reads_everything(world):
+    """Planners are the admins: a planner scoped to project A still reads project B and the whole tree."""
     p = world["planner"]
     assert p.get(f"/nodes/{world['root_node']}").status_code == 200
-    assert p.get(f"/nodes/{world['other']['id']}").status_code == 200  # inside plans scope
-    sub = p.post("/tokens", json={"label": "sub-planner", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
-    assert client(sub["token"]).get(f"/nodes/{world['other']['id']}").status_code == 404
+    sub = client(p.post("/tokens", json={"label": "sub-planner", "scope_node_id": world["project"]["id"], "role": "planner"}).json()["token"])
+    assert sub.get(f"/nodes/{world['other']['id']}").status_code == 200
+    assert sub.get(f"/nodes/{world['other']['id']}/tree").status_code == 200
+    titles = {c["title"] for c in sub.get(f"/nodes/{world['plans']}/tree").json()["children"]}
+    assert {"project A", "project B"} <= titles
+    # but it writes only inside its own scope
+    assert sub.post(f"/nodes/{world['other']['id']}/docs", json={"role": "question", "body": "x"}).status_code == 403
 
 
 def test_tree(world):
@@ -142,6 +147,10 @@ def test_worker_creates_child_but_cannot_plan_it(world):
     assert w.post(f"/nodes/{cid}/docs", json={"role": "report", "body": "sub report"}).status_code == 201
     assert w.post(f"/nodes/{cid}/docs", json={"role": "instruction", "body": "sub instr"}).status_code == 403
     assert w.patch(f"/nodes/{cid}", json={"state": "done"}).status_code == 403
+    # it authored the sub-node's summary, so it may edit that; the planner's instruction on its own node stays locked
+    summary = [d for d in w.get(f"/nodes/{cid}").json()["docs"] if d["role"] == "summary"][0]
+    assert w.patch(f"/docs/{summary['id']}", json={"body": "sub summary, revised"}).status_code == 200
+    assert w.patch(f"/docs/{world['instr']['id']}", json={"body": "nope"}).status_code == 403
 
 
 def test_worker_cannot_create_outside_scope(world):
@@ -204,16 +213,16 @@ def test_mint_rules(world):
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["task"]["id"], "role": "admin"}).status_code == 422
     sub = p.post("/tokens", json={"label": "sub", "scope_node_id": world["project"]["id"], "role": "planner"})
     assert sub.status_code == 201 and sub.json()["role"] == "planner"
-    assert client(sub.json()["token"]).post("/tokens", json={"label": "x", "scope_node_id": world["other"]["id"], "role": "worker"}).status_code == 404
+    assert client(sub.json()["token"]).post("/tokens", json={"label": "x", "scope_node_id": world["other"]["id"], "role": "worker"}).status_code == 403
 
 
 def test_revoke_rules(world):
     p, w = world["planner"], world["worker"]
     t = p.post("/tokens", json={"label": "tmp", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
     assert w.delete(f"/tokens/{t['token_id']}").status_code == 403
-    # a planner scoped to the sibling project cannot see, let alone revoke, this token
+    # a planner scoped to the sibling project can see this token but not revoke it
     sib = p.post("/tokens", json={"label": "sib2", "scope_node_id": world["other"]["id"], "role": "planner"}).json()
-    assert client(sib["token"]).delete(f"/tokens/{t['token_id']}").status_code == 404
+    assert client(sib["token"]).delete(f"/tokens/{t['token_id']}").status_code == 403
     # root did not mint it, but its scope contains the token's scope: allowed
     assert world["root"].delete(f"/tokens/{t['token_id']}").status_code == 204
     assert client(t["token"]).get("/me").status_code == 401
@@ -229,8 +238,10 @@ def test_revoke_cascades_through_minting_chain(world):
     assert client(sub["token"]).get("/me").status_code == 401
     assert client(grand["token"]).get("/me").status_code == 401
     listed = {t["id"]: t for t in p.get("/tokens").json()}
-    assert listed[sub["token_id"]]["revoked"] is True
-    assert listed[grand["token_id"]]["revoked"] is False  # own flag untouched; dead via chain
+    assert listed[sub["token_id"]]["revoked"] is True and listed[sub["token_id"]]["active"] is False
+    assert listed[grand["token_id"]]["revoked"] is False  # own flag untouched
+    assert listed[grand["token_id"]]["active"] is False   # but dead through the chain
+    assert listed[world["worker_tok"]["token_id"]]["active"] is True
 
 
 def test_list_tokens(world):
@@ -277,6 +288,44 @@ def test_backup_written_on_every_write(world):
     world["planner"].patch(f"/nodes/{tid}", json={"state": "open"})
 
 
+def test_backup_concurrent_writes_serialized(world):
+    """10 threads create docs on one node at once; every doc must be on disk afterwards and tree.json intact."""
+    import json
+    from concurrent.futures import ThreadPoolExecutor
+    base = _backup_dir()
+    pid, tid = world["project"]["id"], world["task"]["id"]
+    proj_dir = next(p for p in base.iterdir() if p.name.startswith(f"{pid}-"))
+    tok = world["worker_tok"]["token"]
+
+    def post(i):
+        with client(tok) as c:
+            r = c.post(f"/nodes/{tid}/docs", json={"role": "report", "body": f"concurrent {i}"})
+            assert r.status_code == 201, r.text
+            return r.json()["id"]
+
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        ids = list(ex.map(post, range(10)))
+    for i, did in zip(range(10), ids):
+        f = proj_dir / "docs" / f"{tid}-report-{did}.md"
+        assert f.exists(), did
+        assert f.read_text(encoding="utf-8").endswith(f"\n\nconcurrent {i}")
+    tree = {n["id"]: n for n in json.loads((proj_dir / "tree.json").read_text())}
+    assert tid in tree and tree[tid]["parent_id"] == pid
+
+
+def test_bootstrap_twice_is_noop():
+    import subprocess
+    import psycopg
+    from pathlib import Path
+    repo = Path(__file__).resolve().parent.parent
+    r = subprocess.run(["uv", "run", "python", "-m", "server", "bootstrap"], cwd=repo, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "Already bootstrapped" in r.stdout and "ROOT_TOKEN" not in r.stdout
+    with psycopg.connect(os.environ["PLANNER_DSN"], autocommit=True) as conn:
+        assert conn.execute("SELECT count(*) FROM nodes WHERE parent_id IS NULL").fetchone()[0] == 1
+        assert conn.execute("SELECT count(*) FROM meta WHERE key='root_node_id'").fetchone()[0] == 1
+
+
 def test_backup_kb_and_not_for_fixed_roots(world):
     base = _backup_dir()
     page = world["root"].post("/nodes", json={"parent_id": world["kb"], "title": "Glossary", "summary": "terms"}).json()
@@ -320,8 +369,7 @@ def test_depth_kb_exempt(world):
 
 def test_depth_level5_refused_direct_sql():
     import psycopg
-    dsn = os.environ.get("PLANNER_DSN", "postgresql://planner:planner@localhost:5433/planner")
-    with psycopg.connect(dsn, autocommit=True) as conn:
+    with psycopg.connect(os.environ["PLANNER_DSN"], autocommit=True) as conn:
         plans = int(conn.execute("SELECT value FROM meta WHERE key='plans_node_id'").fetchone()[0])
         parent = plans
         for _ in range(4):

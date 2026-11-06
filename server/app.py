@@ -25,10 +25,14 @@ class Ctx:
     @contextmanager
     def write(self, node_id: int):
         """One transaction around a write touching node_id, then a synchronous backup of
-        that node's project (or kb) subtree. Any failure, including backup, rolls back."""
+        that node's project (or kb) subtree. Writes to one project are serialized with a
+        transaction-scoped advisory lock, so backups never interleave: a concurrent write
+        waits its turn. Any failure, including backup, rolls back."""
         with self.conn.transaction():
-            yield
             root = B.backup_root_for(self.anc(node_id), self.plans, self.kb)
+            if root is not None:
+                self.conn.execute("SELECT pg_advisory_xact_lock(%s)", (root,))
+            yield
             if root is not None:
                 try:
                     B.backup_subtree(self.conn, root, BACKUP_DIR, self.kb)
@@ -238,13 +242,16 @@ def mint(body: TokenIn, c: Ctx = Depends(ctx)):
     return {"token_id": t["id"], "token": raw, "scope_node_id": body.scope_node_id, "role": body.role}
 
 
-def token_out(t):
-    return {k: t[k] for k in ("id", "label", "role", "scope_node_id", "parent_token_id", "revoked", "created_at")}
+def token_out(t, active: bool):
+    out = {k: t[k] for k in ("id", "label", "role", "scope_node_id", "parent_token_id", "revoked", "created_at")}
+    out["active"] = active  # false if this token or any token in its minting chain is revoked
+    return out
 
 
 @app.get("/tokens")
 def list_tokens(c: Ctx = Depends(ctx)):
-    """Tokens whose scope lies within the caller's scope. Planner only."""
+    """Tokens whose scope lies within the caller's scope. Planner only.
+    `revoked` is the token's own flag; `active` is its effective liveness through the chain."""
     if not P.can_list_tokens(c.p):
         raise HTTPException(403, "planner only")
     rows = c.conn.execute(
@@ -256,7 +263,17 @@ def list_tokens(c: Ctx = Depends(ctx)):
         """,
         (c.p.scope_node_id,),
     ).fetchall()
-    return [token_out(t) for t in rows]
+    chain = {r["id"]: (r["parent_token_id"], r["revoked"]) for r in c.conn.execute("SELECT id, parent_token_id, revoked FROM tokens").fetchall()}
+
+    def active(tid):
+        while tid is not None:
+            parent, revoked = chain[tid]
+            if revoked:
+                return False
+            tid = parent
+        return True
+
+    return [token_out(t, active(t["id"])) for t in rows]
 
 
 @app.delete("/tokens/{token_id}", status_code=204)

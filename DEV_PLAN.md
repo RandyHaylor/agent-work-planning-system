@@ -42,6 +42,25 @@ Every write is mirrored to disk per project
 - Synchronous; a failed backup fails the write
 
 
+## Second blind review 2026-11-06
+
+Fixed
+- Backup serialized per project; bootstrap all-or-nothing
+- Token listing shows effective liveness
+- Workers edit docs they authored
+- No default database password; server and database on localhost only
+- Dead code, cycle guard, lockfile committed
+- Skill and process doc contradictions on kb and open items
+
+Rejected as not a defect
+- Planner reading sibling projects: planners are admins by design
+- Planner revoking in its own chain: admin
+
+Design concerns carried forward
+- Validated only on small deterministic CLIs; next test needs a UI or external service
+- Server enforces lanes only; process steps are not server-gated by design
+
+
 ## Cold review 2026-11-06 - what it found and what we did
 
 Fixed now
@@ -72,9 +91,13 @@ Planner / dev manager
 - The user works through the planner and never touches the server
 
 Dev worker
-- Reads only its own node and beneath, plus every `environment` doc above it
-- Writes reports, escalations, spikes, kb proposals; creates children
-- Cannot see ancestors, cannot set state, cannot mint
+- Reads only its own node and beneath, `kb`, and every `environment` doc above it
+- Writes reports, escalations, spikes, kb proposals; creates children; edits docs it authored
+- Cannot edit the planner's docs, cannot see ancestors, cannot set state, cannot mint
+
+The planner is the admin
+- Sees every project and the whole environment
+- Never blind to siblings by design
 
 The environment doc
 - One shared doc on the project node: generic summary, stack, dependencies, shared assets
