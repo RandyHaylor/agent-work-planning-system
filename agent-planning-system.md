@@ -61,6 +61,7 @@ Nothing about the existing system counts as understood until a real test proves 
 - Tests built here are added to the codebase, aligned to the layers of the application stack.
 
 ## Decided: context control and knowledge base
+Why this section exists: agents given the big picture build what they imagine. Every lane, token, and read-only doc below is there to keep an agent on its task with the right context, not to secure anything against a determined agent. That is the user's job through isolation, if they want it.
 - Dev agents don't get the broader context. They see their own node, what is beneath it, the knowledge base, and the project's environment doc.
 - The planning agent (lead / orchestrator) is the admin. It holds the broader context, sees every project, and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
 - Dev agents are encouraged to escalate questions.

@@ -2,6 +2,8 @@
 
 Four parties. Each has one job. Nothing moves up a level without the party above saying so.
 
+The lanes below are context control, not security. An agent that sees everything builds what it imagines. Each party is given exactly the context its job needs, and the server makes stepping outside it an explicit act. That keeps honest agents on task; it is not meant to stop a determined one.
+
 Every agent's session begins with the blocks from `agent_instruction_injections.json` that list its type, verbatim, before its custom instructions. The party that starts the session includes them.
 
 ## User
