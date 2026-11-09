@@ -3,6 +3,13 @@
 As of 2026-11-05, after two live tests with Opus planners. This doc holds what is decided, what is built, and what is open. Design detail lives in `PLAN.md`; process and rules in `agent-planning-system.md`.
 
 
+## Decided 2026-11-09 - the unit of work is a workorder
+
+A workorder is a feature, a sprint's worth of work, a larger tech spike, a broad research phase, or a fix. It is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company knowledge base by the admin agent, and updated through documents that planning or dev agents submit to an admin agent, who updates the central knowledge bases.
+- Found in use: an agent read "project" as a whole app because no size was stated
+- Renamed everywhere: `projects` → `workorders`; nodes inside stay tasks
+
+
 ## Decided - the shape of the system
 
 One base node type, no kinds
@@ -19,11 +26,11 @@ Owning a node means delegating its work
 
 Single tree
 - Fixed roots `kb` and `plans`
-- A project is a direct child of `plans`
+- A workorder is a direct child of `plans`
 
 Depth limit enforced in the database
 - Level 4 flagged `needs_review`
-- Level 5 refused; the branch becomes its own project
+- Level 5 refused; the branch becomes its own workorder
 
 
 ## Decided 2026-11-05 - scope at this stage
@@ -37,15 +44,15 @@ Tokens are lane-keeping, not security
 - Self-signed cert and `curl -k` are fine; no cert pinning
 - Cascading revocation is wanted so a finished worker loses its lane
 
-Every write is mirrored to disk per project
-- `backups/<project>/tree.json` plus one markdown file per doc
+Every write is mirrored to disk per workorder
+- `backups/<workorder>/tree.json` plus one markdown file per doc
 - Synchronous; a failed backup fails the write
 
 
 ## Second blind review 2026-11-05
 
 Fixed
-- Backup serialized per project; bootstrap all-or-nothing
+- Backup serialized per workorder; bootstrap all-or-nothing
 - Token listing shows effective liveness
 - Workers edit docs they authored
 - No default database password; server and database on localhost only
@@ -53,7 +60,7 @@ Fixed
 - Skill and process doc contradictions on kb and open items
 
 Rejected as not a defect
-- Planner reading sibling projects: planners are admins by design
+- Planner reading sibling workorders: planners are admins by design
 - Planner revoking in its own chain: admin
 
 Design concerns carried forward
@@ -96,11 +103,11 @@ Dev worker
 - Cannot edit the planner's docs, cannot see ancestors, cannot set state, cannot mint
 
 The planner is the admin
-- Sees every project and the whole environment
+- Sees every workorder and the whole environment
 - Never blind to siblings by design
 
 The environment doc
-- One shared doc on the project node: generic summary, stack, dependencies, shared assets
+- One shared doc on the workorder node: generic summary, stack, dependencies, shared assets
 - Framed as the environment workers are within, not building
 - The only thing from above a worker can see
 
@@ -114,7 +121,7 @@ Seven steps, in order
 1. Informal outline with the user, one thread at a time
 2. Spikes only for what is tricky or unique; not fishing for them
 3. Formal plan: work, DoD, interfaces, three bands, modules, names, formatting, delegation order
-4. Plan written to the server: project node, environment doc, one node per module
+4. Plan written to the server: workorder node, environment doc, one node per module
 5. Skeleton: hollow nodes, rails green on stubs, acceptance tests under strict expected-fail
 6. Reference run, required: a throwaway implementation proves every acceptance value before commit
 7. Skeleton commit is the diff baseline; then delegate
@@ -167,13 +174,13 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
-## Decided 2026-11-09 - planner is the project admin; full encrypted backups
+## Decided 2026-11-09 - planner is the workorder admin; full encrypted backups
 
-Planner is the project's admin, full stop
-- Planner tokens are always project-scoped; the server refuses any other scope
-- Two planners on a project are two admins of it
+Planner is the workorder's admin, full stop
+- Planner tokens are always workorder-scoped; the server refuses any other scope
+- Two planners on a workorder are two admins of it
 - Planner may hand the role to a new agent, passing the token with the user's permission
-- Nodes editable by planner or admin: rename, reparent within the project, delete
+- Nodes editable by planner or admin: rename, reparent within the workorder, delete
 
 Backup is a full encrypted database dump
 - Taken on every task completion and on demand; restore replaces the database
@@ -199,10 +206,10 @@ One session may work several small tasks
 - Planner proposes the split; user approves or alters
 
 
-## Decided 2026-11-09 - starting a project needs no admin
+## Decided 2026-11-09 - starting a workorder needs no admin
 
-Any agent with server access creates a project
-- `POST /projects` returns the planner token; that agent is the planner
+Any agent with server access creates a workorder
+- `POST /workorders` returns the planner token; that agent is the planner
 - Visible by default
 
 Server access token
@@ -210,7 +217,7 @@ Server access token
 - Required on every request; keeps anything without local disk access off the server
 
 The planner picks the kbs
-- Reads every kb, assigns a set to its project, may override per task node
+- Reads every kb, assigns a set to its workorder, may override per task node
 
 Admin only for kb writes, hiding, visibility grants, proposals
 - Planner spawns an admin agent or relays through the user
@@ -225,28 +232,28 @@ No standing admin token
 - Sessions end on logout, idle expiry, or server restart
 
 Who does what is written in WORKFLOWS.md
-- User approves; admin maintains kbs and creates projects; planner runs one project; worker finishes one node
+- User approves; admin maintains kbs; any agent creates a workorder; planner runs one workorder; worker finishes one node
 
 
-## Decided 2026-11-09 - multiple projects, multiple kbs, three roles
+## Decided 2026-11-09 - multiple workorders, multiple kbs, three roles
 
-Everything decided earlier was in the context of one project
+Everything decided earlier was in the context of one workorder
 
 Admin
-- Top-level; not a project planner
+- Top-level; not a workorder planner
 - Maintains kbs through conversation with the user; the only kb writer
-- Creates projects, assigns kbs, controls visibility
+- Controls visibility; workorders are created by any agent
 - Minted at bootstrap; replaces the root token
 
-Planner, one per project
-- Full write in its project; read-only on other visible projects
-- Reads only the kbs assigned to its project; never writes a kb
+Planner, one per workorder
+- Full write in its workorder; read-only on other visible workorders
+- Reads the kbs and chooses which its workorder uses; never writes a kb
 - Mints workers only
 
-Projects and kbs have uuids
-- `POST /projects` creates the project and mints its planner token in one call
-- Several kbs may exist; any number assigned to a project
-- Projects visible to all planners by default; a hidden project needs an explicit grant from the admin
+Workorders and kbs have uuids
+- `POST /workorders` creates the workorder and mints its planner token in one call
+- Several kbs may exist; any number assigned to a workorder
+- Workorders visible to all planners by default; a hidden workorder needs an explicit grant from the admin
 
 
 ## Decided 2026-11-09 - after the third blind review
@@ -254,7 +261,7 @@ Projects and kbs have uuids
 Doc version history is the audit trail
 - Every edit keeps the previous version, append-only, written by the database
 - Readable by planners; a worker reads only its own docs' history
-- Included in the per-project backup
+- Included in the per-workorder export
 
 Workers still never edit the planner's docs on their assigned node
 - Only the planner or dev manager updates a task node's summary, instruction, environment, approval, review
@@ -263,7 +270,7 @@ Nodes are immutable for now
 - No delete, rename, or reparent; a mis-created node is set `blocked` with a note
 
 Fixed
-- Creating a project backs it up at once
+- Creating a workorder exports it at once
 - kb proposals can be resolved and listed; `needs_review` can be cleared and listed
 - Backup writes are atomic: temp dir then rename
 - Clear error on an unbootstrapped database

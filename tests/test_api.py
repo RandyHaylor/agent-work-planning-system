@@ -25,7 +25,7 @@ def client(token):
 
 
 def anon():
-    """Access token, no bearer: enough to create a project, nothing else."""
+    """Access token, no bearer: enough to create a workorder, nothing else."""
     return httpx.Client(base_url=BASE, verify=False, headers=ACCESS)
 
 
@@ -58,29 +58,29 @@ def admin():
 
 @pytest.fixture(scope="module")
 def world(admin):
-    """root -> plans -> project A (planner A, task, worker) ; project B (planner B)
+    """root -> plans -> workorder A (planner A, task, worker) ; workorder B (planner B)
                 -> kb    -> kb Product (assigned to A) ; kb Company (not assigned)
     """
     me = admin.get("/me").json()
     tree = admin.get(f"/nodes/{me['scope_node_id']}/tree").json()
     kids = {c["title"]: c["id"] for c in tree["children"]}
     plans, kb = kids["plans"], kids["kb"]
-    # Projects are started with the access token alone: no admin involved.
+    # Workorders are started with the access token alone: no admin involved.
     with anon() as starter:
-        pa = starter.post("/projects", json={"title": "project A", "summary": "Project A"}).json()
-        pb = starter.post("/projects", json={"title": "project B", "summary": "Project B"}).json()
+        pa = starter.post("/workorders", json={"title": "workorder A", "summary": "Workorder A"}).json()
+        pb = starter.post("/workorders", json={"title": "workorder B", "summary": "Workorder B"}).json()
     kb_prod = admin.post("/kbs", json={"title": "Product", "summary": "What the product is"}).json()
     kb_co = admin.post("/kbs", json={"title": "Company", "summary": "Who we are"}).json()
     planner, planner_b = client(pa["planner_token"]), client(pb["planner_token"])
-    planner.patch(f"/projects/{pa['uuid']}", json={"kbs": [kb_prod["uuid"]]})  # the planner picks its workers' kbs
-    project = admin.get(f"/nodes/{pa['node_id']}").json()
+    planner.patch(f"/workorders/{pa['uuid']}", json={"kbs": [kb_prod["uuid"]]})  # the planner picks its workers' kbs
+    workorder = admin.get(f"/nodes/{pa['node_id']}").json()
     other = admin.get(f"/nodes/{pb['node_id']}").json()
-    env = planner.post(f"/nodes/{project['id']}/docs", json={"role": "environment", "body": "Stack: Python 3.12, stdlib only."}).json()
-    task = planner.post("/nodes", json={"parent_id": project["id"], "title": "task 1", "summary": "Build module X"}).json()
+    env = planner.post(f"/nodes/{workorder['id']}/docs", json={"role": "environment", "body": "Stack: Python 3.12, stdlib only."}).json()
+    task = planner.post("/nodes", json={"parent_id": workorder["id"], "title": "task 1", "summary": "Build module X"}).json()
     instr = planner.post(f"/nodes/{task['id']}/docs", json={"role": "instruction", "body": "Interfaces: ... DoD: ..."}).json()
     worker_tok = planner.post("/tokens", json={"label": "worker", "scope_node_id": task["id"], "role": "worker"}).json()
     worker = client(worker_tok["token"])
-    return dict(admin=admin, planner=planner, planner_b=planner_b, worker=worker, plans=plans, kb=kb, project=project, other=other,
+    return dict(admin=admin, planner=planner, planner_b=planner_b, worker=worker, plans=plans, kb=kb, workorder=workorder, other=other,
                 pa=pa, pb=pb, kb_prod=kb_prod, kb_co=kb_co, task=task, instr=instr, env=env, worker_tok=worker_tok, root_node=me["scope_node_id"])
 
 
@@ -94,16 +94,16 @@ def test_401_without_server_access_token(world):
     """The access token is checked before anything else: a valid bearer without it is still refused."""
     for tok in (world["worker_tok"]["token"], world["pa"]["planner_token"]):
         with bare(tok) as b:
-            for path in ("/me", "/projects", "/kbs", f"/nodes/{world['task']['id']}", "/escalations", "/tokens"):
+            for path in ("/me", "/workorders", "/kbs", f"/nodes/{world['task']['id']}", "/escalations", "/tokens"):
                 assert b.get(path).status_code == 401, path
-            assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+            assert b.post("/workorders", json={"title": "x", "summary": "x"}).status_code == 401
             assert b.post(f"/nodes/{world['task']['id']}/docs", json={"role": "report", "body": "x"}).status_code == 401
     with bare() as b:
-        assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+        assert b.post("/workorders", json={"title": "x", "summary": "x"}).status_code == 401
         assert b.post("/admin/nonce").status_code == 401
         assert b.get("/admin/session/anything").status_code == 401
     with httpx.Client(base_url=BASE, verify=False, headers={_db.ACCESS_HEADER: "acc_wrong"}) as b:
-        assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+        assert b.post("/workorders", json={"title": "x", "summary": "x"}).status_code == 401
 
 
 def test_admin_login_page_and_nonce_rules():
@@ -186,30 +186,30 @@ def test_admin_is_never_a_token(admin, world):
     assert all(t["role"] in ("planner", "worker") for t in admin.get("/tokens").json())
 
 
-def test_me_reports_role_and_project(world):
+def test_me_reports_role_and_workorder(world):
     w = world["worker"].get("/me").json()
-    assert w["scope_node_id"] == world["task"]["id"] and w["role"] == "worker" and w["project_uuid"] == world["pa"]["uuid"]
+    assert w["scope_node_id"] == world["task"]["id"] and w["role"] == "worker" and w["workorder_uuid"] == world["pa"]["uuid"]
     p = world["planner"].get("/me").json()
-    assert p["role"] == "planner" and p["project_node_id"] == world["project"]["id"]
+    assert p["role"] == "planner" and p["workorder_node_id"] == world["workorder"]["id"]
     a = world["admin"].get("/me").json()
-    assert a["role"] == "admin" and a["project_uuid"] is None and a["token_id"] is None
+    assert a["role"] == "admin" and a["workorder_uuid"] is None and a["token_id"] is None
 
 
-def test_project_creation_returns_working_planner_token(world):
-    """Starting a project needs no admin: the access token alone, a planner, or the admin. Not a worker."""
+def test_workorder_creation_returns_working_planner_token(world):
+    """Starting a workorder needs no admin: the access token alone, a planner, or the admin. Not a worker."""
     pa = world["pa"]
     assert set(pa) >= {"uuid", "node_id", "planner_token", "planner_token_id", "kbs", "visible"}
     assert pa["visible"] is True and len(pa["uuid"]) == 36
     assert world["planner"].get(f"/nodes/{pa['node_id']}").json()["uuid"] == pa["uuid"]
     with anon() as starter:
-        r = starter.post("/projects", json={"title": "started with access only", "summary": "x"})
+        r = starter.post("/workorders", json={"title": "started with access only", "summary": "x"})
         assert r.status_code == 201 and client(r.json()["planner_token"]).get("/me").json()["role"] == "planner"
-        assert starter.get("/projects").status_code == 401  # access alone reads nothing
-    r = world["planner"].post("/projects", json={"title": "started by a planner", "summary": "x"})
+        assert starter.get("/workorders").status_code == 401  # access alone reads nothing
+    r = world["planner"].post("/workorders", json={"title": "started by a planner", "summary": "x"})
     assert r.status_code == 201 and r.json()["visible"] is True
-    assert world["admin"].post("/projects", json={"title": "started by admin", "summary": "x"}).status_code == 201
-    assert world["worker"].post("/projects", json={"title": "x", "summary": "x"}).status_code == 403
-    listed = {p["uuid"]: p for p in world["admin"].get("/projects").json()}
+    assert world["admin"].post("/workorders", json={"title": "started by admin", "summary": "x"}).status_code == 201
+    assert world["worker"].post("/workorders", json={"title": "x", "summary": "x"}).status_code == 403
+    listed = {p["uuid"]: p for p in world["admin"].get("/workorders").json()}
     assert listed[pa["uuid"]]["kbs"] == [world["kb_prod"]["uuid"]]
 
 
@@ -220,11 +220,11 @@ def test_node_has_summary_and_instruction(world):
 
 def test_worker_404_on_ancestors_and_siblings(world):
     w = world["worker"]
-    assert w.get(f"/nodes/{world['project']['id']}").status_code == 404
+    assert w.get(f"/nodes/{world['workorder']['id']}").status_code == 404
     assert w.get(f"/nodes/{world['plans']}").status_code == 404
     assert w.get(f"/nodes/{world['root_node']}").status_code == 404
     assert w.get(f"/nodes/{world['other']['id']}").status_code == 404
-    assert w.get(f"/nodes/{world['project']['id']}/tree").status_code == 404
+    assert w.get(f"/nodes/{world['workorder']['id']}/tree").status_code == 404
 
 
 def test_kb_assignment_rules(world):
@@ -232,7 +232,7 @@ def test_kb_assignment_rules(world):
     p, w, a = world["planner"], world["worker"], world["admin"]
     prod, co = world["kb_prod"]["node_id"], world["kb_co"]["node_id"]
     assert p.get(f"/nodes/{prod}").status_code == 200 and w.get(f"/nodes/{prod}").status_code == 200
-    assert p.get(f"/nodes/{co}").status_code == 200  # unassigned to its project, still readable by the planner
+    assert p.get(f"/nodes/{co}").status_code == 200  # unassigned to its workorder, still readable by the planner
     assert w.get(f"/nodes/{co}").status_code == 404
     both = {world["kb_prod"]["uuid"], world["kb_co"]["uuid"]}
     assert {k["uuid"] for k in p.get("/kbs").json()} == both
@@ -240,11 +240,11 @@ def test_kb_assignment_rules(world):
     assert {k["uuid"] for k in a.get("/kbs").json()} == both
     assert {c["id"] for c in p.get(f"/nodes/{world['kb']}").json()["children"]} == {prod, co}
     assert w.get(f"/nodes/{world['kb']}").status_code == 404
-    # the kb set is the planner's call for its own project only; visibility stays the admin's
-    assert world["planner_b"].patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
-    assert p.patch(f"/projects/{world['pb']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
-    assert w.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code in (403, 404)
-    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"visible": False}).status_code == 403
+    # the kb set is the planner's call for its own workorder only; visibility stays the admin's
+    assert world["planner_b"].patch(f"/workorders/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
+    assert p.patch(f"/workorders/{world['pb']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
+    assert w.patch(f"/workorders/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code in (403, 404)
+    assert p.patch(f"/workorders/{world['pa']['uuid']}", json={"visible": False}).status_code == 403
     # admin writes; planner and worker never do, not even on an assigned kb
     page = a.post("/nodes", json={"parent_id": prod, "title": "Glossary", "summary": "terms"})
     assert page.status_code == 201
@@ -256,11 +256,11 @@ def test_kb_assignment_rules(world):
         assert who.post("/kbs", json={"title": "x", "summary": "x"}).status_code == 403
     # proposals are written on the agent's own node
     assert w.post(f"/nodes/{world['task']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
-    assert p.post(f"/nodes/{world['project']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
+    assert p.post(f"/nodes/{world['workorder']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
     # reassignment by the planner takes effect for its workers at once
-    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"], world["kb_co"]["uuid"]]}).status_code == 200
+    assert p.patch(f"/workorders/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"], world["kb_co"]["uuid"]]}).status_code == 200
     assert w.get(f"/nodes/{co}").status_code == 200
-    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"]]}).status_code == 200
+    assert p.patch(f"/workorders/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"]]}).status_code == 200
     assert w.get(f"/nodes/{co}").status_code == 404
 
 
@@ -284,7 +284,7 @@ def test_node_level_kb_override_for_workers(world):
         assert p.patch(f"/nodes/{sub['id']}", json={"kbs": []}).status_code == 200
         assert sw.get("/kbs").json() == [] and sw.get(f"/nodes/{co['node_id']}").status_code == 404
     assert [k["uuid"] for k in w.get("/kbs").json()] == [co["uuid"]]  # the task's own override unchanged
-    # an override on the task equal to the project set restores the default view for the rest of the suite
+    # an override on the task equal to the workorder set restores the default view for the rest of the suite
     assert p.patch(f"/nodes/{tid}", json={"kbs": [prod["uuid"]]}).status_code == 200
     assert w.get(f"/nodes/{prod['node_id']}").status_code == 200 and w.get(f"/nodes/{co['node_id']}").status_code == 404
     assert p.patch(f"/nodes/{world['kb_prod']['node_id']}", json={"kbs": []}).status_code in (403, 422)
@@ -297,54 +297,54 @@ def test_worker_sees_ancestor_environment_doc(world):
     assert all(d["role"] != "environment" for d in n["docs"])
 
 
-def test_planner_reads_visible_sibling_project_but_cannot_write(world):
+def test_planner_reads_visible_sibling_workorder_but_cannot_write(world):
     p, other = world["planner"], world["other"]
     assert p.get(f"/nodes/{world['root_node']}").status_code == 200
     assert p.get(f"/nodes/{other['id']}").status_code == 200
     assert p.get(f"/nodes/{other['id']}/tree").status_code == 200
     titles = {c["title"] for c in p.get(f"/nodes/{world['plans']}/tree").json()["children"]}
-    assert {"project A", "project B"} <= titles
+    assert {"workorder A", "workorder B"} <= titles
     assert p.post(f"/nodes/{other['id']}/docs", json={"role": "question", "body": "x"}).status_code == 403
     assert p.post("/nodes", json={"parent_id": other["id"], "title": "x", "summary": "x"}).status_code == 403
     assert p.patch(f"/nodes/{other['id']}", json={"state": "blocked"}).status_code == 403
     assert p.post("/nodes", json={"parent_id": world["plans"], "title": "x", "summary": "x"}).status_code == 403
 
 
-def test_hidden_project_until_admin_grants_visibility(world):
+def test_hidden_workorder_until_admin_grants_visibility(world):
     a, pa, pb = world["admin"], world["planner"], world["planner_b"]
-    hidden = a.post("/projects", json={"title": "secret", "summary": "hush"}).json()
+    hidden = a.post("/workorders", json={"title": "secret", "summary": "hush"}).json()
     hp = client(hidden["planner_token"])
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 200  # visible by default
-    assert hp.patch(f"/projects/{hidden['uuid']}", json={"visible": False}).status_code == 403  # its own planner cannot hide it
-    r = a.patch(f"/projects/{hidden['uuid']}", json={"visible": False})
+    assert hp.patch(f"/workorders/{hidden['uuid']}", json={"visible": False}).status_code == 403  # its own planner cannot hide it
+    r = a.patch(f"/workorders/{hidden['uuid']}", json={"visible": False})
     assert r.status_code == 200 and r.json()["visible"] is False
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 404
     assert pb.get(f"/nodes/{hidden['node_id']}").status_code == 404
-    assert hidden["uuid"] not in {p["uuid"] for p in pa.get("/projects").json()}
+    assert hidden["uuid"] not in {p["uuid"] for p in pa.get("/workorders").json()}
     assert "secret" not in {c["title"] for c in pa.get(f"/nodes/{world['plans']}/tree").json()["children"]}
     assert "secret" not in {c["title"] for c in pa.get(f"/nodes/{world['plans']}").json()["children"]}
     assert hp.get(f"/nodes/{hidden['node_id']}").status_code == 200  # its own planner always
-    assert pa.post(f"/projects/{hidden['uuid']}/visibility", json={"viewer": world["pa"]["uuid"]}).status_code == 403
-    assert a.post(f"/projects/{hidden['uuid']}/visibility", json={"viewer": world["pa"]["uuid"]}).status_code == 201
+    assert pa.post(f"/workorders/{hidden['uuid']}/visibility", json={"viewer": world["pa"]["uuid"]}).status_code == 403
+    assert a.post(f"/workorders/{hidden['uuid']}/visibility", json={"viewer": world["pa"]["uuid"]}).status_code == 201
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 200
     assert pa.get(f"/nodes/{hidden['node_id']}/tree").status_code == 200
     assert pb.get(f"/nodes/{hidden['node_id']}").status_code == 404
     assert pa.post(f"/nodes/{hidden['node_id']}/docs", json={"role": "question", "body": "x"}).status_code == 403
-    assert a.delete(f"/projects/{hidden['uuid']}/visibility/{world['pa']['uuid']}").status_code == 204
+    assert a.delete(f"/workorders/{hidden['uuid']}/visibility/{world['pa']['uuid']}").status_code == 204
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 404
-    assert a.patch("/projects/00000000-0000-0000-0000-000000000000", json={"visible": True}).status_code == 404
-    assert a.patch(f"/projects/{hidden['uuid']}", json={}).status_code == 422
+    assert a.patch("/workorders/00000000-0000-0000-0000-000000000000", json={"visible": True}).status_code == 404
+    assert a.patch(f"/workorders/{hidden['uuid']}", json={}).status_code == 422
 
 
 def test_tree(world):
-    t = world["planner"].get(f"/nodes/{world['project']['id']}/tree").json()
+    t = world["planner"].get(f"/nodes/{world['workorder']['id']}/tree").json()
     assert t["children"][0]["id"] == world["task"]["id"]
     assert "docs" not in t
 
 
-def test_planner_writes_on_project_node_it_did_not_create(world):
-    """Admin created the project; the planner must still log questions, write instructions, set state there."""
-    pid = world["project"]["id"]
+def test_planner_writes_on_workorder_node_it_did_not_create(world):
+    """Admin created the workorder; the planner must still log questions, write instructions, set state there."""
+    pid = world["workorder"]["id"]
     r = world["planner"].post(f"/nodes/{pid}/docs", json={"role": "question", "body": "From node / Question / Answer / Answered by / Scope"})
     assert r.status_code == 201
     assert world["planner"].post(f"/nodes/{pid}/docs", json={"role": "instruction", "body": "plan of record"}).status_code == 201
@@ -352,9 +352,9 @@ def test_planner_writes_on_project_node_it_did_not_create(world):
     assert world["planner"].patch(f"/nodes/{pid}", json={"state": "open"}).status_code == 200
 
 
-def test_planner_edits_any_doc_in_project(world):
+def test_planner_edits_any_doc_in_workorder(world):
     assert world["planner"].patch(f"/docs/{world['instr']['id']}", json={"body": "revised by planner"}).status_code == 200
-    summary = [d for d in world["planner"].get(f"/nodes/{world['project']['id']}").json()["docs"] if d["role"] == "summary"][0]
+    summary = [d for d in world["planner"].get(f"/nodes/{world['workorder']['id']}").json()["docs"] if d["role"] == "summary"][0]
     assert world["planner"].patch(f"/docs/{summary['id']}", json={"body": "edited summary (admin-authored)"}).status_code == 200
 
 
@@ -390,7 +390,7 @@ def test_worker_creates_child_but_cannot_plan_it(world):
 
 
 def test_worker_cannot_create_outside_scope(world):
-    assert world["worker"].post("/nodes", json={"parent_id": world["project"]["id"], "title": "x", "summary": "x"}).status_code == 404
+    assert world["worker"].post("/nodes", json={"parent_id": world["workorder"]["id"], "title": "x", "summary": "x"}).status_code == 404
     assert world["planner_b"].post("/nodes", json={"parent_id": world["plans"], "title": "x", "summary": "x"}).status_code == 403
 
 
@@ -430,29 +430,29 @@ def test_survey_approval_review_planner_only_worker_reads(world):
 
 def test_mint_rules(world):
     w, p, a = world["worker"], world["planner"], world["admin"]
-    tid, pid = world["task"]["id"], world["project"]["id"]
+    tid, pid = world["task"]["id"], world["workorder"]["id"]
     assert w.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "bogus"}).status_code == 422
-    # a planner mints workers inside its project only, and never planners or admins
+    # a planner mints workers inside its workorder only, and never planners or admins
     assert p.post("/tokens", json={"label": "x", "scope_node_id": pid, "role": "planner"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "admin"}).status_code == 422
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["other"]["id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["kb_prod"]["node_id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "worker"}).status_code == 201
-    # admin mints planners for a project, workers anywhere in a project
+    # admin mints planners for a workorder, workers anywhere in a workorder
     assert a.post("/tokens", json={"label": "p2", "scope_node_id": pid, "role": "planner"}).status_code == 201
     assert a.post("/tokens", json={"label": "x", "scope_node_id": world["kb_prod"]["node_id"], "role": "worker"}).status_code == 403
-    # a planner is always scoped to the project node itself: any other scope is a 422, whoever asks
+    # a planner is always scoped to the workorder node itself: any other scope is a 422, whoever asks
     for scope in (world["plans"], tid, world["kb_prod"]["node_id"]):
         r = a.post("/tokens", json={"label": "x", "scope_node_id": scope, "role": "planner"})
-        assert r.status_code == 422 and "project node" in r.json()["detail"], scope
+        assert r.status_code == 422 and "workorder node" in r.json()["detail"], scope
 
 
 def test_revoke_rules(world):
     p, w, a = world["planner"], world["worker"], world["admin"]
     t = p.post("/tokens", json={"label": "tmp", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
     assert w.delete(f"/tokens/{t['token_id']}").status_code == 403
-    # project B's planner can see project A but not revoke inside it
+    # workorder B's planner can see workorder A but not revoke inside it
     assert world["planner_b"].delete(f"/tokens/{t['token_id']}").status_code == 403
     # admin did not mint it: still allowed
     assert a.delete(f"/tokens/{t['token_id']}").status_code == 204
@@ -464,7 +464,7 @@ def test_revoke_rules(world):
 
 def test_revoke_cascades_through_minting_chain(world):
     a = world["admin"]
-    sub = a.post("/tokens", json={"label": "sub-pl", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    sub = a.post("/tokens", json={"label": "sub-pl", "scope_node_id": world["workorder"]["id"], "role": "planner"}).json()
     grand = client(sub["token"]).post("/tokens", json={"label": "grand-w", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
     assert client(grand["token"]).get("/me").status_code == 200
     assert a.delete(f"/tokens/{sub['token_id']}").status_code == 204
@@ -492,9 +492,9 @@ def test_retrieve_secret(world):
     # planner retrieves its own
     me = p.get("/me").json()
     assert p.get(f"/tokens/{me['token_id']}/secret").status_code == 200
-    # planner 403 on a sibling project's planner token; another planner of its own project is fine (project admin)
+    # planner 403 on a sibling workorder's planner token; another planner of its own workorder is fine (workorder admin)
     assert p.get(f"/tokens/{pb['planner_token_id']}/secret").status_code == 403
-    sub = a.post("/tokens", json={"label": "sub-pl3", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    sub = a.post("/tokens", json={"label": "sub-pl3", "scope_node_id": world["workorder"]["id"], "role": "planner"}).json()
     assert p.get(f"/tokens/{sub['token_id']}/secret").json()["token"] == sub["token"]
     assert a.get(f"/tokens/{sub['token_id']}/secret").json()["token"] == sub["token"]
     # worker: 403, even for itself
@@ -513,9 +513,9 @@ def test_rotate_rules_and_effect(world):
     # worker: never, not even itself
     assert w.post(f"/tokens/{world['worker_tok']['token_id']}/rotate").status_code == 403
     assert w.post(f"/tokens/{t['token_id']}/rotate").status_code == 403
-    # project B's planner can see project A's token but cannot rotate it
+    # workorder B's planner can see workorder A's token but cannot rotate it
     assert world["planner_b"].post(f"/tokens/{t['token_id']}/rotate").status_code == 403
-    # project A's planner rotates its own worker: same id, scope, parent; old plaintext dead, new one works
+    # workorder A's planner rotates its own worker: same id, scope, parent; old plaintext dead, new one works
     r = p.post(f"/tokens/{t['token_id']}/rotate")
     assert r.status_code == 201
     new = r.json()
@@ -536,13 +536,13 @@ def test_rotate_rules_and_effect(world):
     p.headers["Authorization"] = f"Bearer {r.json()['token']}"
     assert p.get("/me").json()["token_id"] == me["token_id"]
     assert client(old_header[7:]).get("/me").status_code == 401
-    # a planner is the project's admin: it rotates another planner's token in its own project; so does the admin
-    sub = a.post("/tokens", json={"label": "sub-pl2", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    # a planner is the workorder's admin: it rotates another planner's token in its own workorder; so does the admin
+    sub = a.post("/tokens", json={"label": "sub-pl2", "scope_node_id": world["workorder"]["id"], "role": "planner"}).json()
     r = p.post(f"/tokens/{sub['token_id']}/rotate")
     assert r.status_code == 201 and client(sub["token"]).get("/me").status_code == 401
     assert a.post(f"/tokens/{sub['token_id']}/rotate").status_code == 201
-    # a planner revokes another planner of its own project too (self-revoke stays 409)
-    sub2 = a.post("/tokens", json={"label": "sub-pl4", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    # a planner revokes another planner of its own workorder too (self-revoke stays 409)
+    sub2 = a.post("/tokens", json={"label": "sub-pl4", "scope_node_id": world["workorder"]["id"], "role": "planner"}).json()
     assert p.delete(f"/tokens/{sub2['token_id']}").status_code == 204
     assert client(sub2["token"]).get("/me").status_code == 401
     # revoked tokens are not rotated; cascade is untouched by rotation
@@ -573,9 +573,9 @@ def _backup_dir():
 def test_backup_written_on_every_write(world):
     import json
     base = _backup_dir()
-    pid, tid = world["project"]["id"], world["task"]["id"]
+    pid, tid = world["workorder"]["id"], world["task"]["id"]
     proj_dir = base / world["pa"]["uuid"]
-    assert (proj_dir / "title").read_text(encoding="utf-8") == "project A\n"
+    assert (proj_dir / "title").read_text(encoding="utf-8") == "workorder A\n"
     tree = {n["id"]: n for n in json.loads((proj_dir / "tree.json").read_text())}
     assert pid in tree and tid in tree and tree[tid]["parent_id"] == pid and tree[pid]["uuid"] == world["pa"]["uuid"]
     r = world["worker"].post(f"/nodes/{tid}/docs", json={"role": "report", "body": "first draft "}).json()
@@ -583,7 +583,7 @@ def test_backup_written_on_every_write(world):
     assert f.exists()
     assert f.read_text(encoding="utf-8").endswith("\n\nfirst draft ")
     assert "author: worker" in f.read_text(encoding="utf-8")
-    # the project was started with the access token (no bearer): no author token, rendered as "admin"
+    # the workorder was started with the access token (no bearer): no author token, rendered as "admin"
     summary = next(p for p in (proj_dir / "docs").iterdir() if p.name.startswith(f"{pid}-summary-"))
     assert "author: admin" in summary.read_text(encoding="utf-8")
     world["worker"].patch(f"/docs/{r['id']}", json={"body": "second draft"})
@@ -602,7 +602,7 @@ def test_backup_concurrent_writes_serialized(world):
     import json
     from concurrent.futures import ThreadPoolExecutor
     base = _backup_dir()
-    pid, tid = world["project"]["id"], world["task"]["id"]
+    pid, tid = world["workorder"]["id"], world["task"]["id"]
     proj_dir = base / world["pa"]["uuid"]
     tok = world["worker_tok"]["token"]
 
@@ -679,8 +679,8 @@ def test_backup_per_kb_and_not_for_fixed_roots(world):
 def test_spike_same_rule_as_report(world):
     w, p, tid = world["worker"], world["planner"], world["task"]["id"]
     assert w.post(f"/nodes/{tid}/docs", json={"role": "spike", "body": "hello world proof: screenshot at ..."}).status_code == 201
-    assert p.post(f"/nodes/{world['project']['id']}/docs", json={"role": "spike", "body": "arch spike"}).status_code == 201
-    assert w.post(f"/nodes/{world['project']['id']}/docs", json={"role": "spike", "body": "x"}).status_code == 404
+    assert p.post(f"/nodes/{world['workorder']['id']}/docs", json={"role": "spike", "body": "arch spike"}).status_code == 201
+    assert w.post(f"/nodes/{world['workorder']['id']}/docs", json={"role": "spike", "body": "x"}).status_code == 404
 
 
 def _chain(client, parent, n):
@@ -697,11 +697,11 @@ def _chain(client, parent, n):
 def test_depth_level4_flags_level5_refused(world):
     rs = _chain(world["admin"], world["plans"], 5)
     assert [r.status_code for r in rs[:4]] == [201] * 4
-    assert rs[0].json()["uuid"] is not None and rs[1].json()["uuid"] is None  # a project gets a uuid, its children do not
+    assert rs[0].json()["uuid"] is not None and rs[1].json()["uuid"] is None  # a workorder gets a uuid, its children do not
     assert [r.json()["needs_review"] for r in rs[:4]] == [False, False, False, True]
     assert "warning" in rs[3].json() and "warning" not in rs[2].json()
     assert rs[4].status_code == 409
-    assert "separate project under plans" in rs[4].json()["detail"]
+    assert "separate workorder under plans" in rs[4].json()["detail"]
 
 
 def test_depth_kb_exempt(world):
@@ -727,10 +727,10 @@ def test_unknown_node_404(world):
 
 
 def test_node_rename_reparent_delete(world):
-    """Nodes are editable by the project's planner or the admin: rename, move within the project
+    """Nodes are editable by the workorder's planner or the admin: rename, move within the workorder
     (depth rule on the move), delete with everything beneath (tokens revoked, not deleted)."""
     p, w, a, pb = world["planner"], world["worker"], world["admin"], world["planner_b"]
-    pid, tid = world["project"]["id"], world["task"]["id"]
+    pid, tid = world["workorder"]["id"], world["task"]["id"]
     mk = lambda parent, title: p.post("/nodes", json={"parent_id": parent, "title": title, "summary": "s"}).json()
     box = mk(pid, "box")          # level 2
     inner = mk(box["id"], "inner")  # level 3
@@ -739,7 +739,7 @@ def test_node_rename_reparent_delete(world):
     r = p.patch(f"/nodes/{box['id']}", json={"title": "crate"})
     assert r.status_code == 200 and r.json()["title"] == "crate"
     assert p.patch(f"/nodes/{box['id']}", json={"title": "  "}).status_code == 422
-    # reparent within the project: leaf moves up under the project
+    # reparent within the workorder: leaf moves up under the workorder
     r = p.patch(f"/nodes/{leaf['id']}", json={"parent_id": pid})
     assert r.status_code == 200 and r.json()["parent_id"] == pid
     # move crate (with inner beneath) under leaf: crate lands at level 3, inner at level 4, nothing at 5 -> allowed
@@ -751,7 +751,7 @@ def test_node_rename_reparent_delete(world):
     assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": tid}).status_code == 409
     # moving leaf under its own descendant: 422
     assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": inner['id']}).status_code == 422
-    # across projects, or out of plans, or a project node itself: 422
+    # across workorders, or out of plans, or a workorder node itself: 422
     assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": world["other"]["id"]}).status_code == 422
     assert a.patch(f"/nodes/{leaf['id']}", json={"parent_id": world["plans"]}).status_code == 422
     assert a.patch(f"/nodes/{pid}", json={"parent_id": world["other"]["id"]}).status_code == 422
@@ -760,7 +760,7 @@ def test_node_rename_reparent_delete(world):
     assert r.status_code == 200 and r.json()["needs_review"] is False
     r = p.patch(f"/nodes/{inner['id']}", json={"parent_id": box['id']})   # back to level 4
     assert r.status_code == 200 and r.json()["needs_review"] is True and "warning" in r.json()
-    # a worker and a sibling project's planner: 403 on rename, move, delete
+    # a worker and a sibling workorder's planner: 403 on rename, move, delete
     for cl in (w, pb):
         assert cl.patch(f"/nodes/{leaf['id']}", json={"title": "x"}).status_code in (403, 404)
         assert cl.delete(f"/nodes/{leaf['id']}").status_code in (403, 404)
@@ -776,18 +776,18 @@ def test_node_rename_reparent_delete(world):
     assert client(tok["token"]).get("/me").status_code == 401
     listed = {t["id"]: t for t in a.get("/tokens").json()}
     assert listed[tok["token_id"]]["revoked"] is True and listed[tok["token_id"]]["scope_node_id"] == pid
-    # projects and fixed roots are never deleted this way
+    # workorders and fixed roots are never deleted this way
     assert a.delete(f"/nodes/{pid}").status_code == 422
     assert a.delete(f"/nodes/{world['plans']}").status_code == 422
     assert a.delete(f"/nodes/{world['kb_prod']['node_id']}").status_code == 422
 
 
-def test_new_project_backed_up_immediately(world):
-    """A project with only its summary must be on disk right after creation."""
+def test_new_workorder_backed_up_immediately(world):
+    """A workorder with only its summary must be on disk right after creation."""
     base = _backup_dir()
-    p = world["admin"].post("/projects", json={"title": "Bare Project", "summary": "only a summary"}).json()
+    p = world["admin"].post("/workorders", json={"title": "Bare Workorder", "summary": "only a summary"}).json()
     d = base / p["uuid"]
-    assert (d / "tree.json").exists() and (d / "title").read_text(encoding="utf-8") == "Bare Project\n"
+    assert (d / "tree.json").exists() and (d / "title").read_text(encoding="utf-8") == "Bare Workorder\n"
     files = list((d / "docs").iterdir())
     assert len(files) == 1 and files[0].name.startswith(f"{p['node_id']}-summary-")
     assert files[0].read_text(encoding="utf-8").endswith("\n\nonly a summary")
@@ -803,7 +803,7 @@ def test_doc_history(world):
     assert [h["body"] for h in hist] == ["v1", "v2"]
     assert all(h["doc_id"] == r["id"] for h in hist)
     assert [h["body"] for h in w.get(f"/docs/{r['id']}/history").json()] == ["v1", "v2"]
-    # another worker in project B cannot see the doc at all
+    # another worker in workorder B cannot see the doc at all
     other_tok = world["planner_b"].post("/tokens", json={"label": "w2", "scope_node_id": world["other"]["id"], "role": "worker"}).json()
     assert client(other_tok["token"]).get(f"/docs/{r['id']}/history").status_code == 404
     # a worker is not the author of the planner's instruction: 403 on its history even though it can read the doc
@@ -831,7 +831,7 @@ def test_kb_proposal_resolve_and_list(world):
 
 def test_needs_review_clear_and_list(world):
     a, p = world["admin"], world["planner"]
-    rs = _chain(p, world["project"]["id"], 3)  # levels 2, 3, 4 inside project A
+    rs = _chain(p, world["workorder"]["id"], 3)  # levels 2, 3, 4 inside workorder A
     flagged = rs[2].json()
     assert flagged["needs_review"] is True
     assert flagged["id"] in {n["id"] for n in p.get("/nodes/review").json()}

@@ -6,9 +6,9 @@ written to a sibling temp dir, then swapped into place, so a crash never leaves 
 half-updated directory and stale files never survive.
 Glue: ``backup_root_for`` and ``backup_subtree`` pull rows from a connection.
 
-Layout: one directory per project, named by the project's uuid, under the backup dir;
+Layout: one directory per workorder, named by the workorder's uuid, under the backup dir;
 one directory per knowledge base under ``kb/<uuid>/``. Inside:
-    title                                      the project's or kb's title
+    title                                      the workorder's or kb's title
     tree.json                                  every node in the subtree
     docs/<node-id>-<role>-<doc-id>.md          one file per doc: header block, blank line, body verbatim
     docs/<node-id>-<role>-<doc-id>.history.md  previous versions, oldest first; only when any exist
@@ -108,7 +108,7 @@ def write(dest: Path, files: Mapping[str, str]) -> None:
 
 def backup_root_for(chain: list[int], plans_id: int, kb_id: int) -> Optional[int]:
     """Given [node, parent, ..., root], return the subtree root to back up:
-    the project (direct child of plans) or the kb (direct child of the kb container), else None."""
+    the workorder (direct child of plans) or the kb (direct child of the kb container), else None."""
     for container in (kb_id, plans_id):
         if container in chain:
             i = chain.index(container)
@@ -117,7 +117,7 @@ def backup_root_for(chain: list[int], plans_id: int, kb_id: int) -> Optional[int
 
 
 def dest_for(base: Path, top: Mapping[str, Any], kb_id: int) -> Path:
-    """Project: <base>/<uuid>. Knowledge base: <base>/kb/<uuid>. Falls back to id-slug if no uuid."""
+    """Workorder: <base>/<uuid>. Knowledge base: <base>/kb/<uuid>. Falls back to id-slug if no uuid."""
     name = str(top["uuid"]) if top.get("uuid") else f"{top['id']}-{slug(top['title'])}"
     return (base / "kb" / name) if top.get("parent_id") == kb_id else (base / name)
 

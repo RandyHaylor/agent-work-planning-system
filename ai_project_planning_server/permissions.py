@@ -2,24 +2,24 @@
 
 This module knows nothing about HTTP or Postgres. It operates on plain values:
 node ids, ancestor chains, a small Principal record, and a View record that the
-caller fills from the database (which projects and kbs the principal may read).
+caller fills from the database (which workorders and kbs the principal may read).
 The caller supplies an ``ancestors(node_id)`` function returning [node, parent, ..., root].
 
 Roles:
 - admin: top-level. Not a token in the database but a user-approved session (token_id None).
-  Reads and writes everything. Creates kbs, controls project visibility, resolves kb proposals,
+  Reads and writes everything. Creates kbs, controls workorder visibility, resolves kb proposals,
   mints planners and workers.
-- planner: the project's admin. Always scoped to the project node itself (a direct child of
-  plans); no other scope exists for a planner. Full write inside the project, including other
-  planners' docs and tokens: two planners on one project are two project admins. Read-only on
-  every other project that is visible (or that explicitly grants its project visibility). Reads
-  every kb. Decides which kbs its project's workers see (project-wide, or per node). Never writes
-  a kb. Mints workers inside its project only.
+- planner: the workorder's admin. Always scoped to the workorder node itself (a direct child of
+  plans); no other scope exists for a planner. Full write inside the workorder, including other
+  planners' docs and tokens: two planners on one workorder are two workorder admins. Read-only on
+  every other workorder that is visible (or that explicitly grants its workorder visibility). Reads
+  every kb. Decides which kbs its workorder's workers see (workorder-wide, or per node). Never writes
+  a kb. Mints workers inside its workorder only.
 - worker: reads its scope subtree, the kbs selected for it (nearest node override, else the
-  project set), and ancestor environment docs (the API gathers those). Writes reports,
+  workorder set), and ancestor environment docs (the API gathers those). Writes reports,
   escalations, spikes, kb proposals there, creates nodes beneath, edits only docs it authored.
-- access: a caller holding only the server access token and no bearer. It may create a project
-  (which mints that project's planner token) and nothing else.
+- access: a caller holding only the server access token and no bearer. It may create a workorder
+  (which mints that workorder's planner token) and nothing else.
 
 Node ownership is a record, never a permission source.
 """
@@ -43,7 +43,7 @@ class Principal:
     token_id: Optional[int]  # None for the admin session and for an access-only caller
     scope_node_id: int
     role: str
-    project_id: Optional[int] = None  # the project (direct child of plans) the scope lies in; None for admin
+    workorder_id: Optional[int] = None  # the workorder (direct child of plans) the scope lies in; None for admin
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ class View:
     root: int
     plans: int
     kb: int
-    readable_projects: frozenset = frozenset()  # project node ids a planner may read (own + visible + granted)
+    readable_workorders: frozenset = frozenset()  # workorder node ids a planner may read (own + visible + granted)
     readable_kbs: frozenset = frozenset()       # kb node ids (direct children of kb) a worker may read
 
 
@@ -70,7 +70,7 @@ def _child_of(node_id: int, container: int, ancestors: Ancestors) -> Optional[in
     return chain[i - 1] if i > 0 else None
 
 
-def project_of(node_id: int, ancestors: Ancestors, plans: int) -> Optional[int]:
+def workorder_of(node_id: int, ancestors: Ancestors, plans: int) -> Optional[int]:
     return _child_of(node_id, plans, ancestors)
 
 
@@ -95,13 +95,13 @@ def can_read(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
     if node_id in (v.root, v.plans):
         return p.role == PLANNER
     if p.role == PLANNER:
-        proj = project_of(node_id, ancestors, v.plans)
-        return proj is not None and proj in v.readable_projects
+        proj = workorder_of(node_id, ancestors, v.plans)
+        return proj is not None and proj in v.readable_workorders
     return in_subtree(node_id, p.scope_node_id, ancestors)
 
 
-def _own_project(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
-    return p.project_id is not None and project_of(node_id, ancestors, v.plans) == p.project_id
+def _own_workorder(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
+    return p.workorder_id is not None and workorder_of(node_id, ancestors, v.plans) == p.workorder_id
 
 
 def can_create_child(p: Principal, parent_id: int, ancestors: Ancestors, v: View) -> bool:
@@ -110,14 +110,14 @@ def can_create_child(p: Principal, parent_id: int, ancestors: Ancestors, v: View
     if under_kb(parent_id, ancestors, v):
         return False
     if p.role == PLANNER:
-        return _own_project(p, parent_id, ancestors, v)
+        return _own_workorder(p, parent_id, ancestors, v)
     if p.role == WORKER:
-        return in_subtree(parent_id, p.scope_node_id, ancestors) and project_of(parent_id, ancestors, v.plans) is not None
+        return in_subtree(parent_id, p.scope_node_id, ancestors) and workorder_of(parent_id, ancestors, v.plans) is not None
     return False
 
 
-def can_create_project(p: Optional[Principal]) -> bool:
-    """Anyone holding the server access token may start a project: no bearer, a planner, or the admin.
+def can_create_workorder(p: Optional[Principal]) -> bool:
+    """Anyone holding the server access token may start a workorder: no bearer, a planner, or the admin.
     A worker may not."""
     return p is None or p.role in (ADMIN, PLANNER, ACCESS)
 
@@ -126,19 +126,19 @@ def can_set_visibility(p: Principal) -> bool:
     return p.role == ADMIN
 
 
-def can_assign_kbs(p: Principal, project_id: int) -> bool:
-    """Which kbs a project's agents see is the planner's call (its own project), or the admin's."""
-    return p.role == ADMIN or (p.role == PLANNER and p.project_id == project_id)
+def can_assign_kbs(p: Principal, workorder_id: int) -> bool:
+    """Which kbs a workorder's agents see is the planner's call (its own workorder), or the admin's."""
+    return p.role == ADMIN or (p.role == PLANNER and p.workorder_id == workorder_id)
 
 
 def can_set_state(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
     if p.role == ADMIN:
         return True
-    return p.role == PLANNER and _own_project(p, node_id, ancestors, v)
+    return p.role == PLANNER and _own_workorder(p, node_id, ancestors, v)
 
 
 def can_edit_node(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
-    """Rename, reparent, delete: the project's planner or the admin. Same rule as state."""
+    """Rename, reparent, delete: the workorder's planner or the admin. Same rule as state."""
     return can_set_state(p, node_id, ancestors, v)
 
 
@@ -150,7 +150,7 @@ def can_write_doc(p: Principal, node_id: int, role: str, ancestors: Ancestors, v
     if under_kb(node_id, ancestors, v):
         return False
     if p.role == PLANNER:
-        return _own_project(p, node_id, ancestors, v)
+        return _own_workorder(p, node_id, ancestors, v)
     if p.role == WORKER:
         return role in WORKER_DOC_ROLES and in_subtree(node_id, p.scope_node_id, ancestors)
     return False
@@ -162,7 +162,7 @@ def can_edit_doc(p: Principal, node_id: int, role: str, author: Optional[int], a
     if under_kb(node_id, ancestors, v):
         return False
     if p.role == PLANNER:
-        return _own_project(p, node_id, ancestors, v)
+        return _own_workorder(p, node_id, ancestors, v)
     if p.role == WORKER:
         # A worker edits what it authored (its reports, and the summary of a node it created).
         return in_subtree(node_id, p.scope_node_id, ancestors) and author is not None and author == p.token_id
@@ -170,7 +170,7 @@ def can_edit_doc(p: Principal, node_id: int, role: str, author: Optional[int], a
 
 
 def can_answer_escalation(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
-    return p.role == ADMIN or (p.role == PLANNER and _own_project(p, node_id, ancestors, v))
+    return p.role == ADMIN or (p.role == PLANNER and _own_workorder(p, node_id, ancestors, v))
 
 
 def can_resolve_proposal(p: Principal) -> bool:
@@ -182,45 +182,45 @@ def can_mint(p: Principal, scope_node_id: int, child_role: str, ancestors: Ances
     """Only planners and workers are minted; the admin is a session, never a token."""
     if child_role not in TOKEN_ROLES:
         return False
-    proj = project_of(scope_node_id, ancestors, v.plans)
+    proj = workorder_of(scope_node_id, ancestors, v.plans)
     if proj is None:
-        return False  # planners and workers live inside a project
+        return False  # planners and workers live inside a workorder
     if child_role == PLANNER and scope_node_id != proj:
-        return False  # a planner is scoped to the project node itself, never a node inside it
+        return False  # a planner is scoped to the workorder node itself, never a node inside it
     if p.role == ADMIN:
         return True
     if p.role == PLANNER:
-        return child_role == WORKER and _own_project(p, scope_node_id, ancestors, v)
+        return child_role == WORKER and _own_workorder(p, scope_node_id, ancestors, v)
     return False
 
 
 def planner_scope_ok(scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
-    """A planner token's scope must be a project node (a direct child of plans)."""
-    return project_of(scope_node_id, ancestors, v.plans) == scope_node_id
+    """A planner token's scope must be a workorder node (a direct child of plans)."""
+    return workorder_of(scope_node_id, ancestors, v.plans) == scope_node_id
 
 
 def can_revoke(p: Principal, token_scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
-    """Admin anywhere; a planner for tokens inside its own project (lane-keeping)."""
+    """Admin anywhere; a planner for tokens inside its own workorder (lane-keeping)."""
     if p.role == ADMIN:
         return True
-    return p.role == PLANNER and _own_project(p, token_scope_node_id, ancestors, v)
+    return p.role == PLANNER and _own_workorder(p, token_scope_node_id, ancestors, v)
 
 
 def can_rotate(p: Principal, token_id: int, token_role: str, token_scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
     """Retrieve or reissue a token's plaintext. Admin: any token. A planner: any token in its own
-    project, its own and other planners' included (a planner is the project's admin). Never outside
-    its project. Workers: nothing."""
+    workorder, its own and other planners' included (a planner is the workorder's admin). Never outside
+    its workorder. Workers: nothing."""
     if p.role == ADMIN:
         return True
     if p.role != PLANNER:
         return False
-    return _own_project(p, token_scope_node_id, ancestors, v)
+    return _own_workorder(p, token_scope_node_id, ancestors, v)
 
 
 def can_list_tokens(p: Principal) -> bool:
     return p.role in (ADMIN, PLANNER)
 
 
-def can_manage_projects(p: Principal) -> bool:
-    """Admin-only project management: creating kbs, visibility, visibility grants."""
+def can_manage_workorders(p: Principal) -> bool:
+    """Admin-only workorder management: creating kbs, visibility, visibility grants."""
     return p.role == ADMIN

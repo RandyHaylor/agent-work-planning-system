@@ -1,6 +1,6 @@
 ---
 name: planning-server
-description: How to run and follow the agent planning process against the hosted planning server over HTTPS. Use when you are a planner given a repo and a project brief, or a dev worker given a PLANNER_URL and PLANNER_TOKEN.
+description: How to run and follow the agent planning process against the hosted planning server over HTTPS. Use when you are a planner given a repo and a workorder brief, or a dev worker given a PLANNER_URL and PLANNER_TOKEN.
 ---
 
 # Planning server
@@ -17,7 +17,7 @@ curl -sk $PLANNER_URL/me -H "$H"
 
 # If you are the ADMIN
 
-You are not a project planner. You maintain the knowledge bases, create projects, and control what projects can see. You work through conversation with the user. See WORKFLOWS.md for who does what.
+You are not a workorder planner. You maintain the knowledge bases, create workorders, and control what workorders can see. You work through conversation with the user. See WORKFLOWS.md for who does what.
 
 Admin is a session the user approves. There is no standing admin token.
 
@@ -43,11 +43,11 @@ You never see or ask for the password. The user types it into the window. The se
 ## Tokens
 - Retrieve the token of any agent at any level: `GET /tokens/{id}/secret`. Change one only if asked: `POST /tokens/{id}/rotate`.
 
-## Projects
-- Any agent with server access creates its own project with `POST /projects`; you do not need to. If you create one on the user's behalf, hand the returned planner token to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
-- `PATCH /projects/{uuid}` `{"visible":false}` hides a project from other projects. Default: every project is visible read-only to every planner.
-- `POST /projects/{uuid}/visibility` `{"viewer":"<other project uuid>"}` lets a specific project read a hidden one.
-- Which kbs a project uses is the planner's call, not yours.
+## Workorders
+- Any agent with server access creates its own workorder with `POST /workorders`; you do not need to. If you create one on the user's behalf, hand the returned planner token to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
+- `PATCH /workorders/{uuid}` `{"visible":false}` hides a workorder from other workorders. Default: every workorder is visible read-only to every planner.
+- `POST /workorders/{uuid}/visibility` `{"viewer":"<other workorder uuid>"}` lets a specific workorder read a hidden one.
+- Which kbs a workorder uses is the planner's call, not yours.
 
 
 # If you are a WORKER
@@ -57,11 +57,11 @@ Your scope node is your assignment. You finish it. You do not plan it, extend it
 Your token lives in your session. Other agents' session files are not yours to look into.
 
 ## What you can see
-- The only valid information about the project is what the server holds, plus any reference your instruction explicitly grants, used exactly the way it is granted. "Look at this folder for reference, do not edit it" means that and nothing more. Anything else on the machine is not yours to read or assume.
+- The only valid information about the workorder is what the server holds, plus any reference your instruction explicitly grants, used exactly the way it is granted. "Look at this folder for reference, do not edit it" means that and nothing more. Anything else on the machine is not yours to read or assume.
 - Your scope node, its docs, and everything beneath it.
 - Every `environment` doc from above you. That is the larger environment you work within. You are not building it.
-- The knowledge bases assigned to your project (`GET /kbs`). Read-only.
-- Nothing else. Ancestors and other projects return 404.
+- The knowledge bases assigned to your workorder (`GET /kbs`). Read-only.
+- Nothing else. Ancestors and other workorders return 404.
 
 ## Start of work
 1. `GET /nodes/{scope}`: read `summary` and `instruction`. They are your spec and are read-only to you.
@@ -109,24 +109,26 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 
 # If you are a PLANNER
 
-You run one project. The user works through you and never touches the server directly.
+You run one workorder. The user works through you and never touches the server directly.
 Owning a node means you delegate its work. You never do the work of a node you own.
 
-## Starting a project
-With the server up, create it yourself: `POST /projects` `{"title":"...","summary":"..."}`. The response carries the project's uuid and its planner token, once. Hold that token; you are the planner. No admin is needed. `/me` gives your project's node id.
+## Starting a workorder
+A workorder is a feature, a sprint's worth of work, a larger tech spike, a broad research phase, or a fix. It is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company knowledge base by the admin agent, and updated through documents that planning or dev agents submit to an admin agent, who updates the central knowledge bases.
+
+With the server up, create it yourself: `POST /workorders` `{"title":"...","summary":"..."}`. The response carries the workorder's uuid and its planner token, once. Hold that token; you are the planner. No admin is needed. `/me` gives your workorder's node id.
 
 ## Your rights
-- Full read and write on everything in your project: summaries, instructions, environment, questions, state, children, worker tokens.
-- Read-only on every other project that is visible to you (`GET /projects`). Use them for context, never write there.
-- Read every knowledge base (`GET /kbs`) and decide which ones your project uses: `PATCH /projects/{uuid}` `{"kbs":[...]}`. Workers see only that set. A task node can override the set for the agents beneath it: `PATCH /nodes/{id}` `{"kbs":[...]}`.
-- You never edit a kb. Propose changes as `kb_proposal` docs on your project node; the admin applies them after talking with the user.
-- You mint workers only, and only inside your project.
+- Full read and write on everything in your workorder: summaries, instructions, environment, questions, state, children, worker tokens.
+- Read-only on every other workorder that is visible to you (`GET /workorders`). Use them for context, never write there.
+- Read every knowledge base (`GET /kbs`) and decide which ones your workorder uses: `PATCH /workorders/{uuid}` `{"kbs":[...]}`. Workers see only that set. A task node can override the set for the agents beneath it: `PATCH /nodes/{id}` `{"kbs":[...]}`.
+- You never edit a kb. Propose changes as `kb_proposal` docs on your workorder node; the admin applies them after talking with the user.
+- You mint workers only, and only inside your workorder.
 
 ## Handing off the planner role
-When needed, you can hand the project planner role to a new agent. With the user's permission, pass your planner token to that agent, along with the `planner` blocks from `agent_instruction_injections.json` and this skill file. The new agent is then the planner for this project.
+When needed, you can hand the workorder planner role to a new agent. With the user's permission, pass your planner token to that agent, along with the `planner` blocks from `agent_instruction_injections.json` and this skill file. The new agent is then the planner for this workorder.
 
 ## When you need an admin
-Writing a kb, hiding a project, granting visibility into a hidden one, applying a proposal: these need an admin session, which only the user can approve. Either spawn a new unattached agent and tell it to run `admin-login` and what to do once in, or tell the user to start an admin session and pass on the instruction. Then continue.
+Writing a kb, hiding a workorder, granting visibility into a hidden one, applying a proposal: these need an admin session, which only the user can approve. Either spawn a new unattached agent and tell it to run `admin-login` and what to do once in, or tell the user to start an admin session and pass on the instruction. Then continue.
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 
@@ -138,9 +140,9 @@ The injected block `do-not-add-or-change-details` applies to every plan, instruc
    - Start from the knowledge base (`kb` subtree) and the user: "does it do this?"
    - Targeted checks only. No sweeping the codebase.
    - Prove each claim with a real test through the real entry point: an existing integration test, an edited one, or a new one, including a small test app if needed. Survey tests are committed to the repo at the matching layer of the stack.
-   - Record the proven understanding as a `survey` doc on the project node. Unproven claims are listed as unproven.
+   - Record the proven understanding as a `survey` doc on the workorder node. Unproven claims are listed as unproven.
    - A time-intensive deep dive only with the user's permission. Its result is documented and offered to the user as a `kb_proposal`.
-3. Identify anything tricky or unique that needs proving. Spike only those: a `planning spikes` child under the project, one node per spike, one agent per node, throwaway code. Not fishing for spikes; most projects need none, and you say so in the project summary. The plan is not approved until every spike it depends on has reported.
+3. Identify anything tricky or unique that needs proving. Spike only those: a `planning spikes` child under the workorder, one node per spike, one agent per node, throwaway code. Not fishing for spikes; most workorders need none, and you say so in the workorder summary. The plan is not approved until every spike it depends on has reported.
 4. Formal plan with the user:
    - The work and its definition of done.
    - Flow and user story: how the thing is used, start to finish, in a few lines.
@@ -150,7 +152,7 @@ The injected block `do-not-add-or-change-details` applies to every plan, instruc
    - Modules and names. Nothing is named for its implementation. Every module that can stand alone does, with its own docs and tests.
    - Formatting of everything that has a form: every output, error, work product, document, and server entry. Whitespace, line endings, header versus body, message shapes, file layout, section order. A format you leave undecided is declared dev discretion by name.
    - Delegation order, where nodes depend on each other.
-5. Write the plan to the server. On your project node: update `summary`, write `instruction` (including flow and user story), and an `environment` doc (generic project summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the project node's docs as written on the server; that text is what the user approves.
+5. Write the plan to the server. On your workorder node: update `summary`, write `instruction` (including flow and user story), and an `environment` doc (generic workorder summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the workorder node's docs as written on the server; that text is what the user approves.
 6. Build every node hollow. A node is not a node until it has its scaffolding: folders, types, stubs returning something, rails tests green against the stubs, acceptance tests with exact values under a strict expected-fail marker. Documentation exists as named sections marked to be filled.
 7. Reference run, required. Implement the rules once as a throwaway outside the workspace, never delivered. Every acceptance test must pass against it. A failure is a wrong expected value or a missing rule. Fix before commit. Then walk every exact value and name the rule it follows from.
 8. Commit the skeleton. That commit is the diff baseline. Name it in every instruction the same way.
@@ -171,27 +173,27 @@ Use your judgment on what counts as small. The user decides.
 
 ## Tokens
 - Your planner token lives in your session. Other agents' session files are not yours to look into.
-- Retrieve any worker token in your project, or your own, when a session is lost or a task changes hands: `GET /tokens/{id}/secret`. The token keeps working; nothing is forced to change.
+- Retrieve any worker token in your workorder, or your own, when a session is lost or a task changes hands: `GET /tokens/{id}/secret`. The token keeps working; nothing is forced to change.
 - Change one only if you want to: `POST /tokens/{id}/rotate` issues a new plaintext and ends the old one.
 
 ## Delegating
 - Mint a worker token: `POST /tokens` `{"label":"...","role":"worker","scope_node_id":child}`. The plaintext token is returned once at mint and retrievable later. One session may receive several.
 - Give the worker: the `worker` blocks from `agent_instruction_injections.json` first, verbatim; then only the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
-- Isolation (own VM, container, or shared machine) is the user's and the project's call, not this server's. If the project's environment doc requires isolated agents, you make that happen before spawning.
+- Isolation (own VM, container, or shared machine) is the user's and the workorder's call, not this server's. If the workorder's environment doc requires isolated agents, you make that happen before spawning.
 - Spawning never blocks you. Stay live and poll `GET /escalations` throughout the run.
 
 ## Escalations
-- Answer within your scope: `PATCH /docs/{id}` `{"answer":"...","resolved":true}`. Log it: `{"role":"question","body":"From node / Question / Answer / Answered by / Scope"}` on the project node.
+- Answer within your scope: `PATCH /docs/{id}` `{"answer":"...","resolved":true}`. Log it: `{"role":"question","body":"From node / Question / Answer / Answered by / Scope"}` on the workorder node.
 - Scope change, interface change, conflict, or a new bone: bring it to the user. You do not change scope, interfaces, or the plan.
 - Note obvious non-scope decisions as questions for later review, without stopping work.
 - A roadblock stops everything: a conflict, or a spec that cannot be built. Set the node `blocked`, do not start dependent nodes, and wait for the user. Work already running on independent nodes continues.
 
 ## Knowledge bases
-- The kbs assigned to your project record the product, the company, and the broader context. Read them in the survey step.
-- Workers propose changes as `kb_proposal` docs on their nodes. You review them and, if they hold up, post your own `kb_proposal` on the project node for the admin. You never write a kb.
+- The kbs assigned to your workorder record the product, the company, and the broader context. Read them in the survey step.
+- Workers propose changes as `kb_proposal` docs on their nodes. You review them and, if they hold up, post your own `kb_proposal` on the workorder node for the admin. You never write a kb.
 
 ## Proof before reliance
-Before planning on top of anything that already exists, prove it does what you think through a real integration test or actual use. Reading code gives "it seems to". Record the proof on the project node. If that needs a spike, it is one of the spikes in step 2.
+Before planning on top of anything that already exists, prove it does what you think through a real integration test or actual use. Reading code gives "it seems to". Record the proof on the workorder node. If that needs a spike, it is one of the spikes in step 2.
 
 ## Closing a node
 When a worker stops, check its node against the definition of done with real tests, including the real integration proof the worker's report must carry. Unit tests passing is not done. Diff the protected files against the baseline: the only allowed change is the marker deletions. Then run the standing-rules review and record it as a `review` doc on the node:
@@ -202,7 +204,7 @@ When a worker stops, check its node against the definition of done with real tes
 Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Setting a node `done` takes a full encrypted database backup automatically.
 
 ## Editing nodes
-You may rename a node, move it within the project (`PATCH /nodes/{id}` with `title` or `parent_id`; the depth rule applies to moves), or delete it and its subtree (`DELETE /nodes/{id}`). Tokens beneath a deleted node are revoked. Close the project node when every node beneath meets its definition of done.
+You may rename a node, move it within the workorder (`PATCH /nodes/{id}` with `title` or `parent_id`; the depth rule applies to moves), or delete it and its subtree (`DELETE /nodes/{id}`). Tokens beneath a deleted node are revoked. Close the workorder node when every node beneath meets its definition of done.
 
 ## Known pitfalls
 - Fixtures: byte-check with `od` whenever whitespace, line endings, or encoding matter. File-writing tools can drop trailing spaces silently.
@@ -210,8 +212,8 @@ You may rename a node, move it within the project (`PATCH /nodes/{id}` with `tit
 - Keep workers' scratch folders separate. Two workers in one folder overwrite each other.
 
 ## Depth limit (enforced by the server)
-- A project is a direct child of `plans`, level 1. Level 4 nodes are created with `needs_review: true` and a `warning`: review that branch with the user.
-- Level 5 is refused (409). Open a separate project under `plans` for that branch, with its own plan and this same procedure.
+- A workorder is a direct child of `plans`, level 1. The levels beneath are task breakdown inside the workorder, not room for larger scope. Level 4 nodes are created with `needs_review: true` and a `warning`: review that branch with the user.
+- Level 5 is refused (409). That branch is too much for this workorder: open a separate workorder under `plans` for it, with its own plan and this same procedure.
 
 
 # Errors

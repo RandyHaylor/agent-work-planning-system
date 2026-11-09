@@ -25,7 +25,7 @@ PASSWORD_WARNING = """
   It is the only way to act as admin on this server. It is stored
   only as a hash and cannot be recovered or reset without it.
   Losing it means losing the ability to maintain the knowledge
-  bases, manage project visibility, and apply proposed changes:
+  bases, manage workorder visibility, and apply proposed changes:
   important project information and documentation will become
   unreachable through the admin role.
 ==================================================================
@@ -85,7 +85,7 @@ def main():
             kb = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (%s, 'kb') RETURNING id", (root,)).fetchone()["id"]
             conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'Knowledge bases: product, company, broader context. Each child is one kb. Read-only to agents; the admin applies approved changes.')", (kb,))
             plans = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (%s, 'plans') RETURNING id", (root,)).fetchone()["id"]
-            conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'All projects live beneath this node.')", (plans,))
+            conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'All workorders live beneath this node.')", (plans,))
             for k, v in (("root_node_id", root), ("kb_node_id", kb), ("plans_node_id", plans)):
                 conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s)", (k, str(v)))
             store_password(conn, password)

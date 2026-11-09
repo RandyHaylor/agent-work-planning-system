@@ -345,3 +345,10 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - Nodes are editable by the project's planner or the global admin: title, parent (within the project, depth rule enforced on the move too), and delete. Supersedes "nodes are immutable for now".
 - A project planner can hand off the project planner role to a new agent when needed, and is permitted to pass the planner token to that agent with the permission of the user.
 - Retention clarified: backups are backups, not part of regular use. On-demand backups are wanted. Any backup that is not the week or month backup counts toward the 10 latest, whatever triggered it. No special case for the newest file.
+
+## Added 2026-11-09: "project" becomes "workorder"
+- Found in use: an agent read "project" as a whole app, because nothing stated a size. The docs failed.
+- The unit of work this system plans and runs is a workorder. Neutral term: it fits a feature, a sprint's worth of work, a larger tech spike, a broad research phase, a fix.
+- A workorder is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company kb, by the admin agent.
+- Updates to the kb come from planning or dev agents creating external documents (kb proposals) submitted to an admin agent, who updates the central kbs.
+- Rename everywhere: `projects` → `workorders` in the API, schema names, backups, docs, and skill. Nodes inside stay tasks. The planner runs one workorder.

@@ -16,22 +16,22 @@ Every agent's session begins with the blocks from `agent_instruction_injections.
 ## Admin agent
 A session, not a standing role, and not required to start work. Exists only after the user types the password, dies on server restart or logout.
 - Creates knowledge bases and writes their content from conversation with the user.
-- Hides a project, or grants one project visibility into a hidden one.
-- Reads kb proposals from projects, discusses them with the user, applies the approved ones, resolves the proposal docs.
-- Does not plan projects. Does not build anything.
+- Hides a workorder, or grants one workorder visibility into a hidden one.
+- Reads kb proposals from workorders, discusses them with the user, applies the approved ones, resolves the proposal docs.
+- Does not plan workorders. Does not build anything.
 
 When a planner needs one of these, it either spawns a new unattached agent to become admin, with the user typing the password, or tells the user to start an admin session and passes on the instruction.
 
 ## Planner agent
-One project, start to finish. Any agent with server access starts a project with `POST /projects` and receives that project's planner token in the response. That agent is the planner, and the project's admin. It can hand the role to a new agent when needed, passing the token with the user's permission.
-- Decides which knowledge bases its project uses, and may override the set on a specific task node.
+One workorder, from its plan to its closure. A workorder is a feature, a sprint's worth of work, a larger tech spike, a broad research phase, or a fix. It is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company knowledge base by the admin agent, and updated through documents that planning or dev agents submit to an admin agent, who updates the central knowledge bases. Any agent with server access starts a workorder with `POST /workorders` and receives that workorder's planner token in the response. That agent is the planner, and the workorder's admin. It can hand the role to a new agent when needed, passing the token with the user's permission.
+- Decides which knowledge bases its workorder uses, and may override the set on a specific task node.
 - Outlines with the user, surveys what exists, runs spikes only for what must be proven.
 - Writes the formal plan with the user and puts it on the server; the user approves the server text.
 - Builds the hollow skeleton, proves it with the reference run, commits the baseline.
 - Mints one worker token per node and hands each worker only its token, the workspace path, and the skill file.
 - Answers escalations within scope, escalates the rest to the user, logs every question.
 - Verifies each finished node against the definition of done with real tests, runs the standing-rules review, closes or re-engages.
-- Reads other visible projects and the assigned kbs for context. Writes only in its own project. Never writes a kb; proposes.
+- Reads other visible workorders and the assigned kbs for context. Writes only in its own workorder. Never writes a kb; proposes.
 
 ## Worker agent
 One node, holding that node's worker token.
@@ -48,7 +48,7 @@ docker compose up -d --wait
 uv run ai-project-planning-server bootstrap           # user types the admin password and SAVES IT SOMEWHERE SECURE; it cannot be recovered, and backups cannot be restored without it
 uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
 ```
-Every request carries the `PLANNER_SERVER_ACCESS_TOKEN` value from `.env` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
+Every request carries the `PLANNER_SERVER_ACCESS_TOKEN` value from `.env` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a workorder with `POST /workorders` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding workorders, visibility grants, and applying proposals.
 
 ## Tokens and sessions
 A token lives in the agent's session. Agent harnesses strongly try to train against agents looking into other agents' session files; this system officially leans on that. An admin can retrieve or change any agent's token; a planner can retrieve or change its workers' tokens. Retrieval never disrupts a running session.
@@ -56,13 +56,13 @@ A token lives in the agent's session. Agent harnesses strongly try to train agai
 One session may hold several task tokens. The planner proposes the split, small tasks together in one session and large ones in separate or forked sessions, and the user approves or alters it before deployment.
 
 ## Isolation
-Whether agents run in their own VMs, containers, or one shared machine is the user's and the project's decision, outside this server. Agents treat the server as the only source of project truth, plus references the planner grants explicitly and in the form given. A project that requires isolation says so in its environment doc; the planner is responsible for arranging it.
+Whether agents run in their own VMs, containers, or one shared machine is the user's and the workorder's decision, outside this server. Agents treat the server as the only source of workorder truth, plus references the planner grants explicitly and in the form given. A workorder that requires isolation says so in its environment doc; the planner is responsible for arranging it.
 
 ## Handoffs
 | From | To | What is handed over |
 |---|---|---|
 | User | Admin | Injected instruction blocks for `admin`, then the skill file; a typed password in the login window, per session |
-| Server | Planner | Project planner token, in the `POST /projects` response |
+| Server | Planner | Workorder planner token, in the `POST /workorders` response |
 | Planner | New planner | The planner token, with the user's permission, when the role is handed off |
 | Planner | Admin | A spawned admin agent, or an instruction relayed through the user, for kb writes, hiding, visibility, proposals |
 | Planner | Worker | Injected instruction blocks for `worker`, then worker token, workspace path, skill file, scratch folder name |

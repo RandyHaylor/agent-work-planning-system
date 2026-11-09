@@ -39,11 +39,11 @@ class Ctx:
     @contextmanager
     def write(self, node_id: int):
         """One transaction around a write touching node_id, then a synchronous backup of
-        that node's project (or kb) subtree. Writes to one project are serialized with a
+        that node's workorder (or kb) subtree. Writes to one workorder are serialized with a
         transaction-scoped advisory lock, so backups never interleave: a concurrent write
         waits its turn. Any failure, including backup, rolls back.
 
-        Yields a holder dict; a caller that creates a new project or kb sets holder["root"]
+        Yields a holder dict; a caller that creates a new workorder or kb sets holder["root"]
         to the new node after the insert, since nothing exists to derive it from beforehand."""
         with self.conn.transaction():
             holder = {"root": self.backup_root(node_id)}
@@ -60,29 +60,29 @@ class Ctx:
         return P.can_read(self.p, node_id, self.anc, self.v)
 
 
-def _kbs_for_worker(conn, scope: int, project: int, chain: list[int]) -> set[int]:
-    """The kb set a worker at ``scope`` reads: the nearest node override on the way up to the project,
-    else the project's set. An override with no kbs means none."""
+def _kbs_for_worker(conn, scope: int, workorder: int, chain: list[int]) -> set[int]:
+    """The kb set a worker at ``scope`` reads: the nearest node override on the way up to the workorder,
+    else the workorder's set. An override with no kbs means none."""
     for node_id in chain:
         if conn.execute("SELECT 1 FROM node_kb_overrides WHERE node_id = %s", (node_id,)).fetchone():
             return {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM node_kbs WHERE node_id = %s", (node_id,)).fetchall()}
-        if node_id == project:
+        if node_id == workorder:
             break
-    return {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM project_kbs WHERE project_node_id = %s", (project,)).fetchall()}
+    return {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM workorder_kbs WHERE workorder_node_id = %s", (workorder,)).fetchall()}
 
 
 def _build_view(conn, role: str, scope: int, root: int, kb: int, plans: int, anc) -> tuple[Optional[int], P.View]:
-    """The project the scope lies in, and what this principal may read beyond it."""
-    project = P.project_of(scope, anc, plans)
-    projects, kbs = set(), set()
-    if project is not None:
+    """The workorder the scope lies in, and what this principal may read beyond it."""
+    workorder = P.workorder_of(scope, anc, plans)
+    workorders, kbs = set(), set()
+    if workorder is not None:
         if role == P.WORKER:
-            kbs = _kbs_for_worker(conn, scope, project, anc(scope))
+            kbs = _kbs_for_worker(conn, scope, workorder, anc(scope))
         elif role == P.PLANNER:
-            projects = {r["id"] for r in conn.execute("SELECT id FROM nodes WHERE parent_id = %s AND visible", (plans,)).fetchall()}
-            projects |= {r["target_project_id"] for r in conn.execute("SELECT target_project_id FROM project_visibility WHERE viewer_project_id = %s", (project,)).fetchall()}
-            projects.add(project)
-    return project, P.View(root=root, plans=plans, kb=kb, readable_projects=frozenset(projects), readable_kbs=frozenset(kbs))
+            workorders = {r["id"] for r in conn.execute("SELECT id FROM nodes WHERE parent_id = %s AND visible", (plans,)).fetchall()}
+            workorders |= {r["target_workorder_id"] for r in conn.execute("SELECT target_workorder_id FROM workorder_visibility WHERE viewer_workorder_id = %s", (workorder,)).fetchall()}
+            workorders.add(workorder)
+    return workorder, P.View(root=root, plans=plans, kb=kb, readable_workorders=frozenset(workorders), readable_kbs=frozenset(kbs))
 
 
 def _check_access(conn, header: Optional[str]) -> None:
@@ -117,15 +117,15 @@ def _ctx(authorization: Optional[str], x_server_access: Optional[str], bearer_re
         if not authorization or not authorization.startswith("Bearer "):
             if bearer_required:
                 raise HTTPException(401, "missing bearer token")
-            # Access token only: may create a project and nothing else.
-            yield Ctx(conn, P.Principal(token_id=None, scope_node_id=root, role=P.ACCESS, project_id=None), P.View(root=root, plans=plans, kb=kb))
+            # Access token only: may create a workorder and nothing else.
+            yield Ctx(conn, P.Principal(token_id=None, scope_node_id=root, role=P.ACCESS, workorder_id=None), P.View(root=root, plans=plans, kb=kb))
             return
         bearer = authorization[7:]
         if A.is_session_token(bearer):
             # The admin: an in-memory session approved by the user, never a database row.
             if not SESSIONS.touch(bearer):
                 raise HTTPException(401, "admin session unknown, expired, or lost at server restart: run admin-login again")
-            p = P.Principal(token_id=None, scope_node_id=root, role=P.ADMIN, project_id=None)
+            p = P.Principal(token_id=None, scope_node_id=root, role=P.ADMIN, workorder_id=None)
             yield Ctx(conn, p, P.View(root=root, plans=plans, kb=kb))
             return
         # A token is revoked if it, or any token in its minting chain, is revoked.
@@ -143,8 +143,8 @@ def _ctx(authorization: Optional[str], x_server_access: Optional[str], bearer_re
         ).fetchone()
         if not row or row["dead"]:
             raise HTTPException(401, "bad token")
-        project, view = _build_view(conn, row["role"], row["scope_node_id"], root, kb, plans, anc)
-        p = P.Principal(token_id=row["id"], scope_node_id=row["scope_node_id"], role=row["role"], project_id=project)
+        workorder, view = _build_view(conn, row["role"], row["scope_node_id"], root, kb, plans, anc)
+        p = P.Principal(token_id=row["id"], scope_node_id=row["scope_node_id"], role=row["role"], workorder_id=workorder)
         yield Ctx(conn, p, view)
     finally:
         conn.close()
@@ -261,36 +261,36 @@ def doc_out(d):
 def me(c: Ctx = Depends(ctx)):
     if c.p.role == P.ADMIN:
         return {"token_id": None, "label": "admin", "scope_node_id": c.p.scope_node_id, "role": P.ADMIN,
-                "project_node_id": None, "project_uuid": None}
+                "workorder_node_id": None, "workorder_uuid": None}
     t = c.conn.execute("SELECT label FROM tokens WHERE id = %s", (c.p.token_id,)).fetchone()
     proj = None
-    if c.p.project_id is not None:
-        pr = c.conn.execute("SELECT uuid FROM nodes WHERE id = %s", (c.p.project_id,)).fetchone()
+    if c.p.workorder_id is not None:
+        pr = c.conn.execute("SELECT uuid FROM nodes WHERE id = %s", (c.p.workorder_id,)).fetchone()
         proj = str(pr["uuid"]) if pr and pr["uuid"] else None
     return {"token_id": c.p.token_id, "label": t["label"], "scope_node_id": c.p.scope_node_id, "role": c.p.role,
-            "project_node_id": c.p.project_id, "project_uuid": proj}
+            "workorder_node_id": c.p.workorder_id, "workorder_uuid": proj}
 
 
-# ---------- projects and knowledge bases (admin) ----------
+# ---------- workorders and knowledge bases (admin) ----------
 
-def project_out(n, c: Ctx):
-    kbs = c.conn.execute("SELECT n.uuid FROM project_kbs pk JOIN nodes n ON n.id = pk.kb_node_id WHERE pk.project_node_id = %s ORDER BY n.id", (n["id"],)).fetchall()
+def workorder_out(n, c: Ctx):
+    kbs = c.conn.execute("SELECT n.uuid FROM workorder_kbs pk JOIN nodes n ON n.id = pk.kb_node_id WHERE pk.workorder_node_id = %s ORDER BY n.id", (n["id"],)).fetchall()
     return {"uuid": str(n["uuid"]), "node_id": n["id"], "title": n["title"], "state": n["state"], "visible": n["visible"],
             "kbs": [str(k["uuid"]) for k in kbs]}
 
 
-class ProjectIn(BaseModel):
+class WorkorderIn(BaseModel):
     title: str
     summary: str
 
 
-@app.post("/projects", status_code=201)
-def create_project(body: ProjectIn, c: Ctx = Depends(ctx_or_access)):
-    """A new project under plans with a uuid, and its planner token (returned once).
+@app.post("/workorders", status_code=201)
+def create_workorder(body: WorkorderIn, c: Ctx = Depends(ctx_or_access)):
+    """A new workorder under plans with a uuid, and its planner token (returned once).
     Needs no admin: the server access token alone is enough, as is a planner or admin bearer.
-    Workers cannot start projects. Projects are visible by default."""
-    if not P.can_create_project(c.p):
-        raise HTTPException(403, "workers cannot create projects")
+    Workers cannot start workorders. Workorders are visible by default."""
+    if not P.can_create_workorder(c.p):
+        raise HTTPException(403, "workers cannot create workorders")
     raw = db.new_token()
     with c.write(c.plans) as holder:
         n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (c.plans, body.title, c.p.token_id)).fetchone()
@@ -301,30 +301,30 @@ def create_project(body: ProjectIn, c: Ctx = Depends(ctx_or_access)):
         ).fetchone()
         _store_secret(c, t["id"], raw)
         holder["root"] = n["id"]
-    return {**project_out(n, c), "planner_token": raw, "planner_token_id": t["id"]}
+    return {**workorder_out(n, c), "planner_token": raw, "planner_token_id": t["id"]}
 
 
-@app.get("/projects")
-def list_projects(c: Ctx = Depends(ctx)):
+@app.get("/workorders")
+def list_workorders(c: Ctx = Depends(ctx)):
     rows = c.conn.execute("SELECT * FROM nodes WHERE parent_id = %s ORDER BY id", (c.plans,)).fetchall()
-    return [project_out(n, c) for n in rows if c.can_read(n["id"])]
+    return [workorder_out(n, c) for n in rows if c.can_read(n["id"])]
 
 
-class ProjectPatch(BaseModel):
+class WorkorderPatch(BaseModel):
     visible: Optional[bool] = None
     kbs: Optional[list[str]] = None
 
 
-@app.patch("/projects/{project_uuid}")
-def patch_project(project_uuid: str, body: ProjectPatch, c: Ctx = Depends(ctx)):
-    """Visibility: admin only. kbs (the set the project's workers read): the project's own planner, or admin."""
+@app.patch("/workorders/{workorder_uuid}")
+def patch_workorder(workorder_uuid: str, body: WorkorderPatch, c: Ctx = Depends(ctx)):
+    """Visibility: admin only. kbs (the set the workorder's workers read): the workorder's own planner, or admin."""
     if body.visible is None and body.kbs is None:
         raise HTTPException(422, "nothing to change: give visible or kbs")
-    n = node_by_uuid(c, project_uuid, parent=c.plans)
+    n = node_by_uuid(c, workorder_uuid, parent=c.plans)
     if body.visible is not None and not P.can_set_visibility(c.p):
-        raise HTTPException(403, "only the admin sets project visibility")
+        raise HTTPException(403, "only the admin sets workorder visibility")
     if body.kbs is not None and not P.can_assign_kbs(c.p, n["id"]):
-        raise HTTPException(403, "only the project's planner or the admin assigns its kbs")
+        raise HTTPException(403, "only the workorder's planner or the admin assigns its kbs")
     kb_ids = []
     for u in body.kbs or []:
         kb_ids.append(node_by_uuid(c, u, parent=c.kb)["id"])
@@ -332,34 +332,34 @@ def patch_project(project_uuid: str, body: ProjectPatch, c: Ctx = Depends(ctx)):
         if body.visible is not None:
             n = c.conn.execute("UPDATE nodes SET visible = %s WHERE id = %s RETURNING *", (body.visible, n["id"])).fetchone()
         if body.kbs is not None:
-            c.conn.execute("DELETE FROM project_kbs WHERE project_node_id = %s", (n["id"],))
+            c.conn.execute("DELETE FROM workorder_kbs WHERE workorder_node_id = %s", (n["id"],))
             for k in kb_ids:
-                c.conn.execute("INSERT INTO project_kbs (project_node_id, kb_node_id) VALUES (%s, %s)", (n["id"], k))
-    return project_out(n, c)
+                c.conn.execute("INSERT INTO workorder_kbs (workorder_node_id, kb_node_id) VALUES (%s, %s)", (n["id"], k))
+    return workorder_out(n, c)
 
 
 class VisibilityIn(BaseModel):
     viewer: str
 
 
-@app.post("/projects/{project_uuid}/visibility", status_code=201)
-def grant_visibility(project_uuid: str, body: VisibilityIn, c: Ctx = Depends(ctx)):
-    """Admin only: let the viewer project read this (possibly hidden) project."""
-    if not P.can_manage_projects(c.p):
+@app.post("/workorders/{workorder_uuid}/visibility", status_code=201)
+def grant_visibility(workorder_uuid: str, body: VisibilityIn, c: Ctx = Depends(ctx)):
+    """Admin only: let the viewer workorder read this (possibly hidden) workorder."""
+    if not P.can_manage_workorders(c.p):
         raise HTTPException(403, "admin only")
-    target = node_by_uuid(c, project_uuid, parent=c.plans)
+    target = node_by_uuid(c, workorder_uuid, parent=c.plans)
     viewer = node_by_uuid(c, body.viewer, parent=c.plans)
-    c.conn.execute("INSERT INTO project_visibility (viewer_project_id, target_project_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (viewer["id"], target["id"]))
-    return {"target": project_uuid, "viewer": body.viewer}
+    c.conn.execute("INSERT INTO workorder_visibility (viewer_workorder_id, target_workorder_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (viewer["id"], target["id"]))
+    return {"target": workorder_uuid, "viewer": body.viewer}
 
 
-@app.delete("/projects/{project_uuid}/visibility/{viewer_uuid}", status_code=204)
-def revoke_visibility(project_uuid: str, viewer_uuid: str, c: Ctx = Depends(ctx)):
-    if not P.can_manage_projects(c.p):
+@app.delete("/workorders/{workorder_uuid}/visibility/{viewer_uuid}", status_code=204)
+def revoke_visibility(workorder_uuid: str, viewer_uuid: str, c: Ctx = Depends(ctx)):
+    if not P.can_manage_workorders(c.p):
         raise HTTPException(403, "admin only")
-    target = node_by_uuid(c, project_uuid, parent=c.plans)
+    target = node_by_uuid(c, workorder_uuid, parent=c.plans)
     viewer = node_by_uuid(c, viewer_uuid, parent=c.plans)
-    c.conn.execute("DELETE FROM project_visibility WHERE viewer_project_id = %s AND target_project_id = %s", (viewer["id"], target["id"]))
+    c.conn.execute("DELETE FROM workorder_visibility WHERE viewer_workorder_id = %s AND target_workorder_id = %s", (viewer["id"], target["id"]))
     return None
 
 
@@ -371,7 +371,7 @@ class KbIn(BaseModel):
 @app.post("/kbs", status_code=201)
 def create_kb(body: KbIn, c: Ctx = Depends(ctx)):
     """Admin only: a new knowledge base under kb with a uuid."""
-    if not P.can_manage_projects(c.p):
+    if not P.can_manage_workorders(c.p):
         raise HTTPException(403, "admin only")
     with c.write(c.kb) as holder:
         n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (c.kb, body.title, c.p.token_id)).fetchone()
@@ -424,7 +424,7 @@ def read_tree(node_id: int, c: Ctx = Depends(ctx)):
         (node_id,),
     ).fetchall()
     if node_id in (c.root, c.plans, c.kb):
-        # above the project level, hide what the caller may not read (hidden projects, unassigned kbs)
+        # above the workorder level, hide what the caller may not read (hidden workorders, unassigned kbs)
         rows = [r for r in rows if c.can_read(r["id"])]
     by_id = {r["id"]: {"id": r["id"], "title": r["title"], "state": r["state"], "needs_review": r["needs_review"], "children": []} for r in rows}
     for r in rows:
@@ -449,7 +449,7 @@ def create_node(body: NodeIn, c: Ctx = Depends(ctx)):
             n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (body.parent_id, body.title, c.p.token_id)).fetchone()
             c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', %s, %s)", (n["id"], body.summary, c.p.token_id))
             if holder["root"] is None:
-                # A new project or kb: its backup root is itself, known only after the insert.
+                # A new workorder or kb: its backup root is itself, known only after the insert.
                 holder["root"] = c.backup_root(n["id"])
     except psycopg.errors.CheckViolation as e:
         raise HTTPException(409, e.diag.message_primary)
@@ -464,7 +464,7 @@ class NodePatch(BaseModel):
     needs_review: Optional[bool] = None
     kbs: Optional[list[str]] = None  # kb uuids: override the kb set for workers scoped at or beneath this node
     title: Optional[str] = None
-    parent_id: Optional[int] = None  # reparent, within the same project only
+    parent_id: Optional[int] = None  # reparent, within the same workorder only
 
 
 def _subtree_depth(c: Ctx, node_id: int) -> int:
@@ -482,26 +482,26 @@ def _subtree_depth(c: Ctx, node_id: int) -> int:
 
 
 def _check_reparent(c: Ctx, node_id: int, new_parent: int) -> None:
-    """A node moves only inside its own project: never a project node, never across projects,
+    """A node moves only inside its own workorder: never a workorder node, never across workorders,
     never out of plans, never under itself. The depth rule applies to the whole moved subtree."""
-    proj = P.project_of(node_id, c.anc, c.plans)
+    proj = P.workorder_of(node_id, c.anc, c.plans)
     if proj is None or proj == node_id:
-        raise HTTPException(422, "only nodes inside a project can be moved; projects and the fixed roots stay where they are")
+        raise HTTPException(422, "only nodes inside a workorder can be moved; workorders and the fixed roots stay where they are")
     get_node(c, new_parent)
-    if P.project_of(new_parent, c.anc, c.plans) != proj:
-        raise HTTPException(422, "a node moves within its own project only")
+    if P.workorder_of(new_parent, c.anc, c.plans) != proj:
+        raise HTTPException(422, "a node moves within its own workorder only")
     if node_id in c.anc(new_parent):
         raise HTTPException(422, "a node cannot be moved under itself")
-    level = c.conn.execute("SELECT project_level(%s) AS lvl", (new_parent,)).fetchone()["lvl"]
+    level = c.conn.execute("SELECT workorder_level(%s) AS lvl", (new_parent,)).fetchone()["lvl"]
     if level + _subtree_depth(c, node_id) >= 5:
-        raise HTTPException(409, "depth limit: the moved branch would reach level 5. Open a separate project under plans for that branch.")
+        raise HTTPException(409, "depth limit: the moved branch would reach level 5. Open a separate workorder under plans for that branch.")
 
 
 @app.patch("/nodes/{node_id}")
 def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
     """Set state, clear needs_review after the user has reviewed a level-4 branch, set a kb override
-    (the kbs workers at or beneath this node read; nearest ancestor override wins, else the project set),
-    rename, or reparent within the project. The project's planner or the admin."""
+    (the kbs workers at or beneath this node read; nearest ancestor override wins, else the workorder set),
+    rename, or reparent within the workorder. The workorder's planner or the admin."""
     if all(v is None for v in (body.state, body.needs_review, body.kbs, body.title, body.parent_id)):
         raise HTTPException(422, "nothing to change: give state, needs_review, kbs, title, or parent_id")
     if body.state is not None and body.state not in STATES:
@@ -511,8 +511,8 @@ def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
     get_node(c, node_id)
     if not P.can_edit_node(c.p, node_id, c.anc, c.v):
         raise HTTPException(403, "cannot change this node")
-    if body.kbs is not None and P.project_of(node_id, c.anc, c.plans) is None:
-        raise HTTPException(422, "kb overrides apply to nodes inside a project")
+    if body.kbs is not None and P.workorder_of(node_id, c.anc, c.plans) is None:
+        raise HTTPException(422, "kb overrides apply to nodes inside a workorder")
     if body.parent_id is not None:
         _check_reparent(c, node_id, body.parent_id)
     kb_ids = [node_by_uuid(c, u, parent=c.kb)["id"] for u in (body.kbs or [])]
@@ -535,7 +535,7 @@ def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
         out["kbs"] = body.kbs
     if n["needs_review"] and body.parent_id is not None:
         out["warning"] = "level 4 node: needs_review is set. Review this branch with the user."
-    if body.state == "done" and P.project_of(node_id, c.anc, c.plans) is not None:
+    if body.state == "done" and P.workorder_of(node_id, c.anc, c.plans) is not None:
         # A task completed: full encrypted database backup, after the commit above. Synchronous, so
         # this request waits for pg_dump; the cost grows with database size, which holds no code.
         try:
@@ -548,12 +548,12 @@ def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
 @app.delete("/nodes/{node_id}", status_code=204)
 def delete_node(node_id: int, c: Ctx = Depends(ctx)):
     """Delete a node and everything beneath it: its docs, their versions, kb overrides. Tokens scoped
-    in the subtree are revoked, not deleted; they keep their record, rescoped to the project node.
-    Project nodes and the fixed roots are not deleted this way. The project's planner or the admin."""
+    in the subtree are revoked, not deleted; they keep their record, rescoped to the workorder node.
+    Workorder nodes and the fixed roots are not deleted this way. The workorder's planner or the admin."""
     get_node(c, node_id)
-    proj = P.project_of(node_id, c.anc, c.plans)
+    proj = P.workorder_of(node_id, c.anc, c.plans)
     if proj is None or proj == node_id:
-        raise HTTPException(422, "only nodes inside a project can be deleted; projects and the fixed roots cannot")
+        raise HTTPException(422, "only nodes inside a workorder can be deleted; workorders and the fixed roots cannot")
     if not P.can_edit_node(c.p, node_id, c.anc, c.v):
         raise HTTPException(403, "cannot delete this node")
     with c.write(node_id):
@@ -605,7 +605,7 @@ def patch_doc(doc_id: int, body: DocPatch, c: Ctx = Depends(ctx)):
     if body.answer is not None or body.resolved is not None:
         if d["role"] == "escalation":
             if not P.can_answer_escalation(c.p, d["node_id"], c.anc, c.v):
-                raise HTTPException(403, "only the project's planner or the admin answers escalations")
+                raise HTTPException(403, "only the workorder's planner or the admin answers escalations")
         elif d["role"] == "kb_proposal":
             if not P.can_resolve_proposal(c.p):
                 raise HTTPException(403, "only the admin resolves kb proposals")
@@ -657,7 +657,7 @@ def escalations(c: Ctx = Depends(ctx)):
 
 @app.get("/proposals")
 def proposals(c: Ctx = Depends(ctx)):
-    """Unresolved kb_proposal docs in the caller's scope. Admin sees all; a planner its project's."""
+    """Unresolved kb_proposal docs in the caller's scope. Admin sees all; a planner its workorder's."""
     if c.p.role == P.WORKER:
         raise HTTPException(403, "admin or planner only")
     return [doc_out(d) for d in _unresolved_in_scope(c, "kb_proposal")]
@@ -677,7 +677,7 @@ def mint(body: TokenIn, c: Ctx = Depends(ctx)):
         raise HTTPException(422, f"role must be one of {sorted(P.TOKEN_ROLES)}; the admin is a login session, not a token")
     get_node(c, body.scope_node_id)
     if body.role == P.PLANNER and not P.planner_scope_ok(body.scope_node_id, c.anc, c.v):
-        raise HTTPException(422, "a planner is scoped to a project node (a direct child of plans); it is the project's admin and has no narrower scope")
+        raise HTTPException(422, "a planner is scoped to a workorder node (a direct child of plans); it is the workorder's admin and has no narrower scope")
     if not P.can_mint(c.p, body.scope_node_id, body.role, c.anc, c.v):
         raise HTTPException(403, "cannot mint that role for that scope")
     raw = db.new_token()
@@ -703,7 +703,7 @@ def _token_for_secret(c: Ctx, token_id: int):
     if not t or not c.can_read(t["scope_node_id"]):
         raise HTTPException(404, "token not found")
     if not P.can_rotate(c.p, token_id, t["role"], t["scope_node_id"], c.anc, c.v):
-        raise HTTPException(403, "only the admin, the planner of a worker's project, or the token itself")
+        raise HTTPException(403, "only the admin, the planner of a worker's workorder, or the token itself")
     if t["revoked"]:
         raise HTTPException(409, "token is revoked; mint a new one instead")
     return t
@@ -711,7 +711,7 @@ def _token_for_secret(c: Ctx, token_id: int):
 
 @app.get("/tokens/{token_id}/secret")
 def retrieve_secret(token_id: int, c: Ctx = Depends(ctx)):
-    """The token's current plaintext. Admin for any token; a planner for its own and its project's workers."""
+    """The token's current plaintext. Admin for any token; a planner for its own and its workorder's workers."""
     t = _token_for_secret(c, token_id)
     s = c.conn.execute("SELECT plaintext FROM token_secrets WHERE token_id = %s", (token_id,)).fetchone()
     if not s:
@@ -772,6 +772,6 @@ def revoke(token_id: int, c: Ctx = Depends(ctx)):
     if c.p.token_id is not None and token_id == c.p.token_id:
         raise HTTPException(409, "a token cannot revoke itself")
     if not P.can_revoke(c.p, t["scope_node_id"], c.anc, c.v):
-        raise HTTPException(403, "only the admin, or the planner of the token's project, can revoke")
+        raise HTTPException(403, "only the admin, or the planner of the token's workorder, can revoke")
     c.conn.execute("UPDATE tokens SET revoked = true WHERE id = %s", (token_id,))
     return None

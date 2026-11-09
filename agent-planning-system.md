@@ -62,8 +62,8 @@ Nothing about the existing system counts as understood until a real test proves 
 
 ## Decided: context control and knowledge base
 Why this section exists: agents given the big picture build what they imagine. Every lane, token, and read-only doc below is there to keep an agent on its task with the right context, not to secure anything against a determined agent. That is the user's job through isolation, if they want it.
-- Dev agents don't get the broader context. They see their own node, what is beneath it, the knowledge base, and the project's environment doc.
-- The planning agent (lead / orchestrator) is the admin. It holds the broader context, sees every project, and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
+- Dev agents don't get the broader context. They see their own node, what is beneath it, the knowledge base, and the workorder's environment doc.
+- The planning agent (lead / orchestrator) is the admin. It holds the broader context, sees every workorder, and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
 - Dev agents are encouraged to escalate questions.
 - Knowledge base: read-only to working agents. Agents propose changes or additions as a document handed off to the user. The planning agent applies a proposal only after the user approves it (added 2026-11-05).
 - Plan scope builds on the knowledge base (product definition, rules, term definitions, deliverables). It must mesh with existing reality and changes only what the plan explicitly says is added or changed.
@@ -99,7 +99,7 @@ Why this section exists: agents given the big picture build what they imagine. E
 - Requirements:
   - Fully open source (no open-core or source-available licences).
   - Lightweight.
-  - Nesting deep enough for real plans. (Settled 2026-11-05: no limit in the data model; four working levels per project, then the branch becomes its own project.)
+  - Nesting deep enough for real plans. (Settled 2026-11-05: no limit in the data model; four working levels of task breakdown per workorder, then the branch becomes its own workorder.) A workorder is the unit of work (renamed from "project" 2026-11-09): A workorder is a feature, a sprint's worth of work, a larger tech spike, a broad research phase, or a fix. It is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company knowledge base by the admin agent, and updated through documents that planning or dev agents submit to an admin agent, who updates the central knowledge bases.
   - Reliably prevents agents from editing what they aren't permitted to.
   - Central and hosted. (Scoped 2026-11-05: a local tool on one developer's machine for now; multiple agents on that machine. Remote agents are not a current requirement.)
 - Chosen direction: a Postgres-based hosted server, possibly hand-rolled, possibly with a handwritten server.
@@ -127,12 +127,12 @@ Why this section exists: agents given the big picture build what they imagine. E
 - The planning agent deploys dev agents. A dev manager is the same role.
 - A handwritten FastAPI server in front of Postgres issues app tokens with a role and a scope.
 - Escalations are docs on the worker's node, answered in place by the planner; `GET /escalations` lists the open ones.
-- Questions and noted decisions are `question` docs on the project node.
+- Questions and noted decisions are `question` docs on the workorder node.
 - A knowledge base proposal is a `kb_proposal` doc; the planner applies it after the user approves.
 - Sub-agent spawning: a planner mints tokens; workers do not. Delegated design calls are the named dev-discretion band in each instruction.
 - Mock or partial test approvals are `approval` docs on the node.
 - The standing-rules review is the planner's closure check, recorded as a `review` doc.
-- Proven understanding from the survey is a `survey` doc on the project node.
+- Proven understanding from the survey is a `survey` doc on the workorder node.
 
 ## Still open
 - How the user reviews nodes in the slide-like form (the viewer).

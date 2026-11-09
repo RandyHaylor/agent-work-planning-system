@@ -20,8 +20,8 @@ Full encrypted database backups (see full_backup.py; a backup is also taken when
 
 `python -m ai_project_planning_server <cmd>` is equivalent.
 
-Starting a project needs no admin: anything holding the server access token may POST /projects and
-receives that project's planner token.
+Starting a workorder needs no admin: anything holding the server access token may POST /workorders and
+receives that workorder's planner token.
 
 Env: PLANNER_DSN and PLANNER_SERVER_ACCESS_TOKEN override the values in .env; PLANNER_DB_PORT (default
 5433) is read by init-env and compose; PLANNER_ADMIN_IDLE_HOURS (default 8) ends idle admin sessions.

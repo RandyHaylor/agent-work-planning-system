@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     owner       BIGINT,
     state       TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'blocked', 'done')),
     needs_review BOOLEAN NOT NULL DEFAULT false,
-    uuid        UUID UNIQUE,                      -- set for projects (children of plans) and kbs (children of kb)
-    visible     BOOLEAN NOT NULL DEFAULT true,    -- projects only: readable by other projects' planners
+    uuid        UUID UNIQUE,                      -- set for workorders (children of plans) and kbs (children of kb)
+    visible     BOOLEAN NOT NULL DEFAULT true,    -- workorders only: readable by other workorders' planners
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS nodes_parent_idx ON nodes(parent_id);
@@ -27,7 +27,7 @@ ALTER TABLE tokens ADD CONSTRAINT tokens_role_check CHECK (role IN ('planner', '
 -- A token's plaintext can be reissued (rotated) without changing its id, scope, role, or minting chain.
 ALTER TABLE tokens ADD COLUMN IF NOT EXISTS rotated_at TIMESTAMPTZ;
 
--- The plaintext of every token, so the admin (any token) or a planner (its own, and its project's
+-- The plaintext of every token, so the admin (any token) or a planner (its own, and its workorder's
 -- workers) can retrieve it later. Auth still checks tokens.token_hash; this table is only for retrieval.
 CREATE TABLE IF NOT EXISTS token_secrets (
     token_id   BIGINT PRIMARY KEY REFERENCES tokens(id) ON DELETE CASCADE,
@@ -40,18 +40,18 @@ ALTER TABLE nodes
     ADD CONSTRAINT nodes_owner_fkey FOREIGN KEY (owner) REFERENCES tokens(id);
 -- owner / author NULL means the admin session wrote it.
 
--- Which knowledge bases a project may read.
-CREATE TABLE IF NOT EXISTS project_kbs (
-    project_node_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+-- Which knowledge bases a workorder may read.
+CREATE TABLE IF NOT EXISTS workorder_kbs (
+    workorder_node_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     kb_node_id      BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    PRIMARY KEY (project_node_id, kb_node_id)
+    PRIMARY KEY (workorder_node_id, kb_node_id)
 );
 
--- Explicit read grants: viewer project may read target project even when target is hidden.
-CREATE TABLE IF NOT EXISTS project_visibility (
-    viewer_project_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    target_project_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    PRIMARY KEY (viewer_project_id, target_project_id)
+-- Explicit read grants: viewer workorder may read target workorder even when target is hidden.
+CREATE TABLE IF NOT EXISTS workorder_visibility (
+    viewer_workorder_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    target_workorder_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    PRIMARY KEY (viewer_workorder_id, target_workorder_id)
 );
 
 CREATE TABLE IF NOT EXISTS docs (
@@ -98,9 +98,9 @@ CREATE TABLE IF NOT EXISTS meta (
     value TEXT NOT NULL
 );
 
--- Depth limit. Project = direct child of plans = level 1. Level 4 -> needs_review. Level 5 -> refused.
+-- Depth limit. Workorder = direct child of plans = level 1. Level 4 -> needs_review. Level 5 -> refused.
 -- kb subtree and the fixed roots (root, kb, plans) are exempt: anything not under plans returns -1.
-CREATE OR REPLACE FUNCTION project_level(p_parent BIGINT) RETURNS INT AS $$
+CREATE OR REPLACE FUNCTION workorder_level(p_parent BIGINT) RETURNS INT AS $$
 DECLARE
     plans_id BIGINT := (SELECT value::bigint FROM meta WHERE key = 'plans_node_id');
     lvl INT := 0;
@@ -119,16 +119,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Depth guard, plus: a direct child of plans or of kb gets a uuid (project / knowledge base identity).
+-- Depth guard, plus: a direct child of plans or of kb gets a uuid (workorder / knowledge base identity).
 CREATE OR REPLACE FUNCTION nodes_depth_guard() RETURNS trigger AS $$
 DECLARE
     lvl INT;
     kb_id BIGINT := (SELECT value::bigint FROM meta WHERE key = 'kb_node_id');
 BEGIN
-    lvl := project_level(NEW.parent_id);
+    lvl := workorder_level(NEW.parent_id);
     IF lvl >= 5 THEN
         RAISE EXCEPTION USING ERRCODE = 'check_violation',
-            MESSAGE = 'depth limit: level 5 is refused. Open a separate project under plans for that branch, with its own plan and the same procedure.';
+            MESSAGE = 'depth limit: level 5 is refused. Open a separate workorder under plans for that branch, with its own plan and the same procedure.';
     END IF;
     IF lvl = 4 THEN NEW.needs_review := true; END IF;
     IF NEW.uuid IS NULL AND (lvl = 1 OR (kb_id IS NOT NULL AND NEW.parent_id = kb_id)) THEN
@@ -147,7 +147,7 @@ CREATE TRIGGER nodes_depth_guard_move BEFORE UPDATE OF parent_id ON nodes FOR EA
     WHEN (OLD.parent_id IS DISTINCT FROM NEW.parent_id) EXECUTE FUNCTION nodes_depth_guard();
 
 -- Node-level kb override: the planner narrows (or widens) which kbs workers scoped at or beneath
--- this node may read. The nearest ancestor override wins; without one, the project's set applies.
+-- this node may read. The nearest ancestor override wins; without one, the workorder's set applies.
 -- A row in node_kb_overrides with no node_kbs rows means "no kbs" for that subtree.
 CREATE TABLE IF NOT EXISTS node_kb_overrides (
     node_id BIGINT PRIMARY KEY REFERENCES nodes(id) ON DELETE CASCADE

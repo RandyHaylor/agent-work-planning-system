@@ -32,9 +32,9 @@ def _client(token=None):
 
 def test_task_done_takes_encrypted_backup_and_it_restores():
     with _client() as starter:
-        project = starter.post("/projects", json={"title": "backup project", "summary": "Backed up"}).json()
-    planner = _client(project["planner_token"])
-    task = planner.post("/nodes", json={"parent_id": project["node_id"], "title": "task to finish", "summary": "Finish me"}).json()
+        workorder = starter.post("/workorders", json={"title": "backup workorder", "summary": "Backed up"}).json()
+    planner = _client(workorder["planner_token"])
+    task = planner.post("/nodes", json={"parent_id": workorder["node_id"], "title": "task to finish", "summary": "Finish me"}).json()
     marker_doc = planner.post(f"/nodes/{task['id']}/docs", json={"role": "instruction", "body": "unique marker 7f3a9c"}).json()
 
     before = {b.path for b in FB.list_backups()}
