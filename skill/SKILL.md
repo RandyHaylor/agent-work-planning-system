@@ -30,7 +30,7 @@ uv run ai-project-planning-server bootstrap      # the user types the admin pass
 uv run ai-project-planning-server                # HTTPS on 127.0.0.1:8787
 uv run ai-project-planning-server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
 ```
-You never see or ask for the password. The user types it into the window. The session token works until logout, idle expiry, or a server restart. If a call returns 401, run `admin-login` again and ask the user to approve.
+You never see or ask for the password. The user types it into the window. Bootstrap prompts in a terminal, not a browser: open a terminal window on the user's desktop running it (e.g. `gnome-terminal --working-directory <repo> -- uv run ai-project-planning-server bootstrap`) and the user types the password there. The session token works until logout, idle expiry, or a server restart. If a call returns 401, run `admin-login` again and ask the user to approve.
 
 ## Backups
 - A full encrypted database backup is taken automatically whenever a task is set done. On demand: `uv run ai-project-planning-server backup`. List: `backups`. Restore, with the server stopped and the user present to type the admin password: `restore <file>`.

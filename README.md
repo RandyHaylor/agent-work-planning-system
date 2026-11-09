@@ -82,6 +82,7 @@ uv sync --extra test
 uv run ai-project-planning-server init-env     # .env (gitignored, owner-only): DB password and server access token, once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
 uv run ai-project-planning-server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively. SAVE IT: it cannot be recovered
+                                               # an agent opens a terminal window on the user's desktop running this (e.g. gnome-terminal -- ...); the user types the password there; the agent never sees it
 uv run ai-project-planning-server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
 uv run ai-project-planning-server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
 ```
