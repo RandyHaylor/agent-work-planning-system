@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     owner       BIGINT,
     state       TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'blocked', 'done')),
     needs_review BOOLEAN NOT NULL DEFAULT false,
+    uuid        UUID UNIQUE,                      -- set for projects (children of plans) and kbs (children of kb)
+    visible     BOOLEAN NOT NULL DEFAULT true,    -- projects only: readable by other projects' planners
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS nodes_parent_idx ON nodes(parent_id);
@@ -15,7 +17,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     token_hash      TEXT NOT NULL UNIQUE,
     scope_node_id   BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     parent_token_id BIGINT REFERENCES tokens(id),
-    role            TEXT NOT NULL CHECK (role IN ('planner', 'worker')),
+    role            TEXT NOT NULL CHECK (role IN ('admin', 'planner', 'worker')),
     revoked         BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -23,6 +25,20 @@ CREATE TABLE IF NOT EXISTS tokens (
 ALTER TABLE nodes
     DROP CONSTRAINT IF EXISTS nodes_owner_fkey,
     ADD CONSTRAINT nodes_owner_fkey FOREIGN KEY (owner) REFERENCES tokens(id);
+
+-- Which knowledge bases a project may read.
+CREATE TABLE IF NOT EXISTS project_kbs (
+    project_node_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    kb_node_id      BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    PRIMARY KEY (project_node_id, kb_node_id)
+);
+
+-- Explicit read grants: viewer project may read target project even when target is hidden.
+CREATE TABLE IF NOT EXISTS project_visibility (
+    viewer_project_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    target_project_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    PRIMARY KEY (viewer_project_id, target_project_id)
+);
 
 CREATE TABLE IF NOT EXISTS docs (
     id          BIGSERIAL PRIMARY KEY,
@@ -87,8 +103,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Depth guard, plus: a direct child of plans or of kb gets a uuid (project / knowledge base identity).
 CREATE OR REPLACE FUNCTION nodes_depth_guard() RETURNS trigger AS $$
-DECLARE lvl INT;
+DECLARE
+    lvl INT;
+    kb_id BIGINT := (SELECT value::bigint FROM meta WHERE key = 'kb_node_id');
 BEGIN
     lvl := project_level(NEW.parent_id);
     IF lvl >= 5 THEN
@@ -96,6 +115,9 @@ BEGIN
             MESSAGE = 'depth limit: level 5 is refused. Open a separate project under plans for that branch, with its own plan and the same procedure.';
     END IF;
     IF lvl = 4 THEN NEW.needs_review := true; END IF;
+    IF NEW.uuid IS NULL AND (lvl = 1 OR (kb_id IS NOT NULL AND NEW.parent_id = kb_id)) THEN
+        NEW.uuid := gen_random_uuid();
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

@@ -73,10 +73,10 @@ def main() -> int:
         run(["uv", "sync", "--extra", "test", "--quiet"], env)
         out = run(["uv", "run", "python", "-m", "server", "bootstrap"], env, capture=True).stdout
         print(out, end="")
-        m = re.search(r"^ROOT_TOKEN=(\S+)$", out, re.M)
+        m = re.search(r"^ADMIN_TOKEN=(\S+)$", out, re.M)
         if not m:
-            raise SystemExit("bootstrap did not print ROOT_TOKEN")
-        env["PLANNER_ROOT_TOKEN"] = m.group(1)
+            raise SystemExit("bootstrap did not print ADMIN_TOKEN")
+        env["PLANNER_ADMIN_TOKEN"] = m.group(1)
         server = subprocess.Popen(["uv", "run", "python", "-m", "server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
         wait_for_server()
         return subprocess.run(["uv", "run", "pytest", "-q", "server", "tests"], cwd=ROOT, env=env).returncode

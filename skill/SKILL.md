@@ -5,7 +5,7 @@ description: How to run and follow the agent planning process against the hosted
 
 # Planning server
 
-Two roles. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.
+Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.
 The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
 
 ```
@@ -13,7 +13,32 @@ H="Authorization: Bearer $PLANNER_TOKEN"
 curl -sk $PLANNER_URL/me -H "$H"
 ```
 
-`/me` returns your `role` (`planner` or `worker`) and `scope_node_id`.
+`/me` returns your `role` (`admin`, `planner`, or `worker`) and `scope_node_id`.
+
+
+# If you are the ADMIN
+
+You are not a project planner. You maintain the knowledge bases, create projects, and control what projects can see. You work through conversation with the user.
+
+## Stand up the server
+```
+uv sync --extra test
+uv run python -m server init-env       # database password into .env, once per machine
+docker compose up -d --wait
+uv run python -m server bootstrap      # prints ADMIN_TOKEN once
+uv run python -m server                # HTTPS on 127.0.0.1:8787
+```
+
+## Knowledge bases
+- `POST /kbs` `{"title":"...","summary":"..."}` creates a kb (product, company, context, anything). Several may exist.
+- You are the only writer. Agents never edit a kb; they post `kb_proposal` docs on their own nodes.
+- `GET /proposals` lists unresolved proposals. Discuss each with the user. Apply the approved change to the kb yourself, then resolve the proposal with `PATCH /docs/{id}` `{"answer":"...","resolved":true}`.
+
+## Projects
+- `POST /projects` `{"title":"...","summary":"..."}` creates the project with a uuid and mints its planner token. The token is returned once; hand it to the planner with this skill file.
+- `PATCH /projects/{uuid}` `{"kbs":[...kb uuids...]}` assigns which kbs that project may read. `{"visible":false}` hides it from other projects.
+- `POST /projects/{uuid}/visibility` `{"viewer":"<other project uuid>"}` lets a specific project read a hidden one.
+- Default: every project is visible read-only to every planner.
 
 
 # If you are a WORKER
@@ -23,7 +48,8 @@ Your scope node is your assignment. You finish it. You do not plan it, extend it
 ## What you can see
 - Your scope node, its docs, and everything beneath it.
 - Every `environment` doc from above you. That is the larger environment you work within. You are not building it.
-- Nothing else. Ancestors return 404.
+- The knowledge bases assigned to your project (`GET /kbs`). Read-only.
+- Nothing else. Ancestors and other projects return 404.
 
 ## Start of work
 1. `GET /nodes/{scope}`: read `summary` and `instruction`. They are your spec and are read-only to you.
@@ -68,24 +94,15 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 
 # If you are a PLANNER
 
-You run the process. The user works through you and never touches the server directly.
+You run one project. The user works through you and never touches the server directly.
 Owning a node means you delegate its work. You never do the work of a node you own.
-
-## Stand up the server
-```
-uv sync --extra test
-uv run python -m server init-env       # generates the database password into .env (once per machine)
-docker compose up -d --wait
-uv run python -m server bootstrap      # prints ROOT_TOKEN once
-uv run python -m server                # HTTPS on 127.0.0.1:8787
-```
-Server and database listen on localhost only. There is no default password.
-Mint yourself a planner token scoped to `plans` with the root token, and work with that from then on.
-The root token exists only to bootstrap and mint the first planner.
+Your token came from the admin when the project was created. `/me` gives your project's node id.
 
 ## Your rights
-- You are the admin. Full read and write on every node in `plans` and `kb`: summaries, instructions, environment, questions, state, children, tokens. You see every project and the larger environment.
-- `kb` changes are made only after the user approves them. Proposals arrive as `kb_proposal` docs; you hand them to the user.
+- Full read and write on everything in your project: summaries, instructions, environment, questions, state, children, worker tokens.
+- Read-only on every other project that is visible to you (`GET /projects`). Use them for context, never write there.
+- Read-only on the knowledge bases assigned to your project (`GET /kbs`). You never edit a kb. Propose changes as `kb_proposal` docs on your project node; the admin applies them after talking with the user.
+- You mint workers only, and only inside your project.
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 
@@ -107,7 +124,7 @@ The root token exists only to bootstrap and mint the first planner.
    - Modules and names. Nothing is named for its implementation. Every module that can stand alone does, with its own docs and tests.
    - Formatting of everything that has a form: every output, error, work product, document, and server entry. Whitespace, line endings, header versus body, message shapes, file layout, section order. A format you leave undecided is declared dev discretion by name.
    - Delegation order, where nodes depend on each other.
-5. Write the plan to the server. Project node under `plans` with `summary`, `instruction` (including flow and user story), and an `environment` doc (generic project summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the project node's docs as written on the server; that text is what the user approves.
+5. Write the plan to the server. On your project node: update `summary`, write `instruction` (including flow and user story), and an `environment` doc (generic project summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the project node's docs as written on the server; that text is what the user approves.
 6. Build every node hollow. A node is not a node until it has its scaffolding: folders, types, stubs returning something, rails tests green against the stubs, acceptance tests with exact values under a strict expected-fail marker. Documentation exists as named sections marked to be filled.
 7. Reference run, required. Implement the rules once as a throwaway outside the workspace, never delivered. Every acceptance test must pass against it. A failure is a wrong expected value or a missing rule. Fix before commit. Then walk every exact value and name the rule it follows from.
 8. Commit the skeleton. That commit is the diff baseline. Name it in every instruction the same way.
@@ -131,10 +148,9 @@ Carry the standing rules verbatim. Include: a contradiction between tests, or be
 - Note obvious non-scope decisions as questions for later review, without stopping work.
 - A roadblock stops everything: a conflict, or a spec that cannot be built. Set the node `blocked`, do not start dependent nodes, and wait for the user. Work already running on independent nodes continues.
 
-## Knowledge base
-- `kb` is the record of the product, the company, and the broader context. Read it in the survey step.
-- Workers propose changes as `kb_proposal` docs. You hand them to the user.
-- You apply a proposal to `kb` only after the user approves it. Record the approval by resolving the proposal doc with the answer, then write the change into `kb`.
+## Knowledge bases
+- The kbs assigned to your project record the product, the company, and the broader context. Read them in the survey step.
+- Workers propose changes as `kb_proposal` docs on their nodes. You review them and, if they hold up, post your own `kb_proposal` on the project node for the admin. You never write a kb.
 
 ## Proof before reliance
 Before planning on top of anything that already exists, prove it does what you think through a real integration test or actual use. Reading code gives "it seems to". Record the proof on the project node. If that needs a spike, it is one of the spikes in step 2.

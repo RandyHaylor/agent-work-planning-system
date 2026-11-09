@@ -2,7 +2,7 @@
 
     uv run python -m server init-env    # 1. random DB password -> .env (gitignored); refuses to overwrite
     docker compose up -d --wait         # 2. Postgres, bound to 127.0.0.1, password from .env
-    uv run python -m server bootstrap   # 3. schema + root tree; prints ROOT_TOKEN once
+    uv run python -m server bootstrap   # 3. schema + root tree; prints ADMIN_TOKEN once
     uv run python -m server             # 4. HTTPS on 127.0.0.1:8787 (PLANNER_HOST / PLANNER_PORT)
 
 Env: PLANNER_DSN overrides .env; PLANNER_DB_PORT (default 5433) is read by init-env and compose.

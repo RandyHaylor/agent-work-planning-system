@@ -262,3 +262,19 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - Nodes are immutable for now: no delete, rename, or reparent. A mis-created node is set `blocked` with a note. Revisit if it hurts.
 - Fixes: creating a project backs it up at once; kb proposals can be resolved with an answer and listed; `needs_review` can be cleared and listed; backup writes go to a temp dir then rename; clear error on an unbootstrapped database.
 - Docs: "no nesting limits" and "reachable over the internet" removed from requirements; superseded permission sections in this file marked as such; dates corrected to local dates; the skill names pytest as the assumed runner.
+
+## Added 2026-11-09: multiple projects, multiple kbs, three roles
+- Everything decided before this section was in the context of a single project. This section is the multi-project layer.
+- Roles:
+  - `admin`: top-level. Not a project planner. Maintains the knowledge bases through conversation with the user, creates projects, assigns kbs to projects, controls project visibility. One per server, minted at bootstrap (replaces the root token).
+  - `planner`: scoped to one project. Full read and write inside it. Read-only on every other visible project. Cannot edit any kb.
+  - `worker`: unchanged. Its node and beneath, the project's assigned kbs, ancestor environment docs.
+- Projects:
+  - Each project has a uuid, assigned at creation, used in the API and the backup directory.
+  - `POST /projects` (admin) creates the node under `plans`, the uuid, and mints the project's planner token. Returns uuid and token once.
+  - `visible` flag, default true. A hidden project is readable only by its own planner, the admin, and projects granted explicit visibility.
+  - Admin grants a project read access to a hidden project: `POST /projects/{uuid}/visibility {viewer: <uuid>}`.
+- Knowledge bases:
+  - Multiple kbs, each a child of `kb`, each with its own uuid. Product, company, context, whatever is needed.
+  - Admin assigns any number of kbs to a project. Planner and workers of that project read only the assigned kbs.
+  - Agents never edit a kb. They write `kb_proposal` docs. The admin applies changes after a conversation with the user. (Supersedes "kb writable by planners".)

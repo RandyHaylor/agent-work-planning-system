@@ -1,31 +1,33 @@
 # Agent Planning Server
 
-Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. A planner agent plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
+Postgres-backed tree of projects, plan nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. An admin agent maintains the knowledge bases and creates projects. A planner agent runs one project: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
 
 **Scope at this stage.** A local tool for one developer's machine, running next to an agent harness that can spawn multiple agents. Tokens are lane-keeping, not security: they stop a dev agent from reading or writing outside its node. There is no threat model beyond that, so the self-signed cert and `curl -k` are fine. It is not an internet service.
 
 ## Data model
 
-- `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans`.
+- `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review, uuid, visible`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans` with a uuid; a knowledge base is a direct child of `kb` with a uuid. Several of each may exist.
+- `project_kbs`: which kbs a project may read. `project_visibility`: explicit grants to read a hidden project.
 - `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
-- `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
+- `tokens`: `id, label, role (admin|planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
 - `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes are immutable: no delete, rename, or reparent.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
 
 ## Permissions
 
-| | planner | worker |
-|---|---|---|
-| read | everything: `plans`, `kb`, all projects | scope subtree + `kb` + `environment` docs on ancestors |
-| write docs | any role, any node | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
-| edit docs | any | docs it authored |
-| create nodes | in scope | beneath scope |
-| set state, answer escalations | yes | no |
-| mint / revoke tokens | in scope | no |
-| write `kb` | yes, after user approval of a `kb_proposal` | no |
+| | admin | planner | worker |
+|---|---|---|---|
+| read | everything | own project; other projects that are visible or granted; assigned kbs | scope subtree; ancestor `environment` docs; assigned kbs |
+| write docs | anywhere | any role in own project | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
+| edit docs | any | any in own project | docs it authored |
+| create nodes | anywhere | in own project | beneath scope |
+| set state, answer escalations | yes | in own project | no |
+| mint tokens | planners, workers | workers in own project | no |
+| create projects, assign kbs, set visibility | yes | no | no |
+| write a kb, resolve `kb_proposal` | yes | no | no |
 
-Ancestor nodes return 404 to workers. Rules live in `server/permissions.py`, pure, with unit tests.
+Other projects and ancestors return 404 to workers. Hidden projects return 404 to planners without a grant. Rules live in `server/permissions.py`, pure, with unit tests.
 
 ## API
 
@@ -34,6 +36,12 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | Method | Path | Body / returns |
 |---|---|---|
 | GET | `/me` | `role, scope_node_id, label` |
+| POST | `/projects` | admin: `{title, summary}` → `{uuid, node_id, planner_token}` |
+| GET | `/projects` | projects the caller may read |
+| PATCH | `/projects/{uuid}` | admin: `{visible?, kbs?: [uuid]}` |
+| POST / DELETE | `/projects/{uuid}/visibility` | admin: `{viewer: uuid}` grant or revoke read on a hidden project |
+| POST | `/kbs` | admin: `{title, summary}` → kb with uuid |
+| GET | `/kbs` | kbs the caller may read |
 | GET | `/nodes/{id}` | node, docs, `environment` (ancestor env docs) |
 | GET | `/nodes/{id}/tree` | nested `id, title, state` |
 | POST | `/nodes` | `{parent_id, title, summary}`; level 4 adds `warning` |
@@ -56,21 +64,23 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 uv sync --extra test
 uv run python -m server init-env     # random DB password into .env (gitignored), once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
-uv run python -m server bootstrap    # schema, root/kb/plans, prints ROOT_TOKEN once
+uv run python -m server bootstrap    # schema, root/kb/plans, prints ADMIN_TOKEN once
 uv run python -m server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
 ```
 
-Server and database bind to localhost. No default password. The planner is the admin: it sees and writes everything. Tokens keep workers in their lane; the server does not gate process steps such as `done` on reports or reviews.
+Server and database bind to localhost. No default password. The admin token creates kbs and projects; each project's planner token is minted at project creation. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews.
 
 Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
 
-Backup: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
+Backup: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-uuid>/` (kbs under `kb/<uuid>/`) as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
 
-First use: mint a planner token scoped to `plans` with the root token, then work with that.
+First use: create a kb and a project with the admin token. The response carries the project's planner token.
 
 ```
-curl -sk https://localhost:8787/tokens -H "Authorization: Bearer $ROOT_TOKEN" \
-  -H 'content-type: application/json' -d '{"label":"planner","role":"planner","scope_node_id":3}'
+curl -sk https://localhost:8787/kbs -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H 'content-type: application/json' -d '{"title":"product","summary":"..."}'
+curl -sk https://localhost:8787/projects -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H 'content-type: application/json' -d '{"title":"my project","summary":"..."}'
 ```
 
 ## Process summary

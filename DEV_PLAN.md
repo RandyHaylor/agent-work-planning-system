@@ -167,6 +167,27 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
+## Decided 2026-11-09 - multiple projects, multiple kbs, three roles
+
+Everything decided earlier was in the context of one project
+
+Admin
+- Top-level; not a project planner
+- Maintains kbs through conversation with the user; the only kb writer
+- Creates projects, assigns kbs, controls visibility
+- Minted at bootstrap; replaces the root token
+
+Planner, one per project
+- Full write in its project; read-only on other visible projects
+- Reads only the kbs assigned to its project; never writes a kb
+- Mints workers only
+
+Projects and kbs have uuids
+- `POST /projects` creates the project and mints its planner token in one call
+- Several kbs may exist; any number assigned to a project
+- Projects visible to all planners by default; a hidden project needs an explicit grant from the admin
+
+
 ## Decided 2026-11-09 - after the third blind review
 
 Doc version history is the audit trail

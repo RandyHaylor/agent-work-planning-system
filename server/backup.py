@@ -6,7 +6,9 @@ written to a sibling temp dir, then swapped into place, so a crash never leaves 
 half-updated directory and stale files never survive.
 Glue: ``backup_root_for`` and ``backup_subtree`` pull rows from a connection.
 
-Layout under the destination dir:
+Layout: one directory per project, named by the project's uuid, under the backup dir;
+one directory per knowledge base under ``kb/<uuid>/``. Inside:
+    title                                      the project's or kb's title
     tree.json                                  every node in the subtree
     docs/<node-id>-<role>-<doc-id>.md          one file per doc: header block, blank line, body verbatim
     docs/<node-id>-<role>-<doc-id>.history.md  previous versions, oldest first; only when any exist
@@ -14,10 +16,11 @@ Layout under the destination dir:
 import json
 import re
 import shutil
+import uuid as _uuid
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional
 
-NODE_FIELDS = ("id", "parent_id", "title", "state", "needs_review", "owner", "created_at")
+NODE_FIELDS = ("id", "parent_id", "uuid", "title", "state", "needs_review", "visible", "owner", "created_at")
 
 
 class BackupError(RuntimeError):
@@ -30,7 +33,11 @@ def slug(title: str) -> str:
 
 
 def _iso(v: Any) -> Any:
-    return v.isoformat() if hasattr(v, "isoformat") else v
+    if hasattr(v, "isoformat"):
+        return v.isoformat()
+    if isinstance(v, _uuid.UUID):
+        return str(v)
+    return v
 
 
 def _header(d: Mapping[str, Any], authors: Mapping[int, str], when_key: str) -> list[str]:
@@ -52,13 +59,17 @@ def _header(d: Mapping[str, Any], authors: Mapping[int, str], when_key: str) -> 
 
 def render(nodes: Iterable[Mapping[str, Any]], docs: Iterable[Mapping[str, Any]],
            authors: Optional[Mapping[int, str]] = None,
-           versions: Optional[Mapping[int, Iterable[Mapping[str, Any]]]] = None) -> dict[str, str]:
+           versions: Optional[Mapping[int, Iterable[Mapping[str, Any]]]] = None,
+           title: Optional[str] = None) -> dict[str, str]:
     """Return {relative path: content}. Nodes sorted by id; docs by id.
-    ``versions`` maps doc id -> previous versions (each with body, answer, resolved, author, edited_at)."""
+    ``versions`` maps doc id -> previous versions (each with body, answer, resolved, author, edited_at).
+    ``title`` adds a ``title`` file naming the subtree."""
     authors = authors or {}
     versions = versions or {}
     tree = [{k: _iso(n.get(k)) for k in NODE_FIELDS} for n in sorted(nodes, key=lambda n: n["id"])]
     out = {"tree.json": json.dumps(tree, indent=2) + "\n"}
+    if title is not None:
+        out["title"] = title + "\n"
     for d in sorted(docs, key=lambda d: d["id"]):
         stem = f"docs/{d['node_id']}-{d['role']}-{d['id']}"
         out[f"{stem}.md"] = "\n".join(_header(d, authors, "updated_at")) + "\n\n" + d["body"]
@@ -97,13 +108,18 @@ def write(dest: Path, files: Mapping[str, str]) -> None:
 
 def backup_root_for(chain: list[int], plans_id: int, kb_id: int) -> Optional[int]:
     """Given [node, parent, ..., root], return the subtree root to back up:
-    the project (direct child of plans), kb for anything under kb, else None."""
-    if kb_id in chain:
-        return kb_id
-    if plans_id in chain:
-        i = chain.index(plans_id)
-        return chain[i - 1] if i > 0 else None
+    the project (direct child of plans) or the kb (direct child of the kb container), else None."""
+    for container in (kb_id, plans_id):
+        if container in chain:
+            i = chain.index(container)
+            return chain[i - 1] if i > 0 else None
     return None
+
+
+def dest_for(base: Path, top: Mapping[str, Any], kb_id: int) -> Path:
+    """Project: <base>/<uuid>. Knowledge base: <base>/kb/<uuid>. Falls back to id-slug if no uuid."""
+    name = str(top["uuid"]) if top.get("uuid") else f"{top['id']}-{slug(top['title'])}"
+    return (base / "kb" / name) if top.get("parent_id") == kb_id else (base / name)
 
 
 def backup_subtree(conn, root_id: int, dest_base: Path, kb_id: int) -> Path:
@@ -124,7 +140,6 @@ def backup_subtree(conn, root_id: int, dest_base: Path, kb_id: int) -> Path:
         versions.setdefault(v["doc_id"], []).append(v)
     authors = {t["id"]: t["label"] for t in conn.execute("SELECT id, label FROM tokens").fetchall()}
     top = next(r for r in rows if r["id"] == root_id)
-    name = "kb" if root_id == kb_id else f"{root_id}-{slug(top['title'])}"
-    dest = dest_base / name
-    write(dest, render(rows, docs, authors, versions))
+    dest = dest_for(dest_base, top, kb_id)
+    write(dest, render(rows, docs, authors, versions, title=top["title"]))
     return dest
