@@ -5,7 +5,7 @@ description: How to run and follow the agent planning process against the hosted
 
 # Planning server
 
-Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN` and `X-Server-Access: <contents of the server_access_token file at the server location>`. Without the second header the server answers nothing.The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
+Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN` and `X-Server-Access: <the PLANNER_SERVER_ACCESS_TOKEN value from the server's .env file>`. Without the second header the server answers nothing.The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
 
 ```
 H="Authorization: Bearer $PLANNER_TOKEN"
@@ -24,13 +24,16 @@ Admin is a session the user approves. There is no standing admin token.
 ## Stand up the server and become admin
 ```
 uv sync --extra test
-uv run ai-project-planning-server init-env       # database password into .env, once per machine
+uv run ai-project-planning-server init-env       # .env: database password and server access token, once per machine
 docker compose up -d --wait
 uv run ai-project-planning-server bootstrap      # the user types the admin password; tell the user to save it somewhere secure, it cannot be recovered
 uv run ai-project-planning-server                # HTTPS on 127.0.0.1:8787
 uv run ai-project-planning-server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
 ```
 You never see or ask for the password. The user types it into the window. The session token works until logout, idle expiry, or a server restart. If a call returns 401, run `admin-login` again and ask the user to approve.
+
+## Backups
+- A full encrypted database backup is taken automatically whenever a task is set done. On demand: `uv run ai-project-planning-server backup`. List: `backups`. Restore, with the server stopped and the user present to type the admin password: `restore <file>`.
 
 ## Knowledge bases
 - `POST /kbs` `{"title":"...","summary":"..."}` creates a kb (product, company, context, anything). Several may exist.
@@ -119,6 +122,9 @@ With the server up, create it yourself: `POST /projects` `{"title":"...","summar
 - You never edit a kb. Propose changes as `kb_proposal` docs on your project node; the admin applies them after talking with the user.
 - You mint workers only, and only inside your project.
 
+## Handing off the planner role
+When needed, you can hand the project planner role to a new agent. With the user's permission, pass your planner token to that agent, along with the `planner` blocks from `agent_instruction_injections.json` and this skill file. The new agent is then the planner for this project.
+
 ## When you need an admin
 Writing a kb, hiding a project, granting visibility into a hidden one, applying a proposal: these need an admin session, which only the user can approve. Either spawn a new unattached agent and tell it to run `admin-login` and what to do once in, or tell the user to start an admin session and pass on the instruction. Then continue.
 
@@ -193,7 +199,10 @@ When a worker stops, check its node against the definition of done with real tes
 - A generic module knows nothing of the project or its consumers.
 - Isolated modules have their own docs, unit tests, and real integration tests.
 - Nothing mocked without an `approval` doc.
-Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Close the project node when every node beneath meets its definition of done.
+Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Setting a node `done` takes a full encrypted database backup automatically.
+
+## Editing nodes
+You may rename a node, move it within the project (`PATCH /nodes/{id}` with `title` or `parent_id`; the depth rule applies to moves), or delete it and its subtree (`DELETE /nodes/{id}`). Tokens beneath a deleted node are revoked. Close the project node when every node beneath meets its definition of done.
 
 ## Known pitfalls
 - Fixtures: byte-check with `od` whenever whitespace, line endings, or encoding matter. File-writing tools can drop trailing spaces silently.

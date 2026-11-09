@@ -9,10 +9,12 @@ Roles:
 - admin: top-level. Not a token in the database but a user-approved session (token_id None).
   Reads and writes everything. Creates kbs, controls project visibility, resolves kb proposals,
   mints planners and workers.
-- planner: scoped to one project. Full write inside it. Read-only on every other project
-  that is visible (or that explicitly grants its project visibility). Reads every kb.
-  Decides which kbs its project's workers see (project-wide, or per node). Never writes a kb.
-  Mints workers inside its project only.
+- planner: the project's admin. Always scoped to the project node itself (a direct child of
+  plans); no other scope exists for a planner. Full write inside the project, including other
+  planners' docs and tokens: two planners on one project are two project admins. Read-only on
+  every other project that is visible (or that explicitly grants its project visibility). Reads
+  every kb. Decides which kbs its project's workers see (project-wide, or per node). Never writes
+  a kb. Mints workers inside its project only.
 - worker: reads its scope subtree, the kbs selected for it (nearest node override, else the
   project set), and ancestor environment docs (the API gathers those). Writes reports,
   escalations, spikes, kb proposals there, creates nodes beneath, edits only docs it authored.
@@ -135,6 +137,11 @@ def can_set_state(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> 
     return p.role == PLANNER and _own_project(p, node_id, ancestors, v)
 
 
+def can_edit_node(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
+    """Rename, reparent, delete: the project's planner or the admin. Same rule as state."""
+    return can_set_state(p, node_id, ancestors, v)
+
+
 def can_write_doc(p: Principal, node_id: int, role: str, ancestors: Ancestors, v: View) -> bool:
     if role not in ALL_DOC_ROLES:
         return False
@@ -175,12 +182,21 @@ def can_mint(p: Principal, scope_node_id: int, child_role: str, ancestors: Ances
     """Only planners and workers are minted; the admin is a session, never a token."""
     if child_role not in TOKEN_ROLES:
         return False
+    proj = project_of(scope_node_id, ancestors, v.plans)
+    if proj is None:
+        return False  # planners and workers live inside a project
+    if child_role == PLANNER and scope_node_id != proj:
+        return False  # a planner is scoped to the project node itself, never a node inside it
     if p.role == ADMIN:
-        # planners and workers live inside a project
-        return project_of(scope_node_id, ancestors, v.plans) is not None
+        return True
     if p.role == PLANNER:
         return child_role == WORKER and _own_project(p, scope_node_id, ancestors, v)
     return False
+
+
+def planner_scope_ok(scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
+    """A planner token's scope must be a project node (a direct child of plans)."""
+    return project_of(scope_node_id, ancestors, v.plans) == scope_node_id
 
 
 def can_revoke(p: Principal, token_scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
@@ -191,15 +207,14 @@ def can_revoke(p: Principal, token_scope_node_id: int, ancestors: Ancestors, v: 
 
 
 def can_rotate(p: Principal, token_id: int, token_role: str, token_scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
-    """Reissue a token's plaintext. Admin: any token. A planner: any worker token in its own project,
-    or its own token. Never another planner's token, never outside its project. Workers: nothing."""
+    """Retrieve or reissue a token's plaintext. Admin: any token. A planner: any token in its own
+    project, its own and other planners' included (a planner is the project's admin). Never outside
+    its project. Workers: nothing."""
     if p.role == ADMIN:
         return True
     if p.role != PLANNER:
         return False
-    if p.token_id is not None and token_id == p.token_id:
-        return True
-    return token_role == WORKER and _own_project(p, token_scope_node_id, ancestors, v)
+    return _own_project(p, token_scope_node_id, ancestors, v)
 
 
 def can_list_tokens(p: Principal) -> bool:

@@ -137,6 +137,8 @@ def test_mint():
     assert not P.can_mint(worker, 6, P.WORKER, anc, V)
     assert P.can_mint(admin, 4, P.PLANNER, anc, V) and P.can_mint(admin, 11, P.WORKER, anc, V)
     assert not P.can_mint(admin, 3, P.PLANNER, anc, V)  # a planner needs a project
+    assert not P.can_mint(admin, 6, P.PLANNER, anc, V)  # and is scoped to the project node itself, never inside it
+    assert P.planner_scope_ok(4, anc, V) and not P.planner_scope_ok(6, anc, V) and not P.planner_scope_ok(3, anc, V)
     # the admin is a session, never a token: nobody mints one
     assert not P.can_mint(admin, 1, P.ADMIN, anc, V) and not P.can_mint(admin, 4, P.ADMIN, anc, V)
     assert not P.can_mint(admin, 4, "bogus", anc, V)
@@ -155,11 +157,15 @@ def test_rotate():
     # admin: any token
     assert P.can_rotate(admin, 2, P.PLANNER, 4, anc, V)
     assert P.can_rotate(admin, 3, P.WORKER, 11, anc, V)
-    # planner: a worker token in its own project, or itself
+    # planner: any token in its own project: a worker, itself, or another planner of the project
     assert P.can_rotate(planner, 3, P.WORKER, 6, anc, V)
     assert P.can_rotate(planner, 2, P.PLANNER, 4, anc, V)
-    # planner: not another planner's token in its project, not a worker outside its project
-    assert not P.can_rotate(planner, 5, P.PLANNER, 4, anc, V)
+    assert P.can_rotate(planner, 5, P.PLANNER, 4, anc, V)
+    # planner: nothing outside its project
     assert not P.can_rotate(planner, 9, P.WORKER, 11, anc, V)
+    assert not P.can_rotate(planner, 8, P.PLANNER, 7, anc, V)
+    # node editing (rename, reparent, delete): project's planner or admin
+    assert P.can_edit_node(planner, 6, anc, V) and P.can_edit_node(admin, 11, anc, V)
+    assert not P.can_edit_node(planner, 11, anc, V) and not P.can_edit_node(worker, 6, anc, V)
     # worker: nothing, not even itself
     assert not P.can_rotate(worker, 3, P.WORKER, 6, anc, V)

@@ -11,10 +11,12 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from ai_project_planning_server import admin as A
 from ai_project_planning_server import backup as B
 from ai_project_planning_server import db
+from ai_project_planning_server import full_backup as FB
 from ai_project_planning_server import permissions as P
 
 app = FastAPI(title="Agent Planning Server", version="0.3.0")
@@ -90,7 +92,7 @@ def _check_access(conn, header: Optional[str]) -> None:
     if expected is None:
         raise HTTPException(503, "database not bootstrapped: run `uv run ai-project-planning-server bootstrap`")
     if not header or not hmac.compare_digest(db.hash_token(header.strip()), expected):
-        raise HTTPException(401, f"missing or wrong server access token ({db.ACCESS_HEADER}); read it from the server_access_token file bootstrap wrote")
+        raise HTTPException(401, f"missing or wrong server access token ({db.ACCESS_HEADER}); it is PLANNER_SERVER_ACCESS_TOKEN in the server's .env")
 
 
 def require_access(x_server_access: Optional[str] = Header(default=None)):
@@ -175,11 +177,9 @@ def admin_login_page(nonce: str = ""):
     return HTMLResponse(A.login_page(nonce))
 
 
-@app.post("/admin/login", response_class=HTMLResponse)
-async def admin_login(request: Request):
-    form = urllib.parse.parse_qs((await request.body()).decode("utf-8"))
-    nonce = (form.get("nonce") or [""])[0]
-    password = (form.get("password") or [""])[0]
+def _admin_login_blocking(nonce: str, password: str) -> HTMLResponse:
+    """The database read and the password hash (hundreds of thousands of rounds) run here, off the
+    event loop, so other requests are served while a login attempt is checked."""
     if not SESSIONS.nonce_valid(nonce):
         raise HTTPException(404, "unknown or expired login nonce; run admin-login again")
     if SESSIONS.rate_limited():
@@ -192,6 +192,15 @@ async def admin_login(request: Request):
         return HTMLResponse(A.login_page(nonce, "Wrong password."), status_code=401)
     SESSIONS.login(nonce)
     return HTMLResponse(A.DONE_PAGE)
+
+
+@app.post("/admin/login", response_class=HTMLResponse)
+async def admin_login(request: Request):
+    # Reading the form body needs the event loop; everything blocking goes to the threadpool.
+    form = urllib.parse.parse_qs((await request.body()).decode("utf-8"))
+    nonce = (form.get("nonce") or [""])[0]
+    password = (form.get("password") or [""])[0]
+    return await run_in_threadpool(_admin_login_blocking, nonce, password)
 
 
 @app.get("/admin/session/{nonce}", dependencies=[Depends(require_access)])
@@ -454,36 +463,111 @@ class NodePatch(BaseModel):
     state: Optional[str] = None
     needs_review: Optional[bool] = None
     kbs: Optional[list[str]] = None  # kb uuids: override the kb set for workers scoped at or beneath this node
+    title: Optional[str] = None
+    parent_id: Optional[int] = None  # reparent, within the same project only
+
+
+def _subtree_depth(c: Ctx, node_id: int) -> int:
+    """How many levels of descendants hang beneath node_id (0 for a leaf)."""
+    row = c.conn.execute(
+        """
+        WITH RECURSIVE sub AS (
+            SELECT id, 0 AS d FROM nodes WHERE id = %s
+            UNION ALL SELECT n.id, s.d + 1 FROM nodes n JOIN sub s ON n.parent_id = s.id
+        ) SELECT max(d) AS d FROM sub
+        """,
+        (node_id,),
+    ).fetchone()
+    return int(row["d"] or 0)
+
+
+def _check_reparent(c: Ctx, node_id: int, new_parent: int) -> None:
+    """A node moves only inside its own project: never a project node, never across projects,
+    never out of plans, never under itself. The depth rule applies to the whole moved subtree."""
+    proj = P.project_of(node_id, c.anc, c.plans)
+    if proj is None or proj == node_id:
+        raise HTTPException(422, "only nodes inside a project can be moved; projects and the fixed roots stay where they are")
+    get_node(c, new_parent)
+    if P.project_of(new_parent, c.anc, c.plans) != proj:
+        raise HTTPException(422, "a node moves within its own project only")
+    if node_id in c.anc(new_parent):
+        raise HTTPException(422, "a node cannot be moved under itself")
+    level = c.conn.execute("SELECT project_level(%s) AS lvl", (new_parent,)).fetchone()["lvl"]
+    if level + _subtree_depth(c, node_id) >= 5:
+        raise HTTPException(409, "depth limit: the moved branch would reach level 5. Open a separate project under plans for that branch.")
 
 
 @app.patch("/nodes/{node_id}")
 def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
-    """Set state, clear needs_review after the user has reviewed a level-4 branch, or set a kb override:
-    the kbs workers at or beneath this node read (nearest ancestor override wins, else the project set)."""
-    if body.state is None and body.needs_review is None and body.kbs is None:
-        raise HTTPException(422, "nothing to change: give state, needs_review, or kbs")
+    """Set state, clear needs_review after the user has reviewed a level-4 branch, set a kb override
+    (the kbs workers at or beneath this node read; nearest ancestor override wins, else the project set),
+    rename, or reparent within the project. The project's planner or the admin."""
+    if all(v is None for v in (body.state, body.needs_review, body.kbs, body.title, body.parent_id)):
+        raise HTTPException(422, "nothing to change: give state, needs_review, kbs, title, or parent_id")
     if body.state is not None and body.state not in STATES:
         raise HTTPException(422, f"state must be one of {STATES}")
+    if body.title is not None and not body.title.strip():
+        raise HTTPException(422, "title cannot be empty")
     get_node(c, node_id)
-    if not P.can_set_state(c.p, node_id, c.anc, c.v):
+    if not P.can_edit_node(c.p, node_id, c.anc, c.v):
         raise HTTPException(403, "cannot change this node")
     if body.kbs is not None and P.project_of(node_id, c.anc, c.plans) is None:
         raise HTTPException(422, "kb overrides apply to nodes inside a project")
+    if body.parent_id is not None:
+        _check_reparent(c, node_id, body.parent_id)
     kb_ids = [node_by_uuid(c, u, parent=c.kb)["id"] for u in (body.kbs or [])]
-    with c.write(node_id):
-        n = c.conn.execute(
-            "UPDATE nodes SET state = COALESCE(%s, state), needs_review = COALESCE(%s, needs_review) WHERE id = %s RETURNING *",
-            (body.state, body.needs_review, node_id),
-        ).fetchone()
-        if body.kbs is not None:
-            c.conn.execute("INSERT INTO node_kb_overrides (node_id) VALUES (%s) ON CONFLICT DO NOTHING", (node_id,))
-            c.conn.execute("DELETE FROM node_kbs WHERE node_id = %s", (node_id,))
-            for k in kb_ids:
-                c.conn.execute("INSERT INTO node_kbs (node_id, kb_node_id) VALUES (%s, %s)", (node_id, k))
+    try:
+        with c.write(node_id):
+            n = c.conn.execute(
+                "UPDATE nodes SET state = COALESCE(%s, state), needs_review = COALESCE(%s, needs_review), "
+                "title = COALESCE(%s, title), parent_id = COALESCE(%s, parent_id) WHERE id = %s RETURNING *",
+                (body.state, body.needs_review, body.title, body.parent_id, node_id),
+            ).fetchone()
+            if body.kbs is not None:
+                c.conn.execute("INSERT INTO node_kb_overrides (node_id) VALUES (%s) ON CONFLICT DO NOTHING", (node_id,))
+                c.conn.execute("DELETE FROM node_kbs WHERE node_id = %s", (node_id,))
+                for k in kb_ids:
+                    c.conn.execute("INSERT INTO node_kbs (node_id, kb_node_id) VALUES (%s, %s)", (node_id, k))
+    except psycopg.errors.CheckViolation as e:
+        raise HTTPException(409, e.diag.message_primary)
     out = node_out(n)
     if body.kbs is not None:
         out["kbs"] = body.kbs
+    if n["needs_review"] and body.parent_id is not None:
+        out["warning"] = "level 4 node: needs_review is set. Review this branch with the user."
+    if body.state == "done" and P.project_of(node_id, c.anc, c.plans) is not None:
+        # A task completed: full encrypted database backup, after the commit above. Synchronous, so
+        # this request waits for pg_dump; the cost grows with database size, which holds no code.
+        try:
+            out["full_backup"] = str(FB.run_backup(c.conn, node_id))
+        except FB.FullBackupError as e:
+            out["full_backup_error"] = str(e)
     return out
+
+
+@app.delete("/nodes/{node_id}", status_code=204)
+def delete_node(node_id: int, c: Ctx = Depends(ctx)):
+    """Delete a node and everything beneath it: its docs, their versions, kb overrides. Tokens scoped
+    in the subtree are revoked, not deleted; they keep their record, rescoped to the project node.
+    Project nodes and the fixed roots are not deleted this way. The project's planner or the admin."""
+    get_node(c, node_id)
+    proj = P.project_of(node_id, c.anc, c.plans)
+    if proj is None or proj == node_id:
+        raise HTTPException(422, "only nodes inside a project can be deleted; projects and the fixed roots cannot")
+    if not P.can_edit_node(c.p, node_id, c.anc, c.v):
+        raise HTTPException(403, "cannot delete this node")
+    with c.write(node_id):
+        c.conn.execute(
+            """
+            WITH RECURSIVE sub AS (
+                SELECT id FROM nodes WHERE id = %s
+                UNION ALL SELECT n.id FROM nodes n JOIN sub s ON n.parent_id = s.id
+            ) UPDATE tokens SET revoked = true, scope_node_id = %s WHERE scope_node_id IN (SELECT id FROM sub)
+            """,
+            (node_id, proj),
+        )
+        c.conn.execute("DELETE FROM nodes WHERE id = %s", (node_id,))  # docs, versions, overrides cascade
+    return None
 
 
 # ---------- docs ----------
@@ -592,6 +676,8 @@ def mint(body: TokenIn, c: Ctx = Depends(ctx)):
     if body.role not in P.TOKEN_ROLES:
         raise HTTPException(422, f"role must be one of {sorted(P.TOKEN_ROLES)}; the admin is a login session, not a token")
     get_node(c, body.scope_node_id)
+    if body.role == P.PLANNER and not P.planner_scope_ok(body.scope_node_id, c.anc, c.v):
+        raise HTTPException(422, "a planner is scoped to a project node (a direct child of plans); it is the project's admin and has no narrower scope")
     if not P.can_mint(c.p, body.scope_node_id, body.role, c.anc, c.v):
         raise HTTPException(403, "cannot mint that role for that scope")
     raw = db.new_token()

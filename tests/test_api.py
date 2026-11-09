@@ -157,6 +157,29 @@ def test_admin_wrong_password_rejected_then_rate_limited():
     client(token).post("/admin/logout")
 
 
+def test_login_attempt_does_not_block_other_requests(world):
+    """Password hashing runs off the event loop: /me answers while a login is being checked."""
+    import threading
+    p = world["planner"]
+    with anon() as c, bare() as browser:
+        nonce = c.post("/admin/nonce").json()["nonce"]
+        done = threading.Event()
+
+        def attempt():
+            browser.post("/admin/login", data={"nonce": nonce, "password": "definitely-wrong-password"})
+            done.set()
+
+        t = threading.Thread(target=attempt)
+        t.start()
+        worst = 0.0
+        while not done.is_set():
+            t0 = time.perf_counter()
+            assert p.get("/me").status_code == 200
+            worst = max(worst, time.perf_counter() - t0)
+        t.join()
+    assert worst < 0.1, f"a /me call waited {worst:.3f}s behind a login attempt"
+
+
 def test_admin_is_never_a_token(admin, world):
     assert world["planner"].post("/tokens", json={"label": "x", "scope_node_id": world["task"]["id"], "role": "admin"}).status_code == 422
     assert admin.post("/tokens", json={"label": "x", "scope_node_id": world["root_node"], "role": "admin"}).status_code == 422
@@ -416,10 +439,13 @@ def test_mint_rules(world):
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["other"]["id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["kb_prod"]["node_id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "worker"}).status_code == 201
-    # admin mints planners for a project, workers anywhere in a project, never a planner outside one
+    # admin mints planners for a project, workers anywhere in a project
     assert a.post("/tokens", json={"label": "p2", "scope_node_id": pid, "role": "planner"}).status_code == 201
-    assert a.post("/tokens", json={"label": "x", "scope_node_id": world["plans"], "role": "planner"}).status_code == 403
     assert a.post("/tokens", json={"label": "x", "scope_node_id": world["kb_prod"]["node_id"], "role": "worker"}).status_code == 403
+    # a planner is always scoped to the project node itself: any other scope is a 422, whoever asks
+    for scope in (world["plans"], tid, world["kb_prod"]["node_id"]):
+        r = a.post("/tokens", json={"label": "x", "scope_node_id": scope, "role": "planner"})
+        assert r.status_code == 422 and "project node" in r.json()["detail"], scope
 
 
 def test_revoke_rules(world):
@@ -466,10 +492,10 @@ def test_retrieve_secret(world):
     # planner retrieves its own
     me = p.get("/me").json()
     assert p.get(f"/tokens/{me['token_id']}/secret").status_code == 200
-    # planner 403 on a sibling project's planner token and on a sibling planner in its own project
+    # planner 403 on a sibling project's planner token; another planner of its own project is fine (project admin)
     assert p.get(f"/tokens/{pb['planner_token_id']}/secret").status_code == 403
     sub = a.post("/tokens", json={"label": "sub-pl3", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
-    assert p.get(f"/tokens/{sub['token_id']}/secret").status_code == 403
+    assert p.get(f"/tokens/{sub['token_id']}/secret").json()["token"] == sub["token"]
     assert a.get(f"/tokens/{sub['token_id']}/secret").json()["token"] == sub["token"]
     # worker: 403, even for itself
     assert w.get(f"/tokens/{wt['token_id']}/secret").status_code == 403
@@ -510,10 +536,15 @@ def test_rotate_rules_and_effect(world):
     p.headers["Authorization"] = f"Bearer {r.json()['token']}"
     assert p.get("/me").json()["token_id"] == me["token_id"]
     assert client(old_header[7:]).get("/me").status_code == 401
-    # a planner cannot rotate another planner's token in its own project; the admin can
+    # a planner is the project's admin: it rotates another planner's token in its own project; so does the admin
     sub = a.post("/tokens", json={"label": "sub-pl2", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
-    assert p.post(f"/tokens/{sub['token_id']}/rotate").status_code == 403
+    r = p.post(f"/tokens/{sub['token_id']}/rotate")
+    assert r.status_code == 201 and client(sub["token"]).get("/me").status_code == 401
     assert a.post(f"/tokens/{sub['token_id']}/rotate").status_code == 201
+    # a planner revokes another planner of its own project too (self-revoke stays 409)
+    sub2 = a.post("/tokens", json={"label": "sub-pl4", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    assert p.delete(f"/tokens/{sub2['token_id']}").status_code == 204
+    assert client(sub2["token"]).get("/me").status_code == 401
     # revoked tokens are not rotated; cascade is untouched by rotation
     assert a.delete(f"/tokens/{sub['token_id']}").status_code == 204
     assert a.post(f"/tokens/{sub['token_id']}/rotate").status_code == 409
@@ -693,6 +724,62 @@ def test_depth_level5_refused_direct_sql():
 
 def test_unknown_node_404(world):
     assert world["admin"].get("/nodes/999999").status_code == 404
+
+
+def test_node_rename_reparent_delete(world):
+    """Nodes are editable by the project's planner or the admin: rename, move within the project
+    (depth rule on the move), delete with everything beneath (tokens revoked, not deleted)."""
+    p, w, a, pb = world["planner"], world["worker"], world["admin"], world["planner_b"]
+    pid, tid = world["project"]["id"], world["task"]["id"]
+    mk = lambda parent, title: p.post("/nodes", json={"parent_id": parent, "title": title, "summary": "s"}).json()
+    box = mk(pid, "box")          # level 2
+    inner = mk(box["id"], "inner")  # level 3
+    leaf = mk(inner["id"], "leaf")  # level 4 (flagged)
+    # rename
+    r = p.patch(f"/nodes/{box['id']}", json={"title": "crate"})
+    assert r.status_code == 200 and r.json()["title"] == "crate"
+    assert p.patch(f"/nodes/{box['id']}", json={"title": "  "}).status_code == 422
+    # reparent within the project: leaf moves up under the project
+    r = p.patch(f"/nodes/{leaf['id']}", json={"parent_id": pid})
+    assert r.status_code == 200 and r.json()["parent_id"] == pid
+    # move crate (with inner beneath) under leaf: crate lands at level 3, inner at level 4, nothing at 5 -> allowed
+    assert p.patch(f"/nodes/{box['id']}", json={"parent_id": leaf['id']}).status_code == 200
+    assert p.get(f"/nodes/{inner['id']}").json()["needs_review"] is False  # the trigger flags the moved node only
+    deeper = mk(inner["id"], "deeper")  # inner is level 4 now, so this would be level 5 -> refused on insert
+    assert "detail" in deeper and p.get(f"/nodes/{inner['id']}").json()["children"] == []
+    # leaf(2) -> crate(3) -> inner(4): moving leaf under the task (level 2) would put inner at level 5 -> 409
+    assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": tid}).status_code == 409
+    # moving leaf under its own descendant: 422
+    assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": inner['id']}).status_code == 422
+    # across projects, or out of plans, or a project node itself: 422
+    assert p.patch(f"/nodes/{leaf['id']}", json={"parent_id": world["other"]["id"]}).status_code == 422
+    assert a.patch(f"/nodes/{leaf['id']}", json={"parent_id": world["plans"]}).status_code == 422
+    assert a.patch(f"/nodes/{pid}", json={"parent_id": world["other"]["id"]}).status_code == 422
+    # level-4 flag is set by the move trigger when a node lands at level 4
+    r = p.patch(f"/nodes/{inner['id']}", json={"parent_id": leaf['id']})  # inner: level 4 -> level 3
+    assert r.status_code == 200 and r.json()["needs_review"] is False
+    r = p.patch(f"/nodes/{inner['id']}", json={"parent_id": box['id']})   # back to level 4
+    assert r.status_code == 200 and r.json()["needs_review"] is True and "warning" in r.json()
+    # a worker and a sibling project's planner: 403 on rename, move, delete
+    for cl in (w, pb):
+        assert cl.patch(f"/nodes/{leaf['id']}", json={"title": "x"}).status_code in (403, 404)
+        assert cl.delete(f"/nodes/{leaf['id']}").status_code in (403, 404)
+    assert w.patch(f"/nodes/{tid}", json={"title": "x"}).status_code == 403
+    assert w.delete(f"/nodes/{tid}").status_code == 403
+    # delete the whole branch: docs, a worker token scoped inside, all gone or revoked
+    p.post(f"/nodes/{inner['id']}/docs", json={"role": "instruction", "body": "doomed"})
+    tok = p.post("/tokens", json={"label": "doomed-w", "scope_node_id": inner["id"], "role": "worker"}).json()
+    assert client(tok["token"]).get("/me").status_code == 200
+    assert p.delete(f"/nodes/{leaf['id']}").status_code == 204
+    for nid in (leaf["id"], box["id"], inner["id"]):
+        assert a.get(f"/nodes/{nid}").status_code == 404
+    assert client(tok["token"]).get("/me").status_code == 401
+    listed = {t["id"]: t for t in a.get("/tokens").json()}
+    assert listed[tok["token_id"]]["revoked"] is True and listed[tok["token_id"]]["scope_node_id"] == pid
+    # projects and fixed roots are never deleted this way
+    assert a.delete(f"/nodes/{pid}").status_code == 422
+    assert a.delete(f"/nodes/{world['plans']}").status_code == 422
+    assert a.delete(f"/nodes/{world['kb_prod']['node_id']}").status_code == 422
 
 
 def test_new_project_backed_up_immediately(world):

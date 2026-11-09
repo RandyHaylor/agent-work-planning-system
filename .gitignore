@@ -6,4 +6,4 @@ __pycache__/
 planner-server.log
 backups/
 .env
-server_access_token
+full_backups/

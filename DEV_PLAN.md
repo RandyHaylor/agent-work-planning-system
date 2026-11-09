@@ -167,6 +167,26 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
+## Decided 2026-11-09 - planner is the project admin; full encrypted backups
+
+Planner is the project's admin, full stop
+- Planner tokens are always project-scoped; the server refuses any other scope
+- Two planners on a project are two admins of it
+- Planner may hand the role to a new agent, passing the token with the user's permission
+- Nodes editable by planner or admin: rename, reparent within the project, delete
+
+Backup is a full encrypted database dump
+- Taken on every task completion and on demand; restore replaces the database
+- Keypair at bootstrap: public key encrypts, private key unlocked by the admin password on restore
+- Retention: last 10 tasks, oldest per day, one per week, one per month
+- The per-write markdown mirror is a live export, not the backup
+
+One local file for what disk access grants
+- Database password and server access token together, owner-only
+
+Admin login hashing runs off the event loop; test runner uses a per-run project name
+
+
 ## Decided 2026-11-09 - tokens live in sessions; sessions per task
 
 A token lives in the agent's session

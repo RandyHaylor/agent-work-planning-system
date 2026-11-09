@@ -140,6 +140,11 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS nodes_depth_guard ON nodes;
 CREATE TRIGGER nodes_depth_guard BEFORE INSERT ON nodes FOR EACH ROW EXECUTE FUNCTION nodes_depth_guard();
+-- The same rule when a node is moved: level 5 refused, level 4 flagged. The API also refuses moving a
+-- node under itself and checks the moved subtree's depth, which a row trigger cannot see.
+DROP TRIGGER IF EXISTS nodes_depth_guard_move ON nodes;
+CREATE TRIGGER nodes_depth_guard_move BEFORE UPDATE OF parent_id ON nodes FOR EACH ROW
+    WHEN (OLD.parent_id IS DISTINCT FROM NEW.parent_id) EXECUTE FUNCTION nodes_depth_guard();
 
 -- Node-level kb override: the planner narrows (or widens) which kbs workers scoped at or beneath
 -- this node may read. The nearest ancestor override wins; without one, the project's set applies.

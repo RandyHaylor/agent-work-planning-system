@@ -2,10 +2,11 @@
 
     uv run python scripts/test_all.py
 
-Uses its own compose project (`planner-test`), its own DB host port, its own random DB
-password, its own random admin password, its own server access token file and a temp backup dir,
-so the live `docker compose` project, its volume, its .env, its access token and its backups
-directory are never touched. The tests obtain
+Uses its own compose project (`planner-test-<random>`), its own DB host port, its own random DB
+password, admin password and server access token (all passed in the environment, never written to
+the repo's .env), a temp backup dir and a temp log, so the live `docker compose` project, its
+volume, its .env and its backups directory are never touched and parallel runs on one machine
+never collide (each still needs its own PLANNER_PORT and PLANNER_DB_PORT). The tests obtain
 an admin session through the real login flow (nonce, password form, pickup). Starts a fresh Postgres, bootstraps,
 starts the server, runs unit + integration tests, then stops the server and tears the
 test compose project down with its volume.
@@ -33,7 +34,8 @@ URL = f"https://localhost:{PORT}"
 PASSWORD = secrets.token_urlsafe(16)
 ADMIN_PASSWORD = secrets.token_urlsafe(16)
 DSN = f"postgresql://planner:{PASSWORD}@127.0.0.1:{DB_PORT}/planner"
-COMPOSE = ["docker", "compose", "-p", "planner-test"]
+ACCESS_TOKEN = "acc_" + secrets.token_urlsafe(32)
+COMPOSE = ["docker", "compose", "-p", f"planner-test-{secrets.token_hex(4)}"]
 
 
 def run(args: list[str], env: dict, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
@@ -65,18 +67,18 @@ def port_free(port: int) -> bool:
 def main() -> int:
     if not port_free(int(PORT)):
         raise SystemExit(f"port {PORT} is already in use; set PLANNER_PORT to a free port so the tests hit the server under test")
-    backup_dir = tempfile.mkdtemp(prefix="planner-test-backups-")
-    access_token_file = str(Path(tempfile.mkdtemp(prefix="planner-test-access-")) / "server_access_token")
+    work = Path(tempfile.mkdtemp(prefix="planner-test-"))
+    backup_dir = str(work / "backups")
     env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DB_PASSWORD=PASSWORD, PLANNER_DSN=DSN,
                PLANNER_PORT=PORT, PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir,
-               PLANNER_SERVER_ACCESS_TOKEN=access_token_file,  # bootstrap writes it here; tests and the CLI read it
+               PLANNER_SERVER_ACCESS_TOKEN=ACCESS_TOKEN,   # bootstrap hashes it; tests and the CLI send it
                PLANNER_ADMIN_PASSWORD=ADMIN_PASSWORD,     # bootstrap reads it instead of prompting
                PLANNER_ADMIN_FAIL_WINDOW="3",             # short lockout window so the rate-limit test is quick
                PLANNER_TEST_HOOKS="1")                    # enables POST /admin/_clear_sessions (simulated restart)
-    run(COMPOSE + ["down", "-v"], env, check=False)
     run(COMPOSE + ["up", "-d", "--wait"], env)
     server = None
-    log = open(ROOT / "planner-server.log", "w")
+    log = open(work / "planner-server.log", "w")
+    print(f"test run files in {work}")
     try:
         run(["uv", "sync", "--extra", "test", "--quiet"], env)
         out = run(["uv", "run", "ai-project-planning-server", "bootstrap"], env, capture=True).stdout

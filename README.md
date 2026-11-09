@@ -2,6 +2,8 @@
 
 Postgres-backed tree of projects, plan nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. Any agent with server access creates a project and becomes its planner: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. An admin session, approved by the user per session, maintains the knowledge bases and project visibility. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Rules added at the start of every agent's session, before its custom instructions, by agent type: `agent_instruction_injections.json`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
 
+**The planner is the project's admin.** Full stop. A planner token is always scoped to a whole project. Inside that project a planner edits any node or doc, including another planner's, controls every worker token, clears review flags, and sets state. Two planners on one project are two admins of it. A review that treats any of this as a defect is measuring against a model this system does not use. The global admin session does the same across all projects plus the knowledge bases and visibility.
+
 **Why the lanes exist.** Agents given the whole picture build what they imagine instead of what was planned. They wander into sibling modules, redefine interfaces, and invent context. The tokens, the scoped reads, and the read-only instruction docs exist to keep each agent on its own task with exactly the context it needs and nothing more. That is context control, not security. The lanes are a deadbolt, not a vault: they keep honest agents honest and make stepping out of lane an explicit act rather than a drift.
 
 **Scope at this stage.** A local tool for one developer's machine, running next to an agent harness that can spawn multiple agents. An agent that reads the env file or the backups folder, or opens the admin login window uninvited, is breaking its rules, and the rules are the control. Isolating agents so they cannot is the user's choice, outside this app. There is no threat model beyond that, so the self-signed cert and `curl -k` are fine. It is not an internet service.
@@ -12,7 +14,7 @@ Postgres-backed tree of projects, plan nodes, and attached docs, served over HTT
 - `project_kbs`: which kbs a project may read. `project_visibility`: explicit grants to read a hidden project.
 - `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
 - `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked, rotated_at`. Auth checks a hash; the plaintext is kept in `token_secrets`, readable by admin for any token and by a planner for its project's workers, so a lost session can be recovered without disrupting anything. Admin is not a token row: it is an in-memory session created by the browser login. The admin password is never stored in plaintext, only as a salted hash, and admin session tokens are never written to any table.
-- `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes are immutable: no delete, rename, or reparent.
+- `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes can be renamed, reparented within their project, and deleted by the project's planner or the admin; the depth rule applies to moves as well as inserts.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
 
@@ -31,7 +33,7 @@ Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `need
 | hide a project, grant visibility | yes | no | no |
 | write a kb, resolve `kb_proposal` | yes | no | no |
 
-Every request also carries `X-Server-Access`, the contents of `server_access_token` written by bootstrap next to `.env`. Without it the server answers 401. This keeps anything without local disk access off the server.
+Every request also carries `X-Server-Access`, the value of `PLANNER_SERVER_ACCESS_TOKEN` in `.env`. Without it the server answers 401. `.env` is the one local file holding what disk access grants: the database password and the server access token, owner-only permissions.
 
 Other projects and ancestors return 404 to workers. Hidden projects return 404 to planners without a grant. Rules live in `ai_project_planning_server/permissions.py`, pure, with unit tests.
 
@@ -55,7 +57,8 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | GET | `/nodes/{id}` | node, docs, `environment` (ancestor env docs) |
 | GET | `/nodes/{id}/tree` | nested `id, title, state` |
 | POST | `/nodes` | `{parent_id, title, summary}`; level 4 adds `warning` |
-| PATCH | `/nodes/{id}` | `{state}`, `{needs_review}`, `{kbs: [uuid]}` (kb override for agents beneath) |
+| PATCH | `/nodes/{id}` | `{state}`, `{needs_review}`, `{title}`, `{parent_id}` (move within the project, depth rule applies), `{kbs: [uuid]}` (kb override for agents beneath) |
+| DELETE | `/nodes/{id}` | planner or admin: delete the subtree; tokens beneath are revoked |
 | GET | `/nodes/review` | nodes flagged `needs_review` in scope |
 | POST | `/nodes/{id}/docs` | `{role, body}` |
 | PATCH | `/docs/{id}` | `{body}`, or `{answer, resolved}` on `escalation` / `kb_proposal` |
@@ -74,7 +77,7 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 
 ```
 uv sync --extra test
-uv run ai-project-planning-server init-env     # random DB password into .env (gitignored), once per machine
+uv run ai-project-planning-server init-env     # .env (gitignored, owner-only): DB password and server access token, once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
 uv run ai-project-planning-server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively. SAVE IT: it cannot be recovered
 uv run ai-project-planning-server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
@@ -83,14 +86,18 @@ uv run ai-project-planning-server admin-login  # opens a browser login window; t
 
 Server and database bind to localhost. No default passwords. Admin is a session: the password is known only to the user, the agent never sees it, and sessions live in server memory only, so a restart ends them. Admin is not needed to start work; any agent creates a project and gets its planner token in the response. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews. Roles and handoffs: `WORKFLOWS.md`.
 
-Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
+Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (live export, default `backups/`), `PLANNER_FULL_BACKUP_DIR` (default `full_backups/`), `PLANNER_DB_PORT` (compose host port, default 5433), `PLANNER_SERVER_ACCESS_TOKEN` (overrides `.env`). Reset with `docker compose down -v`.
 
-Backup: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-uuid>/` (kbs under `kb/<uuid>/`) as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
+Other commands: `set-admin-password` (asks for the current password, re-encrypts the backup key), `backup`, `backups`, `restore <file>`, `init-backup-keys` (for a database bootstrapped before backups existed), `admin-login`, `admin-logout`.
+
+Live export: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-uuid>/` (kbs under `kb/<uuid>/`) as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized. An export failure rolls the write back. This is a readable mirror, not the backup.
+
+Backup: a full database dump, encrypted, taken every time a task node is set done, and on demand with `uv run ai-project-planning-server backup`. Files land in `full_backups/`. Retention after each backup: every backup from the last 10 task completions, the oldest of each day, one per week, one per month. Encryption uses a keypair created at bootstrap: the public key is stored in the clear and used at backup time, the private key is stored encrypted with the admin password and unlocked only on restore. Restore replaces the database: `uv run ai-project-planning-server restore <file>` asks for the admin password and a typed confirmation. A backup holds whatever was in the database, including anything later rolled back; that is the point. After a rollback for a severe security reason, stop work, take a new backup, then load and fix or purge older backups in turn. That is a note, not a routine.
 
 First use: create a project. The response carries the project's planner token. No admin needed.
 
 ```
-A="X-Server-Access: $(cat server_access_token)"
+A="X-Server-Access: $(grep PLANNER_SERVER_ACCESS_TOKEN .env | cut -d= -f2)"
 curl -sk https://localhost:8787/projects -H "$A" \
   -H 'content-type: application/json' -d '{"title":"my project","summary":"..."}'
 ```

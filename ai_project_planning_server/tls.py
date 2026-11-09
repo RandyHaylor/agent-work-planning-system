@@ -29,5 +29,9 @@ def ensure_cert() -> tuple[Path, Path]:
         .sign(pk, hashes.SHA256())
     )
     key.write_bytes(pk.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()))
+    try:
+        key.chmod(0o600)
+    except OSError:
+        pass
     cert.write_bytes(c.public_bytes(serialization.Encoding.PEM))
     return cert, key

@@ -23,7 +23,7 @@ A session, not a standing role, and not required to start work. Exists only afte
 When a planner needs one of these, it either spawns a new unattached agent to become admin, with the user typing the password, or tells the user to start an admin session and passes on the instruction.
 
 ## Planner agent
-One project, start to finish. Any agent with server access starts a project with `POST /projects` and receives that project's planner token in the response. That agent is the planner.
+One project, start to finish. Any agent with server access starts a project with `POST /projects` and receives that project's planner token in the response. That agent is the planner, and the project's admin. It can hand the role to a new agent when needed, passing the token with the user's permission.
 - Decides which knowledge bases its project uses, and may override the set on a specific task node.
 - Outlines with the user, surveys what exists, runs spikes only for what must be proven.
 - Writes the formal plan with the user and puts it on the server; the user approves the server text.
@@ -43,12 +43,12 @@ One node, holding that node's worker token.
 
 ## Startup, in order
 ```
-uv run ai-project-planning-server init-env            # DB password into .env, once per machine
+uv run ai-project-planning-server init-env            # .env: DB password and server access token, once per machine
 docker compose up -d --wait
-uv run ai-project-planning-server bootstrap           # user types the admin password and SAVES IT SOMEWHERE SECURE; it cannot be recovered. Writes server_access_token
+uv run ai-project-planning-server bootstrap           # user types the admin password and SAVES IT SOMEWHERE SECURE; it cannot be recovered, and backups cannot be restored without it
 uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
 ```
-Every request carries the contents of `server_access_token` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
+Every request carries the `PLANNER_SERVER_ACCESS_TOKEN` value from `.env` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
 
 ## Tokens and sessions
 A token lives in the agent's session. Agent harnesses strongly try to train against agents looking into other agents' session files; this system officially leans on that. An admin can retrieve or change any agent's token; a planner can retrieve or change its workers' tokens. Retrieval never disrupts a running session.
@@ -63,6 +63,7 @@ Whether agents run in their own VMs, containers, or one shared machine is the us
 |---|---|---|
 | User | Admin | Injected instruction blocks for `admin`, then the skill file; a typed password in the login window, per session |
 | Server | Planner | Project planner token, in the `POST /projects` response |
+| Planner | New planner | The planner token, with the user's permission, when the role is handed off |
 | Planner | Admin | A spawned admin agent, or an instruction relayed through the user, for kb writes, hiding, visibility, proposals |
 | Planner | Worker | Injected instruction blocks for `worker`, then worker token, workspace path, skill file, scratch folder name |
 | Worker | Planner | Report doc on the node; escalation docs when blocked |

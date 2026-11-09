@@ -325,3 +325,22 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - Large or complex tasks go to separate agents, or to agents forked from another session.
 - The planner suggests the split at its discretion, and invites the user to approve or alter it before deploying.
 - Correction, same day: retrieve means retrieve. The server keeps the plaintext in a table readable only through `GET /tokens/{id}/secret`: admin for any token, a planner for the worker tokens in its project and its own. Nothing is forced to change; rotation exists only as the "change" half, used when wanted. A deadbolt, not a vault door.
+
+## Added 2026-11-09: planner is the project admin, full stop
+- A planner token is always scoped to a project node. The server refuses any other scope for a planner.
+- Two planners on one project are two project admins. Either may edit the other's docs, rotate or retrieve the other's workers' tokens, and clear the level-4 flag. By design.
+- Reviews that flag planner powers inside its project as defects are measuring against a model this system does not use.
+- The admin login handler runs off the event loop so other requests do not wait on password hashing.
+- One local file holds what anyone with disk access needs to reach the server: the database password and the server access token, owner-only permissions.
+- Test runner: a per-run compose project name and log path, so runs never collide.
+
+## Added 2026-11-09: backup is a full encrypted database backup
+- A backup is a full dump of the database, encrypted. Restore replaces the database from a chosen backup.
+- Encryption: at bootstrap the server creates a keypair. The public key is stored in the clear; the private key is stored encrypted with the admin password. Backups are encrypted to the public key, so no password is needed when a task completes. Restore asks for the admin password to unlock the private key.
+- Trigger: a new backup every time a task node is set done.
+- Retention: one per day (the oldest that day), one per task for the last 10 tasks, one per week, one per month.
+- Disk space is not a concern. Code does not live in the database.
+- A backup is a backup: whatever was in the database is in it, including anything later rolled back. That is the point. Note, not a procedure: after a rollback for a severe security reason, stop work, take a new backup, then load and fix or purge older backups in turn.
+- The per-write markdown mirror stays and is called what it is: a live export, not the backup.
+- Nodes are editable by the project's planner or the global admin: title, parent (within the project, depth rule enforced on the move too), and delete. Supersedes "nodes are immutable for now".
+- A project planner can hand off the project planner role to a new agent when needed, and is permitted to pass the planner token to that agent with the permission of the user.

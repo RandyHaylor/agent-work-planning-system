@@ -7,14 +7,15 @@ No admin token is minted or printed. The admin is a session approved by the user
 browser login (``uv run ai-project-planning-server admin-login``). The password is asked for interactively;
 PLANNER_ADMIN_PASSWORD in the environment overrides the prompt, for tests and automation.
 
-Also writes the server access token file (``server_access_token`` next to .env, or the path in
-PLANNER_SERVER_ACCESS_TOKEN) and stores its hash: every request must carry it in X-Server-Access."""
+Also stores the hash of the server access token (PLANNER_SERVER_ACCESS_TOKEN in .env, written by
+init-env, or the environment override): every request must carry it in X-Server-Access."""
 import getpass
 import os
 import sys
 
 from ai_project_planning_server import admin as A
 from ai_project_planning_server import db
+from ai_project_planning_server import full_backup
 
 
 PASSWORD_WARNING = """
@@ -59,8 +60,8 @@ def store_password(conn, password: str) -> None:
 
 
 def store_access_token(conn) -> str:
-    """Write the server access token file and store its hash. Every request must carry the token."""
-    token = db.write_access_token()
+    """Store the hash of the server access token from .env (or the environment). Every request must carry the token."""
+    token = db.ensure_access_token()
     conn.execute("INSERT INTO meta (key, value) VALUES ('server_access_hash', %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", (db.hash_token(token),))
     return token
 
@@ -73,7 +74,7 @@ def main():
             if not db.meta_get(conn, "server_access_hash"):
                 with conn.transaction():
                     store_access_token(conn)
-                print(f"Server access token written to {db.access_token_path()}")
+                print(f"Server access token registered ({db.ACCESS_KEY} in {db.ENV_FILE})")
             print("Already bootstrapped. Use `uv run ai-project-planning-server set-admin-password` to change the admin password.")
             return
         password = read_password()
@@ -88,8 +89,10 @@ def main():
             for k, v in (("root_node_id", root), ("kb_node_id", kb), ("plans_node_id", plans)):
                 conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s)", (k, str(v)))
             store_password(conn, password)
+            full_backup.ensure_keys(conn, password)
         print(f"root_node_id={root} kb_node_id={kb} plans_node_id={plans}")
-        print(f"Server access token written to {db.access_token_path()} (every request carries it in {db.ACCESS_HEADER})")
+        where = "the environment" if os.environ.get(db.ACCESS_KEY) else str(db.ENV_FILE)
+        print(f"Server access token registered: {db.ACCESS_KEY} from {where} (every request carries it in {db.ACCESS_HEADER})")
         print("Admin password set. Become admin with: uv run ai-project-planning-server admin-login")
         print("Save the admin password somewhere secure now. It cannot be recovered.")
 
@@ -98,8 +101,12 @@ def set_admin_password():
     with db.connect() as conn:
         if not db.meta_get(conn, "root_node_id"):
             raise SystemExit("not bootstrapped: run `uv run ai-project-planning-server bootstrap` first")
+        new_password = read_password("New admin password")
         with conn.transaction():
-            store_password(conn, read_password("New admin password"))
+            # The backup private key is encrypted with the admin password; re-encrypt it so backups stay restorable.
+            msg = full_backup.on_password_change(conn, new_password, lambda: os.environ.get("PLANNER_ADMIN_CURRENT_PASSWORD") or getpass.getpass("Current admin password (unlocks the backup key): "))
+            store_password(conn, new_password)
+        print(msg)
         print("Admin password updated. Existing admin sessions stay valid until the server restarts or they log out.")
 
 
