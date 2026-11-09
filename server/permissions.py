@@ -6,8 +6,9 @@ caller fills from the database (which projects and kbs the principal may read).
 The caller supplies an ``ancestors(node_id)`` function returning [node, parent, ..., root].
 
 Three roles:
-- admin: top-level. Reads and writes everything. Creates projects and kbs, assigns kbs to
-  projects, controls project visibility, resolves kb proposals, mints any token.
+- admin: top-level. Not a token in the database but a user-approved session (token_id None).
+  Reads and writes everything. Creates projects and kbs, assigns kbs to projects, controls
+  project visibility, resolves kb proposals, mints planners and workers.
 - planner: scoped to one project. Full write inside it. Read-only on every other project
   that is visible (or that explicitly grants its project visibility). Reads only the kbs
   assigned to its project. Never writes a kb. Mints workers inside its project only.
@@ -24,6 +25,7 @@ Ancestors = Callable[[int], list[int]]
 
 ADMIN, PLANNER, WORKER = "admin", "planner", "worker"
 ROLES = frozenset({ADMIN, PLANNER, WORKER})
+TOKEN_ROLES = frozenset({PLANNER, WORKER})  # roles a database token can carry; admin is a session only
 
 PLANNER_ONLY_DOC_ROLES = frozenset({"summary", "instruction", "environment", "question", "survey", "approval", "review"})
 WORKER_DOC_ROLES = frozenset({"report", "spike", "escalation", "kb_proposal"})
@@ -33,7 +35,7 @@ ENV_ROLE = "environment"
 
 @dataclass(frozen=True)
 class Principal:
-    token_id: int
+    token_id: Optional[int]  # None for the admin session
     scope_node_id: int
     role: str
     project_id: Optional[int] = None  # the project (direct child of plans) the scope lies in; None for admin
@@ -144,12 +146,11 @@ def can_resolve_proposal(p: Principal) -> bool:
 
 
 def can_mint(p: Principal, scope_node_id: int, child_role: str, ancestors: Ancestors, v: View) -> bool:
-    if child_role not in ROLES:
+    """Only planners and workers are minted; the admin is a session, never a token."""
+    if child_role not in TOKEN_ROLES:
         return False
     if p.role == ADMIN:
-        # planners and workers live inside a project; a second admin is scoped to root
-        if child_role == ADMIN:
-            return scope_node_id == v.root
+        # planners and workers live inside a project
         return project_of(scope_node_id, ancestors, v.plans) is not None
     if p.role == PLANNER:
         return child_role == WORKER and _own_project(p, scope_node_id, ancestors, v)

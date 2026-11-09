@@ -18,7 +18,7 @@ def anc(n):
 
 
 V = P.View(root=1, plans=3, kb=2, readable_projects=frozenset({4, 12}), readable_kbs=frozenset({8}))
-admin = P.Principal(token_id=1, scope_node_id=1, role=P.ADMIN)
+admin = P.Principal(token_id=None, scope_node_id=1, role=P.ADMIN)
 planner = P.Principal(token_id=2, scope_node_id=4, role=P.PLANNER, project_id=4)
 worker = P.Principal(token_id=3, scope_node_id=6, role=P.WORKER, project_id=4)
 
@@ -115,7 +115,8 @@ def test_mint():
     assert not P.can_mint(worker, 6, P.WORKER, anc, V)
     assert P.can_mint(admin, 4, P.PLANNER, anc, V) and P.can_mint(admin, 11, P.WORKER, anc, V)
     assert not P.can_mint(admin, 3, P.PLANNER, anc, V)  # a planner needs a project
-    assert P.can_mint(admin, 1, P.ADMIN, anc, V) and not P.can_mint(admin, 4, P.ADMIN, anc, V)
+    # the admin is a session, never a token: nobody mints one
+    assert not P.can_mint(admin, 1, P.ADMIN, anc, V) and not P.can_mint(admin, 4, P.ADMIN, anc, V)
     assert not P.can_mint(admin, 4, "bogus", anc, V)
 
 

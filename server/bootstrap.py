@@ -1,33 +1,74 @@
-"""Create schema, root tree (root -> kb, plans) and print the admin token once.
+"""Create schema, root tree (root -> kb, plans) and set the admin password.
 
-Runs in one transaction: either the whole tree and meta exist afterwards, or nothing does.
-A second run on a bootstrapped database is a no-op that says so."""
+Runs in one transaction: either the whole tree, meta and password exist afterwards, or nothing does.
+A second run on a bootstrapped database is a no-op that says so.
+
+No admin token is minted or printed. The admin is a session approved by the user through the
+browser login (``python -m server admin-login``). The password is asked for interactively;
+PLANNER_ADMIN_PASSWORD in the environment overrides the prompt, for tests and automation."""
+import getpass
+import os
+import sys
+
+from server import admin as A
 from server import db
+
+
+def read_password(purpose: str = "Admin password") -> str:
+    env = os.environ.get("PLANNER_ADMIN_PASSWORD")
+    if env is not None:
+        print("warning: admin password taken from PLANNER_ADMIN_PASSWORD (non-interactive)", file=sys.stderr)
+        problem = A.check_password_policy(env)
+        if problem:
+            raise SystemExit(problem)
+        return env
+    while True:
+        pw = getpass.getpass(f"{purpose} (min {A.MIN_PASSWORD_LEN} chars): ")
+        problem = A.check_password_policy(pw)
+        if problem:
+            print(problem)
+            continue
+        if getpass.getpass("Repeat: ") != pw:
+            print("passwords do not match")
+            continue
+        return pw
+
+
+def store_password(conn, password: str) -> None:
+    salt, h = A.hash_password(password)
+    for k, v in (("admin_pw_salt", salt), ("admin_pw_hash", h)):
+        conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", (k, v))
 
 
 def main():
     with db.connect() as conn:
+        conn.execute("SELECT 1")  # fail early on a bad DSN before asking for a password
+        db.apply_schema(conn)
+        if db.meta_get(conn, "root_node_id"):
+            print("Already bootstrapped. Use `python -m server set-admin-password` to change the admin password.")
+            return
+        password = read_password()
         with conn.transaction():
-            db.apply_schema(conn)
-            if db.meta_get(conn, "root_node_id"):
-                print("Already bootstrapped. The admin token was printed at first bootstrap and is not stored.")
-                return
             root = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (NULL, 'root') RETURNING id").fetchone()["id"]
-            raw = db.new_token()
-            tok = conn.execute(
-                "INSERT INTO tokens (label, token_hash, scope_node_id, role) VALUES ('admin', %s, %s, 'admin') RETURNING id",
-                (db.hash_token(raw), root),
-            ).fetchone()["id"]
-            conn.execute("UPDATE nodes SET owner = %s WHERE id = %s", (tok, root))
-            conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', 'Root of the planning tree.', %s)", (root, tok))
-            kb = conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, 'kb', %s) RETURNING id", (root, tok)).fetchone()["id"]
-            conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', 'Knowledge bases: product, company, broader context. Each child is one kb. Read-only to agents; the admin applies approved changes.', %s)", (kb, tok))
-            plans = conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, 'plans', %s) RETURNING id", (root, tok)).fetchone()["id"]
-            conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', 'All projects live beneath this node.', %s)", (plans, tok))
-            for k, v in (("root_node_id", root), ("kb_node_id", kb), ("plans_node_id", plans), ("admin_token_id", tok)):
+            conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'Root of the planning tree.')", (root,))
+            kb = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (%s, 'kb') RETURNING id", (root,)).fetchone()["id"]
+            conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'Knowledge bases: product, company, broader context. Each child is one kb. Read-only to agents; the admin applies approved changes.')", (kb,))
+            plans = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (%s, 'plans') RETURNING id", (root,)).fetchone()["id"]
+            conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'All projects live beneath this node.')", (plans,))
+            for k, v in (("root_node_id", root), ("kb_node_id", kb), ("plans_node_id", plans)):
                 conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s)", (k, str(v)))
+            store_password(conn, password)
         print(f"root_node_id={root} kb_node_id={kb} plans_node_id={plans}")
-        print(f"ADMIN_TOKEN={raw}")
+        print("Admin password set. Become admin with: uv run python -m server admin-login")
+
+
+def set_admin_password():
+    with db.connect() as conn:
+        if not db.meta_get(conn, "root_node_id"):
+            raise SystemExit("not bootstrapped: run `uv run python -m server bootstrap` first")
+        with conn.transaction():
+            store_password(conn, read_password("New admin password"))
+        print("Admin password updated. Existing admin sessions stay valid until the server restarts or they log out.")
 
 
 if __name__ == "__main__":

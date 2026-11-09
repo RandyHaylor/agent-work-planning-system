@@ -4,15 +4,21 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
+import urllib.parse
+
 import psycopg
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from server import admin as A
 from server import backup as B
 from server import db
 from server import permissions as P
 
-app = FastAPI(title="Agent Planning Server", version="0.2.0")
+app = FastAPI(title="Agent Planning Server", version="0.3.0")
+SESSIONS = A.SessionStore()  # admin sessions: this process only; a restart clears them
+TEST_HOOKS = os.environ.get("PLANNER_TEST_HOOKS") == "1"
 
 ROLES = tuple(sorted(P.ALL_DOC_ROLES))
 STATES = ("open", "blocked", "done")
@@ -64,13 +70,30 @@ def _build_view(conn, role: str, scope: int, root: int, kb: int, plans: int, anc
     return project, P.View(root=root, plans=plans, kb=kb, readable_projects=frozenset(projects), readable_kbs=frozenset(kbs))
 
 
+def _meta_ids(conn) -> tuple[int, int, int]:
+    meta = {k: db.meta_get(conn, k) for k in ("root_node_id", "kb_node_id", "plans_node_id", "admin_pw_hash")}
+    if any(v is None for v in meta.values()):
+        raise HTTPException(503, "database not bootstrapped: run `uv run python -m server bootstrap`")
+    return tuple(int(meta[k]) for k in ("root_node_id", "kb_node_id", "plans_node_id"))
+
+
 def ctx(authorization: Optional[str] = Header(default=None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "missing bearer token")
+    bearer = authorization[7:]
     conn = db.connect()
     try:
+        root, kb, plans = _meta_ids(conn)
+        anc = db.ancestors_fn(conn)
+        if A.is_session_token(bearer):
+            # The admin: an in-memory session approved by the user, never a database row.
+            if not SESSIONS.touch(bearer):
+                raise HTTPException(401, "admin session unknown, expired, or lost at server restart: run admin-login again")
+            p = P.Principal(token_id=None, scope_node_id=root, role=P.ADMIN, project_id=None)
+            yield Ctx(conn, p, P.View(root=root, plans=plans, kb=kb))
+            return
         # A token is revoked if it, or any token in its minting chain, is revoked.
-        h = db.hash_token(authorization[7:])
+        h = db.hash_token(bearer)
         row = conn.execute(
             """
             WITH RECURSIVE chain AS (
@@ -84,16 +107,71 @@ def ctx(authorization: Optional[str] = Header(default=None)):
         ).fetchone()
         if not row or row["dead"]:
             raise HTTPException(401, "bad token")
-        meta = {k: db.meta_get(conn, k) for k in ("root_node_id", "kb_node_id", "plans_node_id", "admin_token_id")}
-        if any(v is None for v in meta.values()):
-            raise HTTPException(503, "database not bootstrapped: run `uv run python -m server bootstrap`")
-        root, kb, plans = (int(meta[k]) for k in ("root_node_id", "kb_node_id", "plans_node_id"))
-        anc = db.ancestors_fn(conn)
         project, view = _build_view(conn, row["role"], row["scope_node_id"], root, kb, plans, anc)
         p = P.Principal(token_id=row["id"], scope_node_id=row["scope_node_id"], role=row["role"], project_id=project)
         yield Ctx(conn, p, view)
     finally:
         conn.close()
+
+
+# ---------- admin login: the user approves an agent as admin by typing the password into the browser ----------
+
+@app.post("/admin/nonce", status_code=201)
+def admin_nonce():
+    """Unauthenticated: start a login. The CLI opens /admin/login?nonce=... for the user."""
+    return {"nonce": SESSIONS.new_nonce()}
+
+
+@app.get("/admin/login", response_class=HTMLResponse)
+def admin_login_page(nonce: str = ""):
+    if not SESSIONS.nonce_valid(nonce):
+        raise HTTPException(404, "unknown or expired login nonce; run admin-login again")
+    return HTMLResponse(A.login_page(nonce))
+
+
+@app.post("/admin/login", response_class=HTMLResponse)
+async def admin_login(request: Request):
+    form = urllib.parse.parse_qs((await request.body()).decode("utf-8"))
+    nonce = (form.get("nonce") or [""])[0]
+    password = (form.get("password") or [""])[0]
+    if not SESSIONS.nonce_valid(nonce):
+        raise HTTPException(404, "unknown or expired login nonce; run admin-login again")
+    if SESSIONS.rate_limited():
+        raise HTTPException(429, "too many failed logins; wait a minute")
+    with db.connect() as conn:
+        _meta_ids(conn)
+        salt, h = db.meta_get(conn, "admin_pw_salt"), db.meta_get(conn, "admin_pw_hash")
+    if not A.verify_password(password, salt, h):
+        SESSIONS.record_failure()
+        return HTMLResponse(A.login_page(nonce, "Wrong password."), status_code=401)
+    SESSIONS.login(nonce)
+    return HTMLResponse(A.DONE_PAGE)
+
+
+@app.get("/admin/session/{nonce}")
+def admin_session(nonce: str):
+    """Returns the session token exactly once after the user approved; 404 before and after."""
+    token = SESSIONS.pickup(nonce)
+    if token is None:
+        raise HTTPException(404, "no approved session for this nonce")
+    return {"token": token}
+
+
+@app.post("/admin/logout", status_code=204)
+def admin_logout(authorization: Optional[str] = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer ") or not A.is_session_token(authorization[7:]):
+        raise HTTPException(401, "admin session token required")
+    if not SESSIONS.logout(authorization[7:]):
+        raise HTTPException(401, "no such session")
+    return None
+
+
+if TEST_HOOKS:
+    @app.post("/admin/_clear_sessions", status_code=204)
+    def admin_clear_sessions():
+        """Test hook (PLANNER_TEST_HOOKS=1 only): what a server restart does to admin sessions."""
+        SESSIONS.clear()
+        return None
 
 
 def get_node(c: Ctx, node_id: int):
@@ -126,6 +204,9 @@ def doc_out(d):
 
 @app.get("/me")
 def me(c: Ctx = Depends(ctx)):
+    if c.p.role == P.ADMIN:
+        return {"token_id": None, "label": "admin", "scope_node_id": c.p.scope_node_id, "role": P.ADMIN,
+                "project_node_id": None, "project_uuid": None}
     t = c.conn.execute("SELECT label FROM tokens WHERE id = %s", (c.p.token_id,)).fetchone()
     proj = None
     if c.p.project_id is not None:
@@ -444,8 +525,8 @@ class TokenIn(BaseModel):
 
 @app.post("/tokens", status_code=201)
 def mint(body: TokenIn, c: Ctx = Depends(ctx)):
-    if body.role not in P.ROLES:
-        raise HTTPException(422, f"role must be one of {sorted(P.ROLES)}")
+    if body.role not in P.TOKEN_ROLES:
+        raise HTTPException(422, f"role must be one of {sorted(P.TOKEN_ROLES)}; the admin is a login session, not a token")
     get_node(c, body.scope_node_id)
     if not P.can_mint(c.p, body.scope_node_id, body.role, c.anc, c.v):
         raise HTTPException(403, "cannot mint that role for that scope")
@@ -496,7 +577,7 @@ def revoke(token_id: int, c: Ctx = Depends(ctx)):
     t = c.conn.execute("SELECT scope_node_id FROM tokens WHERE id = %s", (token_id,)).fetchone()
     if not t or not c.can_read(t["scope_node_id"]):
         raise HTTPException(404, "token not found")
-    if token_id == c.p.token_id:
+    if c.p.token_id is not None and token_id == c.p.token_id:
         raise HTTPException(409, "a token cannot revoke itself")
     if not P.can_revoke(c.p, t["scope_node_id"], c.anc, c.v):
         raise HTTPException(403, "only the admin, or the planner of the token's project, can revoke")

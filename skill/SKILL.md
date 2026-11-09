@@ -18,16 +18,20 @@ curl -sk $PLANNER_URL/me -H "$H"
 
 # If you are the ADMIN
 
-You are not a project planner. You maintain the knowledge bases, create projects, and control what projects can see. You work through conversation with the user.
+You are not a project planner. You maintain the knowledge bases, create projects, and control what projects can see. You work through conversation with the user. See WORKFLOWS.md for who does what.
 
-## Stand up the server
+Admin is a session the user approves. There is no standing admin token.
+
+## Stand up the server and become admin
 ```
 uv sync --extra test
 uv run python -m server init-env       # database password into .env, once per machine
 docker compose up -d --wait
-uv run python -m server bootstrap      # prints ADMIN_TOKEN once
+uv run python -m server bootstrap      # the user types the admin password; nothing is printed
 uv run python -m server                # HTTPS on 127.0.0.1:8787
+uv run python -m server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
 ```
+You never see or ask for the password. The user types it into the window. The session token works until logout, idle expiry, or a server restart. If a call returns 401, run `admin-login` again and ask the user to approve.
 
 ## Knowledge bases
 - `POST /kbs` `{"title":"...","summary":"..."}` creates a kb (product, company, context, anything). Several may exist.

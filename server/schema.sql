@@ -17,14 +17,18 @@ CREATE TABLE IF NOT EXISTS tokens (
     token_hash      TEXT NOT NULL UNIQUE,
     scope_node_id   BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     parent_token_id BIGINT REFERENCES tokens(id),
-    role            TEXT NOT NULL CHECK (role IN ('admin', 'planner', 'worker')),
+    role            TEXT NOT NULL CHECK (role IN ('planner', 'worker')),
     revoked         BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- The admin is never a token row: it is an in-memory session approved by the user (server/admin.py).
+ALTER TABLE tokens DROP CONSTRAINT IF EXISTS tokens_role_check;
+ALTER TABLE tokens ADD CONSTRAINT tokens_role_check CHECK (role IN ('planner', 'worker'));
 
 ALTER TABLE nodes
     DROP CONSTRAINT IF EXISTS nodes_owner_fkey,
     ADD CONSTRAINT nodes_owner_fkey FOREIGN KEY (owner) REFERENCES tokens(id);
+-- owner / author NULL means the admin session wrote it.
 
 -- Which knowledge bases a project may read.
 CREATE TABLE IF NOT EXISTS project_kbs (
@@ -45,12 +49,13 @@ CREATE TABLE IF NOT EXISTS docs (
     node_id     BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     role        TEXT NOT NULL CHECK (role IN ('summary', 'instruction', 'environment', 'report', 'spike', 'escalation', 'question', 'kb_proposal', 'survey', 'approval', 'review')),
     body        TEXT NOT NULL,
-    author      BIGINT NOT NULL REFERENCES tokens(id),
+    author      BIGINT REFERENCES tokens(id),      -- NULL = admin session
     answer      TEXT,
     resolved    BOOLEAN NOT NULL DEFAULT false,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE docs ALTER COLUMN author DROP NOT NULL;
 CREATE INDEX IF NOT EXISTS docs_node_idx ON docs(node_id);
 CREATE UNIQUE INDEX IF NOT EXISTS docs_one_summary ON docs(node_id) WHERE role = 'summary';
 
@@ -61,9 +66,10 @@ CREATE TABLE IF NOT EXISTS doc_versions (
     body        TEXT NOT NULL,
     answer      TEXT,
     resolved    BOOLEAN NOT NULL,
-    author      BIGINT NOT NULL,
+    author      BIGINT,                             -- NULL = admin session
     edited_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE doc_versions ALTER COLUMN author DROP NOT NULL;
 CREATE INDEX IF NOT EXISTS doc_versions_doc_idx ON doc_versions(doc_id);
 
 CREATE OR REPLACE FUNCTION docs_keep_version() RETURNS trigger AS $$

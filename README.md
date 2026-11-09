@@ -9,7 +9,7 @@ Postgres-backed tree of projects, plan nodes, and attached docs, served over HTT
 - `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review, uuid, visible`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans` with a uuid; a knowledge base is a direct child of `kb` with a uuid. Several of each may exist.
 - `project_kbs`: which kbs a project may read. `project_visibility`: explicit grants to read a hidden project.
 - `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
-- `tokens`: `id, label, role (admin|planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
+- `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint. Admin is not a token row: it is an in-memory session created by the browser login.
 - `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes are immutable: no delete, rename, or reparent.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
@@ -36,6 +36,10 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | Method | Path | Body / returns |
 |---|---|---|
 | GET | `/me` | `role, scope_node_id, label` |
+| POST | `/admin/nonce` | unauthenticated: start a login; returns a nonce |
+| GET / POST | `/admin/login` | the browser page where the user types the admin password |
+| GET | `/admin/session/{nonce}` | the session token, once, after a successful login |
+| POST | `/admin/logout` | end the caller's admin session |
 | POST | `/projects` | admin: `{title, summary}` → `{uuid, node_id, planner_token}` |
 | GET | `/projects` | projects the caller may read |
 | PATCH | `/projects/{uuid}` | admin: `{visible?, kbs?: [uuid]}` |
@@ -64,11 +68,12 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 uv sync --extra test
 uv run python -m server init-env     # random DB password into .env (gitignored), once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
-uv run python -m server bootstrap    # schema, root/kb/plans, prints ADMIN_TOKEN once
+uv run python -m server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively
 uv run python -m server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
+uv run python -m server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
 ```
 
-Server and database bind to localhost. No default password. The admin token creates kbs and projects; each project's planner token is minted at project creation. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews.
+Server and database bind to localhost. No default passwords. Admin is a session: the password is known only to the user, the agent never sees it, and sessions live in server memory only, so a restart ends them. The admin session creates kbs and projects; each project's planner token is minted at project creation. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews. Roles and handoffs: `WORKFLOWS.md`.
 
 Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
 

@@ -278,3 +278,15 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
   - Multiple kbs, each a child of `kb`, each with its own uuid. Product, company, context, whatever is needed.
   - Admin assigns any number of kbs to a project. Planner and workers of that project read only the assigned kbs.
   - Agents never edit a kb. They write `kb_proposal` docs. The admin applies changes after a conversation with the user. (Supersedes "kb writable by planners".)
+
+## Added 2026-11-09: admin is a user-approved session
+- The top-level admin role is something the user approves, every time.
+- Admin password: set by the user at bootstrap, typed interactively, never printed, stored as a hash in the database. Only the user knows it. Changeable with the same interactive command.
+- Bootstrap no longer prints a persistent admin token. There is none.
+- Admin login: the agent runs `python -m server admin-login`. The command opens a browser window to the local server's login page. The user types the password directly into that page; the agent never sees it. On success the server creates an admin session token held in memory only, the command receives it and prints it once, and the agent uses it like any other token.
+- Admin sessions do not survive a server restart. They can also be ended with `python -m server admin-logout` or expire after a configurable idle time (default 8 hours).
+- Who does what, written for agents:
+  - User: approves plans, approves kb changes, approves admin sessions, resolves roadblocks.
+  - Admin agent (session): creates kbs and projects, assigns kbs, sets visibility, applies approved kb changes, hands the project's planner token to the planner.
+  - Planner agent: one project, start to finish, per the planner half of the skill.
+  - Worker agent: one node, per the worker half.

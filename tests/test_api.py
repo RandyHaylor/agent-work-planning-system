@@ -1,26 +1,47 @@
 """Real integration tests over HTTPS against the running server and Postgres.
 
-Requires: docker compose up, bootstrap done, server running, and the env var
-PLANNER_ADMIN_TOKEN set to the token bootstrap printed.
+Requires: docker compose up, bootstrap done with PLANNER_ADMIN_PASSWORD, server running with
+PLANNER_TEST_HOOKS=1 and a short PLANNER_ADMIN_FAIL_WINDOW (scripts/test_all.py does all of this).
+The admin session is obtained through the real login flow: nonce, password form, pickup.
 """
 import os
+import time
 
 import httpx
 import pytest
 
 BASE = os.environ.get("PLANNER_URL", "https://localhost:8787")
-ADMIN = os.environ.get("PLANNER_ADMIN_TOKEN") or os.environ.get("PLANNER_ROOT_TOKEN")
-if not ADMIN:
-    pytest.skip("PLANNER_ADMIN_TOKEN not set", allow_module_level=True)
+ADMIN_PASSWORD = os.environ.get("PLANNER_ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    pytest.skip("PLANNER_ADMIN_PASSWORD not set", allow_module_level=True)
 
 
 def client(token):
     return httpx.Client(base_url=BASE, verify=False, headers={"Authorization": f"Bearer {token}"})
 
 
+def anon():
+    return httpx.Client(base_url=BASE, verify=False)
+
+
+def admin_login(password=ADMIN_PASSWORD):
+    """What `python -m server admin-login` plus the user's browser do, programmatically."""
+    with anon() as c:
+        nonce = c.post("/admin/nonce").json()["nonce"]
+        assert c.get(f"/admin/session/{nonce}").status_code == 404  # nothing to pick up before approval
+        r = c.post("/admin/login", data={"nonce": nonce, "password": password})
+        if r.status_code != 200:
+            return r, None
+        got = c.get(f"/admin/session/{nonce}")
+        assert got.status_code == 200
+        return r, got.json()["token"]
+
+
 @pytest.fixture(scope="module")
 def admin():
-    return client(ADMIN)
+    _, token = admin_login()
+    assert token and token.startswith("adm_")
+    return client(token)
 
 
 @pytest.fixture(scope="module")
@@ -52,6 +73,64 @@ def world(admin):
 def test_401_without_token():
     assert httpx.get(f"{BASE}/me", verify=False).status_code == 401
     assert client("pln_bogus").get("/me").status_code == 401
+    assert client("adm_bogus").get("/me").status_code == 401
+
+
+def test_admin_login_page_and_nonce_rules():
+    with anon() as c:
+        assert c.get("/admin/login?nonce=bogus").status_code == 404
+        nonce = c.post("/admin/nonce").json()["nonce"]
+        page = c.get(f"/admin/login?nonce={nonce}")
+        assert page.status_code == 200 and 'name="password"' in page.text and nonce in page.text
+        # an unregistered nonce cannot log in, even with the right password
+        assert c.post("/admin/login", data={"nonce": "forged", "password": ADMIN_PASSWORD}).status_code == 404
+
+
+def test_admin_session_single_pickup_and_logout(admin):
+    r, token = admin_login()
+    assert r.status_code == 200 and "close this window" in r.text
+    a = client(token)
+    assert a.get("/me").json()["role"] == "admin"
+    # the nonce was consumed: the login page for it is gone and the token cannot be picked up twice
+    assert a.post("/admin/logout").status_code == 204
+    assert a.get("/me").status_code == 401
+    assert a.post("/admin/logout").status_code == 401
+
+
+def test_admin_session_does_not_survive_restart(admin):
+    """PLANNER_TEST_HOOKS exposes what a restart does: the in-memory store is cleared."""
+    _, token = admin_login()
+    a = client(token)
+    assert a.get("/me").status_code == 200
+    assert a.post("/admin/_clear_sessions").status_code == 204
+    assert a.get("/me").status_code == 401
+    assert admin.get("/me").status_code == 401  # the module's admin died too
+    # re-login works, and the module fixture client is repointed for the remaining tests
+    _, token2 = admin_login()
+    admin.headers["Authorization"] = f"Bearer {token2}"
+    assert admin.get("/me").status_code == 200
+
+
+def test_admin_wrong_password_rejected_then_rate_limited():
+    r, token = admin_login("not the password")
+    assert r.status_code == 401 and token is None and "Wrong password" in r.text
+    with anon() as c:
+        for _ in range(4):
+            nonce = c.post("/admin/nonce").json()["nonce"]
+            assert c.post("/admin/login", data={"nonce": nonce, "password": "still wrong"}).status_code == 401
+        nonce = c.post("/admin/nonce").json()["nonce"]
+        assert c.post("/admin/login", data={"nonce": nonce, "password": ADMIN_PASSWORD}).status_code == 429
+    # the runner sets PLANNER_ADMIN_FAIL_WINDOW=3 so the lockout clears quickly
+    time.sleep(float(os.environ.get("PLANNER_ADMIN_FAIL_WINDOW", "60")) + 0.5)
+    _, token = admin_login()
+    assert token
+    client(token).post("/admin/logout")
+
+
+def test_admin_is_never_a_token(admin, world):
+    assert world["planner"].post("/tokens", json={"label": "x", "scope_node_id": world["task"]["id"], "role": "admin"}).status_code == 422
+    assert admin.post("/tokens", json={"label": "x", "scope_node_id": world["root_node"], "role": "admin"}).status_code == 422
+    assert all(t["role"] in ("planner", "worker") for t in admin.get("/tokens").json())
 
 
 def test_me_reports_role_and_project(world):
@@ -60,7 +139,7 @@ def test_me_reports_role_and_project(world):
     p = world["planner"].get("/me").json()
     assert p["role"] == "planner" and p["project_node_id"] == world["project"]["id"]
     a = world["admin"].get("/me").json()
-    assert a["role"] == "admin" and a["project_uuid"] is None
+    assert a["role"] == "admin" and a["project_uuid"] is None and a["token_id"] is None
 
 
 def test_project_creation_returns_working_planner_token(world):
@@ -262,7 +341,7 @@ def test_mint_rules(world):
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "bogus"}).status_code == 422
     # a planner mints workers inside its project only, and never planners or admins
     assert p.post("/tokens", json={"label": "x", "scope_node_id": pid, "role": "planner"}).status_code == 403
-    assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "admin"}).status_code == 403
+    assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "admin"}).status_code == 422
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["other"]["id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": world["kb_prod"]["node_id"], "role": "worker"}).status_code == 403
     assert p.post("/tokens", json={"label": "x", "scope_node_id": tid, "role": "worker"}).status_code == 201
@@ -332,6 +411,9 @@ def test_backup_written_on_every_write(world):
     assert f.exists()
     assert f.read_text(encoding="utf-8").endswith("\n\nfirst draft ")
     assert "author: worker" in f.read_text(encoding="utf-8")
+    # the admin-authored project summary is attributed to "admin"
+    summary = next(p for p in (proj_dir / "docs").iterdir() if p.name.startswith(f"{pid}-summary-"))
+    assert "author: admin" in summary.read_text(encoding="utf-8")
     world["worker"].patch(f"/docs/{r['id']}", json={"body": "second draft"})
     assert f.read_text(encoding="utf-8").endswith("\n\nsecond draft")
     e = world["worker"].post(f"/nodes/{tid}/docs", json={"role": "escalation", "body": "q"}).json()
@@ -383,7 +465,7 @@ def test_bootstrap_twice_is_noop():
     repo = Path(__file__).resolve().parent.parent
     r = subprocess.run(["uv", "run", "python", "-m", "server", "bootstrap"], cwd=repo, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
-    assert "Already bootstrapped" in r.stdout and "ADMIN_TOKEN" not in r.stdout
+    assert "Already bootstrapped" in r.stdout and "adm_" not in r.stdout
     with psycopg.connect(dsn, autocommit=True) as conn:
         assert conn.execute("SELECT count(*) FROM nodes WHERE parent_id IS NULL").fetchone()[0] == 1
         assert conn.execute("SELECT count(*) FROM meta WHERE key='root_node_id'").fetchone()[0] == 1

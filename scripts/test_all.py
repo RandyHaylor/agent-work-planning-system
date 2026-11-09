@@ -3,8 +3,9 @@
     uv run python scripts/test_all.py
 
 Uses its own compose project (`planner-test`), its own DB host port, its own random DB
-password and a temp backup dir, so the live `docker compose` project, its volume, its
-.env and its backups directory are never touched. Starts a fresh Postgres, bootstraps,
+password, its own random admin password and a temp backup dir, so the live `docker compose`
+project, its volume, its .env and its backups directory are never touched. The tests obtain
+an admin session through the real login flow (nonce, password form, pickup). Starts a fresh Postgres, bootstraps,
 starts the server, runs unit + integration tests, then stops the server and tears the
 test compose project down with its volume.
 
@@ -29,6 +30,7 @@ PORT = os.environ.get("PLANNER_PORT", "8787")
 DB_PORT = os.environ.get("PLANNER_DB_PORT", "5434")
 URL = f"https://localhost:{PORT}"
 PASSWORD = secrets.token_urlsafe(16)
+ADMIN_PASSWORD = secrets.token_urlsafe(16)
 DSN = f"postgresql://planner:{PASSWORD}@127.0.0.1:{DB_PORT}/planner"
 COMPOSE = ["docker", "compose", "-p", "planner-test"]
 
@@ -64,7 +66,10 @@ def main() -> int:
         raise SystemExit(f"port {PORT} is already in use; set PLANNER_PORT to a free port so the tests hit the server under test")
     backup_dir = tempfile.mkdtemp(prefix="planner-test-backups-")
     env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DB_PASSWORD=PASSWORD, PLANNER_DSN=DSN,
-               PLANNER_PORT=PORT, PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir)
+               PLANNER_PORT=PORT, PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir,
+               PLANNER_ADMIN_PASSWORD=ADMIN_PASSWORD,     # bootstrap reads it instead of prompting
+               PLANNER_ADMIN_FAIL_WINDOW="3",             # short lockout window so the rate-limit test is quick
+               PLANNER_TEST_HOOKS="1")                    # enables POST /admin/_clear_sessions (simulated restart)
     run(COMPOSE + ["down", "-v"], env, check=False)
     run(COMPOSE + ["up", "-d", "--wait"], env)
     server = None
@@ -73,10 +78,8 @@ def main() -> int:
         run(["uv", "sync", "--extra", "test", "--quiet"], env)
         out = run(["uv", "run", "python", "-m", "server", "bootstrap"], env, capture=True).stdout
         print(out, end="")
-        m = re.search(r"^ADMIN_TOKEN=(\S+)$", out, re.M)
-        if not m:
-            raise SystemExit("bootstrap did not print ADMIN_TOKEN")
-        env["PLANNER_ADMIN_TOKEN"] = m.group(1)
+        if not re.search(r"^root_node_id=", out, re.M):
+            raise SystemExit("bootstrap did not report the root tree")
         server = subprocess.Popen(["uv", "run", "python", "-m", "server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
         wait_for_server()
         return subprocess.run(["uv", "run", "pytest", "-q", "server", "tests"], cwd=ROOT, env=env).returncode

@@ -45,7 +45,7 @@ def _header(d: Mapping[str, Any], authors: Mapping[int, str], when_key: str) -> 
         f"doc: {d['doc_id'] if 'doc_id' in d else d['id']}",
         f"node: {d['node_id']}",
         f"role: {d['role']}",
-        f"author: {authors.get(d['author'], d['author'])}",
+        f"author: {'admin' if d.get('author') is None else authors.get(d['author'], d['author'])}",
     ]
     if when_key == "updated_at":
         header.append(f"created_at: {_iso(d.get('created_at'))}")

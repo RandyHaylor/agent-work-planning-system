@@ -1,11 +1,18 @@
 """Startup order, run by the planner once per machine (steps 1-3 once; step 4 each session):
 
-    uv run python -m server init-env    # 1. random DB password -> .env (gitignored); refuses to overwrite
-    docker compose up -d --wait         # 2. Postgres, bound to 127.0.0.1, password from .env
-    uv run python -m server bootstrap   # 3. schema + root tree; prints ADMIN_TOKEN once
-    uv run python -m server             # 4. HTTPS on 127.0.0.1:8787 (PLANNER_HOST / PLANNER_PORT)
+    uv run python -m server init-env            # 1. random DB password -> .env (gitignored); refuses to overwrite
+    docker compose up -d --wait                 # 2. Postgres, bound to 127.0.0.1, password from .env
+    uv run python -m server bootstrap           # 3. schema + root tree; asks the user for the admin password
+    uv run python -m server                     # 4. HTTPS on 127.0.0.1:8787 (PLANNER_HOST / PLANNER_PORT)
 
-Env: PLANNER_DSN overrides .env; PLANNER_DB_PORT (default 5433) is read by init-env and compose.
+Becoming admin (an agent runs this; the user types the password into the browser window it opens):
+
+    uv run python -m server admin-login         # prints ADMIN_TOKEN=adm_... once; dies with the server
+    uv run python -m server admin-logout        # ends the session in PLANNER_ADMIN_TOKEN
+    uv run python -m server set-admin-password  # change the password on an existing database
+
+Env: PLANNER_DSN overrides .env; PLANNER_DB_PORT (default 5433) is read by init-env and compose;
+PLANNER_ADMIN_IDLE_HOURS (default 8) ends idle admin sessions.
 """
 import os
 import sys
@@ -18,6 +25,15 @@ if cmd == "init-env":
 elif cmd == "bootstrap":
     from server.bootstrap import main
     main()
+elif cmd == "set-admin-password":
+    from server.bootstrap import set_admin_password
+    set_admin_password()
+elif cmd == "admin-login":
+    from server.admin_cli import login
+    sys.exit(login())
+elif cmd == "admin-logout":
+    from server.admin_cli import logout
+    sys.exit(logout())
 elif cmd is None:
     import uvicorn
     from server.tls import ensure_cert

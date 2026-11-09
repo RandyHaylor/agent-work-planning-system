@@ -167,6 +167,18 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
+## Decided 2026-11-09 - admin is a user-approved session
+
+No standing admin token
+- The user sets the admin password at bootstrap; hashed in the database; only the user knows it
+- An agent runs `admin-login`, which opens a browser window; the user types the password there
+- The server issues an in-memory session token; the agent never sees the password
+- Sessions end on logout, idle expiry, or server restart
+
+Who does what is written in WORKFLOWS.md
+- User approves; admin maintains kbs and creates projects; planner runs one project; worker finishes one node
+
+
 ## Decided 2026-11-09 - multiple projects, multiple kbs, three roles
 
 Everything decided earlier was in the context of one project
