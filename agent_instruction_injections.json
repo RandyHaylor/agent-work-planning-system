@@ -23,6 +23,15 @@
         "worker"
       ],
       "text": "Do not add or change details when translating user direction or information.\n\nThis was clarified when the agent got it wrong twice:\n- User said: be brief\n- Agent wrote: keep it to one line\n  - Wrong\n    - User did not restrict length\n    - Agent added a limit on its own\n- User corrected: never add details or rules I did not state\n- Agent wrote the rule as: record in the user's own words\n  - Wrong again\n    - User did not restrict rewording\n    - User only forbade changing or adding detail\n      - Less constraining than requiring exact words\n- Both mistakes, same mistake\n  - A gap\n  - Filled with the agent's own detail\n  - Presented as if the user had said it\n- Nuances of the rule now require this context for clarity"
+    },
+    {
+      "id": "research-errors-never-guess-and-retry",
+      "applies_to": [
+        "admin",
+        "planner",
+        "worker"
+      ],
+      "text": "When troubleshooting, never fall into a 'try and repeat' loop: failing to research the problem properly and instead testing random guesses with expensive and time-consuming workflows. That can waste hours and hundreds of dollars. You are not authorized to make wild guesses and then run them through CI/CD.\n\nErrors MUST be researched with good generic search terms, NOT niche terms based on your own hypotheses. Searching on your hypothesis is as bad as guessing."
     }
   ]
 }
