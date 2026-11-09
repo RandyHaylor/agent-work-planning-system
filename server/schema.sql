@@ -38,6 +38,29 @@ CREATE TABLE IF NOT EXISTS docs (
 CREATE INDEX IF NOT EXISTS docs_node_idx ON docs(node_id);
 CREATE UNIQUE INDEX IF NOT EXISTS docs_one_summary ON docs(node_id) WHERE role = 'summary';
 
+-- Version history: every UPDATE of a doc stores the previous row. Append-only; nothing deletes from it.
+CREATE TABLE IF NOT EXISTS doc_versions (
+    id          BIGSERIAL PRIMARY KEY,
+    doc_id      BIGINT NOT NULL REFERENCES docs(id) ON DELETE CASCADE,
+    body        TEXT NOT NULL,
+    answer      TEXT,
+    resolved    BOOLEAN NOT NULL,
+    author      BIGINT NOT NULL,
+    edited_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS doc_versions_doc_idx ON doc_versions(doc_id);
+
+CREATE OR REPLACE FUNCTION docs_keep_version() RETURNS trigger AS $$
+BEGIN
+    INSERT INTO doc_versions (doc_id, body, answer, resolved, author, edited_at)
+    VALUES (OLD.id, OLD.body, OLD.answer, OLD.resolved, OLD.author, OLD.updated_at);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS docs_keep_version ON docs;
+CREATE TRIGGER docs_keep_version BEFORE UPDATE ON docs FOR EACH ROW EXECUTE FUNCTION docs_keep_version();
+
 CREATE TABLE IF NOT EXISTS meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL

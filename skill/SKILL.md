@@ -62,7 +62,7 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 ## When you are done
 - Every acceptance test for your node passes, rails still pass, your instruction's definition of done is met.
 - The real integration proof above is in your report.
-- Your report is complete: Status / Built / Tests (exact commands and the pytest summary line verbatim) / Deviations / Discretion calls / Open items.
+- Your report is complete: Status / Built / Tests (exact commands and the test runner's summary line verbatim) / Deviations / Discretion calls / Open items.
 - Stop. You do not close your node. The planner checks it against the definition of done and closes it or re-engages you.
 
 

@@ -60,7 +60,7 @@ Nothing about the existing system counts as understood until a real test proves 
 - Dev agents don't get the broader context. They see their own node, what is beneath it, the knowledge base, and the project's environment doc.
 - The planning agent (lead / orchestrator) is the admin. It holds the broader context, sees every project, and answers dev agent escalations. It shares no more context than strictly necessary and keeps concerns separated.
 - Dev agents are encouraged to escalate questions.
-- Knowledge base: read-only to working agents. Agents propose changes or additions as a document handed off to the user. The planning agent applies a proposal only after the user approves it (added 2026-11-06).
+- Knowledge base: read-only to working agents. Agents propose changes or additions as a document handed off to the user. The planning agent applies a proposal only after the user approves it (added 2026-11-05).
 - Plan scope builds on the knowledge base (product definition, rules, term definitions, deliverables). It must mesh with existing reality and changes only what the plan explicitly says is added or changed.
 
 ## Decided: escalation and authority
@@ -94,9 +94,9 @@ Nothing about the existing system counts as understood until a real test proves 
 - Requirements:
   - Fully open source (no open-core or source-available licences).
   - Lightweight.
-  - No nesting limits.
+  - Nesting deep enough for real plans. (Settled 2026-11-05: no limit in the data model; four working levels per project, then the branch becomes its own project.)
   - Reliably prevents agents from editing what they aren't permitted to.
-  - Central and hosted. Mostly multiple agents on one machine, but it must support agents on other machines or VMs reaching it over the internet.
+  - Central and hosted. (Scoped 2026-11-05: a local tool on one developer's machine for now; multiple agents on that machine. Remote agents are not a current requirement.)
 - Chosen direction: a Postgres-based hosted server, possibly hand-rolled, possibly with a handwritten server.
 - Task flow:
   1. A task is planned by the planning agent with the user, per the rules.

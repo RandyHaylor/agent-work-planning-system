@@ -15,6 +15,7 @@ app = FastAPI(title="Agent Planning Server", version="0.1.0")
 
 ROLES = ("summary", "instruction", "environment", "report", "spike", "escalation", "question", "kb_proposal", "survey", "approval", "review")
 STATES = ("open", "blocked", "done")
+ANSWERABLE = ("escalation", "kb_proposal")  # docs a planner answers/resolves in place
 BACKUP_DIR = Path(os.environ.get("PLANNER_BACKUP_DIR", Path(__file__).resolve().parent.parent / "backups"))
 
 
@@ -22,20 +23,26 @@ class Ctx:
     def __init__(self, conn, principal: P.Principal, kb_root: int, plans_root: int):
         self.conn, self.p, self.kb, self.plans, self.anc = conn, principal, kb_root, plans_root, db.ancestors_fn(conn)
 
+    def backup_root(self, node_id: int) -> Optional[int]:
+        return B.backup_root_for(self.anc(node_id), self.plans, self.kb)
+
     @contextmanager
     def write(self, node_id: int):
         """One transaction around a write touching node_id, then a synchronous backup of
         that node's project (or kb) subtree. Writes to one project are serialized with a
         transaction-scoped advisory lock, so backups never interleave: a concurrent write
-        waits its turn. Any failure, including backup, rolls back."""
+        waits its turn. Any failure, including backup, rolls back.
+
+        Yields a holder dict; a caller that creates a new project sets holder["root"] to the
+        new node after the insert, since no project exists to derive it from beforehand."""
         with self.conn.transaction():
-            root = B.backup_root_for(self.anc(node_id), self.plans, self.kb)
-            if root is not None:
-                self.conn.execute("SELECT pg_advisory_xact_lock(%s)", (root,))
-            yield
-            if root is not None:
+            holder = {"root": self.backup_root(node_id)}
+            if holder["root"] is not None:
+                self.conn.execute("SELECT pg_advisory_xact_lock(%s)", (holder["root"],))
+            yield holder
+            if holder["root"] is not None:
                 try:
-                    B.backup_subtree(self.conn, root, BACKUP_DIR, self.kb)
+                    B.backup_subtree(self.conn, holder["root"], BACKUP_DIR, self.kb)
                 except B.BackupError as e:
                     raise HTTPException(500, f"backup failed, write rolled back: {e}")
 
@@ -59,9 +66,10 @@ def ctx(authorization: Optional[str] = Header(default=None)):
         ).fetchone()
         if not row or row["dead"]:
             raise HTTPException(401, "bad token")
-        root_tok = int(db.meta_get(conn, "root_token_id"))
-        kb = int(db.meta_get(conn, "kb_node_id"))
-        plans = int(db.meta_get(conn, "plans_node_id"))
+        meta = {k: db.meta_get(conn, k) for k in ("root_token_id", "kb_node_id", "plans_node_id")}
+        if any(v is None for v in meta.values()):
+            raise HTTPException(503, "database not bootstrapped: run `uv run python -m server bootstrap`")
+        root_tok, kb, plans = (int(meta[k]) for k in ("root_token_id", "kb_node_id", "plans_node_id"))
         p = P.Principal(token_id=row["id"], scope_node_id=row["scope_node_id"], role=row["role"], is_root=row["id"] == root_tok)
         yield Ctx(conn, p, kb, plans)
     finally:
@@ -89,6 +97,13 @@ def me(c: Ctx = Depends(ctx)):
     return {"token_id": c.p.token_id, "label": t["label"], "scope_node_id": c.p.scope_node_id, "role": c.p.role, "is_root": c.p.is_root}
 
 
+@app.get("/nodes/review")
+def nodes_needing_review(c: Ctx = Depends(ctx)):
+    """Nodes with needs_review set, limited to what the caller can read."""
+    rows = c.conn.execute("SELECT * FROM nodes WHERE needs_review ORDER BY id").fetchall()
+    return [node_out(n) for n in rows if P.can_read(c.p, n["id"], c.anc, c.kb)]
+
+
 @app.get("/nodes/{node_id}")
 def read_node(node_id: int, c: Ctx = Depends(ctx)):
     n = get_node(c, node_id)
@@ -108,14 +123,14 @@ def read_tree(node_id: int, c: Ctx = Depends(ctx)):
     rows = c.conn.execute(
         """
         WITH RECURSIVE sub AS (
-            SELECT id, parent_id, title, state FROM nodes WHERE id = %s
+            SELECT id, parent_id, title, state, needs_review FROM nodes WHERE id = %s
             UNION ALL
-            SELECT n.id, n.parent_id, n.title, n.state FROM nodes n JOIN sub s ON n.parent_id = s.id
+            SELECT n.id, n.parent_id, n.title, n.state, n.needs_review FROM nodes n JOIN sub s ON n.parent_id = s.id
         ) SELECT * FROM sub ORDER BY id
         """,
         (node_id,),
     ).fetchall()
-    by_id = {r["id"]: {"id": r["id"], "title": r["title"], "state": r["state"], "children": []} for r in rows}
+    by_id = {r["id"]: {"id": r["id"], "title": r["title"], "state": r["state"], "needs_review": r["needs_review"], "children": []} for r in rows}
     for r in rows:
         if r["id"] != node_id:
             by_id[r["parent_id"]]["children"].append(by_id[r["id"]])
@@ -134,9 +149,12 @@ def create_node(body: NodeIn, c: Ctx = Depends(ctx)):
     if not P.can_create_child(c.p, body.parent_id, c.anc, c.kb):
         raise HTTPException(403, "cannot create here")
     try:
-        with c.write(body.parent_id):
+        with c.write(body.parent_id) as holder:
             n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (body.parent_id, body.title, c.p.token_id)).fetchone()
             c.conn.execute("INSERT INTO docs (node_id, role, body, author) VALUES (%s, 'summary', %s, %s)", (n["id"], body.summary, c.p.token_id))
+            if holder["root"] is None:
+                # A new project: its backup root is itself, known only after the insert.
+                holder["root"] = c.backup_root(n["id"])
     except psycopg.errors.CheckViolation as e:
         raise HTTPException(409, e.diag.message_primary)
     out = node_out(n)
@@ -145,19 +163,26 @@ def create_node(body: NodeIn, c: Ctx = Depends(ctx)):
     return out
 
 
-class StateIn(BaseModel):
-    state: str
+class NodePatch(BaseModel):
+    state: Optional[str] = None
+    needs_review: Optional[bool] = None
 
 
 @app.patch("/nodes/{node_id}")
-def set_state(node_id: int, body: StateIn, c: Ctx = Depends(ctx)):
-    if body.state not in STATES:
+def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
+    """Set state, or clear needs_review after the user has reviewed a level-4 branch. Planner only."""
+    if body.state is None and body.needs_review is None:
+        raise HTTPException(422, "nothing to change: give state or needs_review")
+    if body.state is not None and body.state not in STATES:
         raise HTTPException(422, f"state must be one of {STATES}")
     get_node(c, node_id)
     if not P.can_set_state(c.p, node_id, c.anc, c.kb):
-        raise HTTPException(403, "cannot set state")
+        raise HTTPException(403, "cannot change this node")
     with c.write(node_id):
-        n = c.conn.execute("UPDATE nodes SET state = %s WHERE id = %s RETURNING *", (body.state, node_id)).fetchone()
+        n = c.conn.execute(
+            "UPDATE nodes SET state = COALESCE(%s, state), needs_review = COALESCE(%s, needs_review) WHERE id = %s RETURNING *",
+            (body.state, body.needs_review, node_id),
+        ).fetchone()
     return node_out(n)
 
 
@@ -192,10 +217,10 @@ def patch_doc(doc_id: int, body: DocPatch, c: Ctx = Depends(ctx)):
     if not d or not P.can_read(c.p, d["node_id"], c.anc, c.kb):
         raise HTTPException(404, "doc not found")
     if body.answer is not None or body.resolved is not None:
-        if d["role"] != "escalation":
-            raise HTTPException(422, "answer/resolved apply to escalations only")
+        if d["role"] not in ANSWERABLE:
+            raise HTTPException(422, f"answer/resolved apply to {ANSWERABLE} only")
         if not P.can_answer_escalation(c.p, d["node_id"], c.anc):
-            raise HTTPException(403, "only a planner answers escalations")
+            raise HTTPException(403, "only a planner answers escalations or resolves proposals")
     if body.body is not None and not P.can_edit_doc(c.p, d["node_id"], d["role"], d["author"], c.anc, c.kb):
         raise HTTPException(403, "cannot edit this doc")
     with c.write(d["node_id"]):
@@ -206,19 +231,46 @@ def patch_doc(doc_id: int, body: DocPatch, c: Ctx = Depends(ctx)):
     return doc_out(c.conn.execute("SELECT * FROM docs WHERE id = %s", (doc_id,)).fetchone())
 
 
-@app.get("/escalations")
-def escalations(c: Ctx = Depends(ctx)):
-    rows = c.conn.execute(
+def version_out(v):
+    return {k: v[k] for k in ("id", "doc_id", "body", "author", "answer", "resolved", "edited_at")}
+
+
+@app.get("/docs/{doc_id}/history")
+def doc_history(doc_id: int, c: Ctx = Depends(ctx)):
+    """Previous versions of a doc, oldest first. Planners, or the worker that authored it."""
+    d = c.conn.execute("SELECT * FROM docs WHERE id = %s", (doc_id,)).fetchone()
+    if not d or not P.can_read(c.p, d["node_id"], c.anc, c.kb):
+        raise HTTPException(404, "doc not found")
+    if c.p.role != P.PLANNER and d["author"] != c.p.token_id:
+        raise HTTPException(403, "history is visible to planners and the doc's author")
+    rows = c.conn.execute("SELECT * FROM doc_versions WHERE doc_id = %s ORDER BY id", (doc_id,)).fetchall()
+    return [version_out(v) for v in rows]
+
+
+def _unresolved_in_scope(c: Ctx, role: str):
+    return c.conn.execute(
         """
         WITH RECURSIVE sub AS (
             SELECT id FROM nodes WHERE id = %s
             UNION ALL SELECT n.id FROM nodes n JOIN sub s ON n.parent_id = s.id
         ) SELECT d.* FROM docs d JOIN sub ON d.node_id = sub.id
-        WHERE d.role = 'escalation' AND NOT d.resolved ORDER BY d.id
+        WHERE d.role = %s AND NOT d.resolved ORDER BY d.id
         """,
-        (c.p.scope_node_id,),
+        (c.p.scope_node_id, role),
     ).fetchall()
-    return [doc_out(d) for d in rows]
+
+
+@app.get("/escalations")
+def escalations(c: Ctx = Depends(ctx)):
+    return [doc_out(d) for d in _unresolved_in_scope(c, "escalation")]
+
+
+@app.get("/proposals")
+def proposals(c: Ctx = Depends(ctx)):
+    """Unresolved kb_proposal docs in the caller's scope. Planner only."""
+    if c.p.role != P.PLANNER:
+        raise HTTPException(403, "planner only")
+    return [doc_out(d) for d in _unresolved_in_scope(c, "kb_proposal")]
 
 
 class TokenIn(BaseModel):

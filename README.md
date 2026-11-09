@@ -9,6 +9,7 @@ Postgres-backed tree of plan nodes and attached docs, served over HTTPS, with ro
 - `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans`.
 - `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
 - `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint.
+- `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes are immutable: no delete, rename, or reparent.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
 
@@ -36,10 +37,13 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | GET | `/nodes/{id}` | node, docs, `environment` (ancestor env docs) |
 | GET | `/nodes/{id}/tree` | nested `id, title, state` |
 | POST | `/nodes` | `{parent_id, title, summary}`; level 4 adds `warning` |
-| PATCH | `/nodes/{id}` | `{state}` |
+| PATCH | `/nodes/{id}` | `{state}` and/or `{needs_review}` |
+| GET | `/nodes/review` | nodes flagged `needs_review` in scope |
 | POST | `/nodes/{id}/docs` | `{role, body}` |
-| PATCH | `/docs/{id}` | `{body}` or `{answer, resolved}` |
+| PATCH | `/docs/{id}` | `{body}`, or `{answer, resolved}` on `escalation` / `kb_proposal` |
+| GET | `/docs/{id}/history` | previous versions, oldest first (planner, or the author) |
 | GET | `/escalations` | unresolved escalations in scope |
+| GET | `/proposals` | unresolved `kb_proposal` docs in scope |
 | POST | `/tokens` | `{label, role, scope_node_id}` → plaintext token |
 | GET | `/tokens` | tokens in scope (planner) |
 | DELETE | `/tokens/{id}` | revoke; any planner whose scope contains the token's scope. Revocation cascades to tokens minted beneath |
@@ -60,7 +64,7 @@ Server and database bind to localhost. No default password. The planner is the a
 
 Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
 
-Backup: every write under `plans` or `kb` rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json` plus `docs/<node>-<role>-<doc>.md`. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
+Backup: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-id>-<slug>/` as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
 
 First use: mint a planner token scoped to `plans` with the root token, then work with that.
 

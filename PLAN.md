@@ -1,5 +1,7 @@
 # Prototype Plan: Agent Planning Server
-As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's decisions.
+Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log: later "Added" sections supersede earlier ones. The current state is summarized in DEV_PLAN.md and README.md.
+
+> SUPERSEDED: the sections from here to "Stack" describe the 2026-11-04 prototype with owner-based permissions, `can_spawn`, and no nesting limit. Replaced by "two roles replace owner-based permissions", "depth limit", and later sections below. Kept for history.
 
 ## Decided in discussion (2026-11-04)
 - One base node type. Plain container. No kinds.
@@ -218,14 +220,14 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - The same proof is required before work is called done. Unit tests passing means it is time to integration test.
 - Added to the standing rules in agent-planning-system.md and to both halves of skill/SKILL.md. Worker reports must carry the real proof; planner closure checks it.
 
-## Added 2026-11-06: what this tool is, at this stage
+## Added 2026-11-05: what this tool is, at this stage
 - A local tool, run on a developer's machine alongside an AI agent harness that can run multiple agents.
 - Not an internet service. Not a security product.
 - Tokens are lane-keeping, not security. They exist so that dev agents can only see and write their own node. Nobody is defending against a hostile agent or a network attacker.
   - So: self-signed cert and `curl -k` are fine. No cert pinning. No threat model beyond "keep agents in their lane".
   - Revocation still matters for lane-keeping: a finished worker should lose its lane. Cascading revocation is wanted for that reason, not for security.
 
-## Added 2026-11-06: backup to disk on every write
+## Added 2026-11-05: backup to disk on every write
 - The database is the working store. The record of a project must also exist on disk.
 - After every write that touches a project (node create, state change, doc create, doc edit, escalation answer), the server writes that project's full subtree to disk.
 - Layout: `PLANNER_BACKUP_DIR/<project-id>-<slug>/`
@@ -235,7 +237,7 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - Default dir: `backups/` under the repo, gitignored. Configurable.
 - Synchronous, in the request. A failed backup fails the write.
 
-## Added 2026-11-06: gaps against the initial design notes, closed
+## Added 2026-11-05: gaps against the initial design notes, closed
 - Survey step for existing systems: kb and user first, targeted checks, proof by real test committed at the matching layer, recorded as a `survey` doc. Deep dive only with permission, offered as a `kb_proposal`.
 - Formal plan adds flow and user story, and on existing systems: what changes, what is added, what is improved first.
 - The user approves the plan as written on the server, not only in chat.
@@ -246,10 +248,17 @@ As of 2026-11-04. Companion to agent-planning-system.md. Only the prototype's de
 - "The user" is whoever called the planner.
 - Closed: the old "append vs beneath" question. Docs on the node and children beneath it.
 
-## Added 2026-11-06: clarifications after the second blind review
+## Added 2026-11-05: clarifications after the second blind review
 - The planner is the admin. It reads and writes everything in `plans` and `kb`. Planners are never blind to sibling projects or the larger environment. Any test or rule implying otherwise is wrong and is removed.
 - Backup is one at a time per project. A write that arrives while a backup is running waits its turn. Implemented as a per-project database lock held for the write and its backup.
 - Bootstrap is all-or-nothing.
 - Token listing shows whether a token actually works, including tokens dead because a parent was revoked.
 - Workers cannot edit the docs that define their task. That is the design. Workers write their own docs on their node and beneath it, and may edit docs they authored, including the summary of a sub-node they created. The planner reviews those notes at closure and folds them into the final work docs or the kb as approved.
 - No default database password. Bootstrap generates one into a gitignored local env file that compose and the server read. Server and database bind to localhost only.
+
+## Added 2026-11-09: after the third blind review
+- Doc version history: every edit to a doc keeps the previous version. Append-only, written by the database on update. Readable by planners. This is the audit trail.
+- Unchanged: a worker never edits the planner's docs on its assigned node. Only the planner or dev manager updates a task node's summary, instruction, environment, approval, or review.
+- Nodes are immutable for now: no delete, rename, or reparent. A mis-created node is set `blocked` with a note. Revisit if it hurts.
+- Fixes: creating a project backs it up at once; kb proposals can be resolved with an answer and listed; `needs_review` can be cleared and listed; backup writes go to a temp dir then rename; clear error on an unbootstrapped database.
+- Docs: "no nesting limits" and "reachable over the internet" removed from requirements; superseded permission sections in this file marked as such; dates corrected to local dates; the skill names pytest as the assumed runner.

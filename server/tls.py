@@ -1,5 +1,6 @@
 """Self-signed cert generation for first run."""
 import datetime
+import ipaddress
 import os
 from pathlib import Path
 
@@ -24,7 +25,7 @@ def ensure_cert() -> tuple[Path, Path]:
         .subject_name(name).issuer_name(name).public_key(pk.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now).not_valid_after(now + datetime.timedelta(days=3650))
-        .add_extension(x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(__import__("ipaddress").ip_address("127.0.0.1"))]), critical=False)
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]), critical=False)
         .sign(pk, hashes.SHA256())
     )
     key.write_bytes(pk.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()))

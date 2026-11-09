@@ -26,7 +26,7 @@ Depth limit enforced in the database
 - Level 5 refused; the branch becomes its own project
 
 
-## Decided 2026-11-06 - scope at this stage
+## Decided 2026-11-05 - scope at this stage
 
 A local tool on a developer's machine
 - Runs beside an agent harness that spawns multiple agents
@@ -42,7 +42,7 @@ Every write is mirrored to disk per project
 - Synchronous; a failed backup fails the write
 
 
-## Second blind review 2026-11-06
+## Second blind review 2026-11-05
 
 Fixed
 - Backup serialized per project; bootstrap all-or-nothing
@@ -61,7 +61,7 @@ Design concerns carried forward
 - Server enforces lanes only; process steps are not server-gated by design
 
 
-## Cold review 2026-11-06 - what it found and what we did
+## Cold review 2026-11-05 - what it found and what we did
 
 Fixed now
 - Revocation did not cascade; no token listing
@@ -161,9 +161,30 @@ Server
 - Isolated permissions module with its own unit tests
 - Ten endpoints, flat JSON; skill file for agents
 
-Two live tests with Opus planners, scored on dev worker deviations
-- csvmd, five modules: zero deviations; one spec hole filled by a worker instead of escalated
-- linedupe, three modules: zero deviations; planner caught its own wrong expected value in the reference run
+Three live tests, scored on dev worker deviations
+- csvmd, Opus planner, five modules: zero deviations; one spec hole filled by a worker instead of escalated
+- linedupe, Opus planner, three modules: zero deviations; planner caught its own wrong expected value in the reference run
+- wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
+
+
+## Decided 2026-11-09 - after the third blind review
+
+Doc version history is the audit trail
+- Every edit keeps the previous version, append-only, written by the database
+- Readable by planners; a worker reads only its own docs' history
+- Included in the per-project backup
+
+Workers still never edit the planner's docs on their assigned node
+- Only the planner or dev manager updates a task node's summary, instruction, environment, approval, review
+
+Nodes are immutable for now
+- No delete, rename, or reparent; a mis-created node is set `blocked` with a note
+
+Fixed
+- Creating a project backs it up at once
+- kb proposals can be resolved and listed; `needs_review` can be cleared and listed
+- Backup writes are atomic: temp dir then rename
+- Clear error on an unbootstrapped database
 
 
 ## Open - left to plan, decide, or discuss
@@ -171,23 +192,19 @@ Two live tests with Opus planners, scored on dev worker deviations
 Who or what notifies the planner that a worker stopped
 - In a harness, the spawn completion; on the server, nothing yet
 
-How a knowledge base proposal is applied
-- Hand-off exists as a doc; the apply step does not
-
-How mock or partial test approvals are recorded
-
-Where proven understanding from a survey is recorded
-
 Marker design
 - Deletion should leave clean code: no orphan import
 
 Packaging as an installable skill
 - Today the skill is a file in the repo; nothing registers it with a harness
 
+Process validated only on small deterministic CLIs
+- Three runs, eight workers, zero worker deviations
+- Exact-value acceptance tests and a reference run will not fit UI, GPU, or network work as-is
+
 
 ## Next - in order
 
-1. Run a third test with the planner as a top-level session, not a nested agent
+1. A live test on something with a UI or an external service, planner as a top-level session
 2. Viewer: slide-like read-only rendering of a node and its subtree
-3. Doc version history
-4. Skill packaging for a harness
+3. Skill packaging for a harness

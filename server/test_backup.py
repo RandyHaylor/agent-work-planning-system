@@ -39,11 +39,27 @@ def test_render_doc_files():
 
 
 def test_write_replaces_stale(tmp_path):
-    B.write(tmp_path, B.render(NODES, DOCS))
-    assert (tmp_path / "docs" / "5-escalation-9.md").exists()
-    B.write(tmp_path, B.render(NODES, DOCS[1:]))
-    assert not (tmp_path / "docs" / "5-escalation-9.md").exists()
-    assert (tmp_path / "docs" / "4-summary-7.md").exists()
+    dest = tmp_path / "4-proj"
+    B.write(dest, B.render(NODES, DOCS))
+    assert (dest / "docs" / "5-escalation-9.md").exists()
+    B.write(dest, B.render(NODES, DOCS[1:]))
+    assert not (dest / "docs" / "5-escalation-9.md").exists()
+    assert (dest / "docs" / "4-summary-7.md").exists()
+    # the swap leaves no temp or old dirs behind
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["4-proj"]
+
+
+def test_render_history_only_when_present():
+    versions = {7: [
+        {"id": 2, "body": "older", "answer": None, "resolved": False, "author": 2, "edited_at": TS},
+        {"id": 1, "body": "oldest", "answer": None, "resolved": False, "author": 2, "edited_at": TS.replace(day=5)},
+    ]}
+    files = B.render(NODES, DOCS, {2: "planner"}, versions)
+    assert "docs/4-summary-7.history.md" in files
+    assert "docs/5-escalation-9.history.md" not in files
+    h = files["docs/4-summary-7.history.md"]
+    assert h.index("oldest") < h.index("older")
+    assert "edited_at: 2026-11-05" in h and "doc: 7" in h and "author: planner" in h
 
 
 def test_backup_root_for():

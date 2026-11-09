@@ -313,15 +313,23 @@ def test_backup_concurrent_writes_serialized(world):
     assert tid in tree and tree[tid]["parent_id"] == pid
 
 
+def _dsn():
+    dsn = os.environ.get("PLANNER_DSN")
+    if not dsn:
+        pytest.skip("PLANNER_DSN not set (scripts/test_all.py sets it)")
+    return dsn
+
+
 def test_bootstrap_twice_is_noop():
     import subprocess
     import psycopg
     from pathlib import Path
+    dsn = _dsn()
     repo = Path(__file__).resolve().parent.parent
     r = subprocess.run(["uv", "run", "python", "-m", "server", "bootstrap"], cwd=repo, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert "Already bootstrapped" in r.stdout and "ROOT_TOKEN" not in r.stdout
-    with psycopg.connect(os.environ["PLANNER_DSN"], autocommit=True) as conn:
+    with psycopg.connect(dsn, autocommit=True) as conn:
         assert conn.execute("SELECT count(*) FROM nodes WHERE parent_id IS NULL").fetchone()[0] == 1
         assert conn.execute("SELECT count(*) FROM meta WHERE key='root_node_id'").fetchone()[0] == 1
 
@@ -369,7 +377,7 @@ def test_depth_kb_exempt(world):
 
 def test_depth_level5_refused_direct_sql():
     import psycopg
-    with psycopg.connect(os.environ["PLANNER_DSN"], autocommit=True) as conn:
+    with psycopg.connect(_dsn(), autocommit=True) as conn:
         plans = int(conn.execute("SELECT value FROM meta WHERE key='plans_node_id'").fetchone()[0])
         parent = plans
         for _ in range(4):
@@ -381,3 +389,71 @@ def test_depth_level5_refused_direct_sql():
 
 def test_unknown_node_404(world):
     assert world["root"].get("/nodes/999999").status_code == 404
+
+
+def test_new_project_backed_up_immediately(world):
+    """A project with only its summary must be on disk right after creation (third review, defect 1)."""
+    base = _backup_dir()
+    p = world["planner"].post("/nodes", json={"parent_id": world["plans"], "title": "Bare Project", "summary": "only a summary"}).json()
+    d = base / f"{p['id']}-bare-project"
+    assert (d / "tree.json").exists()
+    files = list((d / "docs").iterdir())
+    assert len(files) == 1 and files[0].name.startswith(f"{p['id']}-summary-")
+    assert files[0].read_text(encoding="utf-8").endswith("\n\nonly a summary")
+
+
+def test_doc_history(world):
+    w, p, tid = world["worker"], world["planner"], world["task"]["id"]
+    r = w.post(f"/nodes/{tid}/docs", json={"role": "report", "body": "v1"}).json()
+    assert w.get(f"/docs/{r['id']}/history").json() == []
+    assert w.patch(f"/docs/{r['id']}", json={"body": "v2"}).status_code == 200
+    assert w.patch(f"/docs/{r['id']}", json={"body": "v3"}).status_code == 200
+    hist = p.get(f"/docs/{r['id']}/history").json()
+    assert [h["body"] for h in hist] == ["v1", "v2"]
+    assert all(h["doc_id"] == r["id"] for h in hist)
+    # the author worker sees its own history; another worker on another node cannot see the doc at all
+    assert [h["body"] for h in w.get(f"/docs/{r['id']}/history").json()] == ["v1", "v2"]
+    other_tok = p.post("/tokens", json={"label": "w2", "scope_node_id": world["other"]["id"], "role": "worker"}).json()
+    assert client(other_tok["token"]).get(f"/docs/{r['id']}/history").status_code == 404
+    # a worker is not the author of the planner's instruction: 403 on its history even though it can read the doc
+    assert w.get(f"/docs/{world['instr']['id']}/history").status_code == 403
+    # history is in the backup
+    base = _backup_dir()
+    proj_dir = next(x for x in base.iterdir() if x.name.startswith(f"{world['project']['id']}-"))
+    h = (proj_dir / "docs" / f"{tid}-report-{r['id']}.history.md").read_text(encoding="utf-8")
+    assert "v1" in h and "v2" in h and "v3" not in h and "edited_at:" in h
+    # a never-edited doc has no history file
+    assert not any(x.name.endswith(".history.md") and x.name.startswith(f"{tid}-escalation-") for x in (proj_dir / "docs").iterdir()
+                   if x.name.split("-")[2].split(".")[0].isdigit() and int(x.name.split("-")[2].split(".")[0]) > r["id"])
+
+
+def test_kb_proposal_resolve_and_list(world):
+    w, p, tid = world["worker"], world["planner"], world["task"]["id"]
+    assert w.get("/proposals").status_code == 403
+    prop = w.post(f"/nodes/{tid}/docs", json={"role": "kb_proposal", "body": "Add glossary term X"}).json()
+    assert any(x["id"] == prop["id"] for x in p.get("/proposals").json())
+    assert w.patch(f"/docs/{prop['id']}", json={"answer": "self", "resolved": True}).status_code == 403
+    r = p.patch(f"/docs/{prop['id']}", json={"answer": "approved by user, applied to kb", "resolved": True})
+    assert r.status_code == 200 and r.json()["resolved"] is True
+    assert all(x["id"] != prop["id"] for x in p.get("/proposals").json())
+    # answer/resolved still refused on roles that are not answerable
+    rep = w.post(f"/nodes/{tid}/docs", json={"role": "report", "body": "r"}).json()
+    assert p.patch(f"/docs/{rep['id']}", json={"resolved": True}).status_code == 422
+
+
+def test_needs_review_clear_and_list(world):
+    root, p = world["root"], world["planner"]
+    rs = _chain(root, world["plans"], 4)
+    flagged = rs[3].json()
+    assert flagged["needs_review"] is True
+    listed = {n["id"] for n in p.get("/nodes/review").json()}
+    assert flagged["id"] in listed
+    tree = p.get(f"/nodes/{rs[0].json()['id']}/tree").json()
+    assert "needs_review" in tree and tree["needs_review"] is False
+    assert world["worker"].patch(f"/nodes/{flagged['id']}", json={"needs_review": False}).status_code in (403, 404)
+    assert p.patch(f"/nodes/{flagged['id']}", json={}).status_code == 422
+    r = p.patch(f"/nodes/{flagged['id']}", json={"needs_review": False})
+    assert r.status_code == 200 and r.json()["needs_review"] is False
+    assert flagged["id"] not in {n["id"] for n in p.get("/nodes/review").json()}
+    # a worker sees only flagged nodes inside its own scope
+    assert world["worker"].get("/nodes/review").status_code == 200
