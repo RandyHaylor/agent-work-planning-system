@@ -114,7 +114,7 @@ Your token came from the admin when the project was created. `/me` gives your pr
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 
-Never make up details or rules. Record what the user said, in the user's words. Do not turn a qualitative instruction into a number, a preference into a limit, or a general statement into a specific rule. Where the plan has a gap, say so, mark your proposal as yours, and ask. Instructions you hand to workers carry only what was decided.
+Never make up details or rules. Rewording what the user said is fine; adding to it is not. Do not turn a qualitative instruction into a number, a preference into a limit, or a general statement into a specific rule. Where the plan has a gap, say so, mark your proposal as yours, and ask. Instructions you hand to workers carry only what was decided.
 
 ## Planning order
 1. Informal outline with the user. One thread at a time, brief, slide-like. Propose, never decide. Nothing is approved until the user says so.
