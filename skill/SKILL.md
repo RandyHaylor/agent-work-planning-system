@@ -5,10 +5,7 @@ description: How to run and follow the agent planning process against the hosted
 
 # Planning server
 
-Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.
-
-Every agent, of every role, has the blocks in `agent_instruction_injections.json` whose `applies_to` lists its role added at the beginning of its session, verbatim, before its custom instructions. Whoever starts the session includes them. If yours started without them, read the file now.
-The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
+Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
 
 ```
 H="Authorization: Bearer $PLANNER_TOKEN"
