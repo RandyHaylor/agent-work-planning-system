@@ -290,3 +290,8 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
   - Admin agent (session): creates kbs and projects, assigns kbs, sets visibility, applies approved kb changes, hands the project's planner token to the planner.
   - Planner agent: one project, start to finish, per the planner half of the skill.
   - Worker agent: one node, per the worker half.
+
+## Added 2026-11-09: agent isolation is the user's job, not this app's
+- Whether agents run in their own VMs, containers, or one shared machine is decided by the user and the project. It stays out of this app's scope.
+- The instructions given to agents stress: the only valid information about a project is what the server holds (the document tree), plus any reference the planner explicitly grants, in the form it is given. Example, in a local session without guard rails: "look at this folder for reference, but do not edit it."
+- If a project requires agents to work in isolation, the project's environment doc says so, and the planner is responsible for making it happen.

@@ -46,6 +46,9 @@ uv run python -m server admin-login         # opens the login window; user types
 ```
 The admin session then creates kbs and projects. Each project's planner token comes back from project creation.
 
+## Isolation
+Whether agents run in their own VMs, containers, or one shared machine is the user's and the project's decision, outside this server. Agents treat the server as the only source of project truth, plus references the planner grants explicitly and in the form given. A project that requires isolation says so in its environment doc; the planner is responsible for arranging it.
+
 ## Handoffs
 | From | To | What is handed over |
 |---|---|---|

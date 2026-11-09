@@ -50,6 +50,7 @@ You never see or ask for the password. The user types it into the window. The se
 Your scope node is your assignment. You finish it. You do not plan it, extend it, or redefine it.
 
 ## What you can see
+- The only valid information about the project is what the server holds, plus any reference your instruction explicitly grants, used exactly the way it is granted. "Look at this folder for reference, do not edit it" means that and nothing more. Anything else on the machine is not yours to read or assume.
 - Your scope node, its docs, and everything beneath it.
 - Every `environment` doc from above you. That is the larger environment you work within. You are not building it.
 - The knowledge bases assigned to your project (`GET /kbs`). Read-only.
@@ -143,7 +144,8 @@ Carry the standing rules verbatim. Include: a contradiction between tests, or be
 
 ## Delegating
 - Mint a worker token: `POST /tokens` `{"label":"...","role":"worker","scope_node_id":child}`. The plaintext token is returned once.
-- Give the worker only: the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else.
+- Give the worker only: the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
+- Isolation (own VM, container, or shared machine) is the user's and the project's call, not this server's. If the project's environment doc requires isolated agents, you make that happen before spawning.
 - Spawning never blocks you. Stay live and poll `GET /escalations` throughout the run.
 
 ## Escalations
