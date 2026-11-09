@@ -26,7 +26,7 @@ Admin is a session the user approves. There is no standing admin token.
 uv sync --extra test
 uv run ai-project-planning-server init-env       # database password into .env, once per machine
 docker compose up -d --wait
-uv run ai-project-planning-server bootstrap      # the user types the admin password; nothing is printed
+uv run ai-project-planning-server bootstrap      # the user types the admin password; tell the user to save it somewhere secure, it cannot be recovered
 uv run ai-project-planning-server                # HTTPS on 127.0.0.1:8787
 uv run ai-project-planning-server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
 ```

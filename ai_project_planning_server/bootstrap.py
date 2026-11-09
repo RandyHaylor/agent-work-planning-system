@@ -17,6 +17,20 @@ from ai_project_planning_server import admin as A
 from ai_project_planning_server import db
 
 
+PASSWORD_WARNING = """
+==================================================================
+  WARNING: SAVE THIS PASSWORD SOMEWHERE SECURE. DO NOT FORGET IT.
+
+  It is the only way to act as admin on this server. It is stored
+  only as a hash and cannot be recovered or reset without it.
+  Losing it means losing the ability to maintain the knowledge
+  bases, manage project visibility, and apply proposed changes:
+  important project information and documentation will become
+  unreachable through the admin role.
+==================================================================
+"""
+
+
 def read_password(purpose: str = "Admin password") -> str:
     env = os.environ.get("PLANNER_ADMIN_PASSWORD")
     if env is not None:
@@ -25,6 +39,7 @@ def read_password(purpose: str = "Admin password") -> str:
         if problem:
             raise SystemExit(problem)
         return env
+    print(PASSWORD_WARNING)
     while True:
         pw = getpass.getpass(f"{purpose} (min {A.MIN_PASSWORD_LEN} chars): ")
         problem = A.check_password_policy(pw)
@@ -76,6 +91,7 @@ def main():
         print(f"root_node_id={root} kb_node_id={kb} plans_node_id={plans}")
         print(f"Server access token written to {db.access_token_path()} (every request carries it in {db.ACCESS_HEADER})")
         print("Admin password set. Become admin with: uv run ai-project-planning-server admin-login")
+        print("Save the admin password somewhere secure now. It cannot be recovered.")
 
 
 def set_admin_password():

@@ -76,7 +76,7 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 uv sync --extra test
 uv run ai-project-planning-server init-env     # random DB password into .env (gitignored), once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
-uv run ai-project-planning-server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively
+uv run ai-project-planning-server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively. SAVE IT: it cannot be recovered
 uv run ai-project-planning-server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
 uv run ai-project-planning-server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
 ```

@@ -45,7 +45,7 @@ One node, holding that node's worker token.
 ```
 uv run ai-project-planning-server init-env            # DB password into .env, once per machine
 docker compose up -d --wait
-uv run ai-project-planning-server bootstrap           # user types the admin password; writes server_access_token; nothing else printed
+uv run ai-project-planning-server bootstrap           # user types the admin password and SAVES IT SOMEWHERE SECURE; it cannot be recovered. Writes server_access_token
 uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
 ```
 Every request carries the contents of `server_access_token` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
