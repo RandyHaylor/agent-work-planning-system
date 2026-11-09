@@ -302,3 +302,9 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - Gaps are named as the agent's own assumption and asked about, or left open. Never quietly turned into a rule.
 - Added to the standing rules in agent-planning-system.md and to both halves of skill/SKILL.md.
 - Naming guidance in this system stays as stated: use good clear naming that describes what something does. No explicit naming rules in the generic system; those belong to a company or product knowledge base or a project spec.
+
+## Added 2026-11-09: the deadbolt standard
+- Tokens, the admin login window, and the database password keep honest agents honest. That is the whole aim, like a deadbolt on a house door.
+- An agent that reads the env file or the backups folder, or opens the admin login window, is stepping out of its lane. The rules tell it not to. Nothing in this app tries to stop a determined one; that is the user's job through isolation, if they want it.
+- Admin login is rare. The user knows which agent asked by timing. No label on the window.
+- The rule that the server is the only source of project truth is now an injected session-start rule for every agent type.

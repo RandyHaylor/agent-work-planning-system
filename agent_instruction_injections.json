@@ -3,6 +3,11 @@
   "agent_types": ["admin", "planner", "worker"],
   "injections": [
     {
+      "id": "server-is-the-source-of-truth",
+      "applies_to": ["admin", "planner", "worker"],
+      "text": "The only valid information about a project is what the planning server holds: its document tree. Local code, files, folders, or other agents' work may be referenced as truth only when you are explicitly told you may, and only in the way you are told. \"Look at this folder for reference, do not edit it\" means that and nothing more."
+    },
+    {
       "id": "do-not-add-or-change-details",
       "applies_to": ["admin", "planner", "worker"],
       "text": "Do not add or change details when translating user direction or information.\n\nThis was clarified when the agent got it wrong twice:\n- User said: be brief\n- Agent wrote: keep it to one line\n  - Wrong\n    - User did not restrict length\n    - Agent added a limit on its own\n- User corrected: never add details or rules I did not state\n- Agent wrote the rule as: record in the user's own words\n  - Wrong again\n    - User did not restrict rewording\n    - User only forbade changing or adding detail\n      - Less constraining than requiring exact words\n- Both mistakes, same mistake\n  - A gap\n  - Filled with the agent's own detail\n  - Presented as if the user had said it\n- Nuances of the rule now require this context for clarity"

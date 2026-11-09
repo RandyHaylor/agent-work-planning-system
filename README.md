@@ -2,7 +2,7 @@
 
 Postgres-backed tree of projects, plan nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. An admin agent maintains the knowledge bases and creates projects. A planner agent runs one project: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Rules added at the start of every agent's session, before its custom instructions, by agent type: `agent_instruction_injections.json`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
 
-**Scope at this stage.** A local tool for one developer's machine, running next to an agent harness that can spawn multiple agents. Tokens are lane-keeping, not security: they stop a dev agent from reading or writing outside its node. There is no threat model beyond that, so the self-signed cert and `curl -k` are fine. It is not an internet service.
+**Scope at this stage.** A local tool for one developer's machine, running next to an agent harness that can spawn multiple agents. Tokens are lane-keeping, not security: they stop a dev agent from reading or writing outside its node. The standard is a deadbolt, not a vault: it keeps honest agents honest. An agent that reads the env file or the backups folder, or opens the admin login window uninvited, is breaking its rules, and the rules are the control. Isolating agents so they cannot is the user's choice, outside this app. There is no threat model beyond that, so the self-signed cert and `curl -k` are fine. It is not an internet service.
 
 ## Data model
 
