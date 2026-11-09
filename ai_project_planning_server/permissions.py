@@ -190,6 +190,18 @@ def can_revoke(p: Principal, token_scope_node_id: int, ancestors: Ancestors, v: 
     return p.role == PLANNER and _own_project(p, token_scope_node_id, ancestors, v)
 
 
+def can_rotate(p: Principal, token_id: int, token_role: str, token_scope_node_id: int, ancestors: Ancestors, v: View) -> bool:
+    """Reissue a token's plaintext. Admin: any token. A planner: any worker token in its own project,
+    or its own token. Never another planner's token, never outside its project. Workers: nothing."""
+    if p.role == ADMIN:
+        return True
+    if p.role != PLANNER:
+        return False
+    if p.token_id is not None and token_id == p.token_id:
+        return True
+    return token_role == WORKER and _own_project(p, token_scope_node_id, ancestors, v)
+
+
 def can_list_tokens(p: Principal) -> bool:
     return p.role in (ADMIN, PLANNER)
 

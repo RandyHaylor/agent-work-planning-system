@@ -451,6 +451,76 @@ def test_revoke_cascades_through_minting_chain(world):
     assert listed[world["worker_tok"]["token_id"]]["active"] is True
 
 
+def test_retrieve_secret(world):
+    p, w, a = world["planner"], world["worker"], world["admin"]
+    # the secret retrieved equals the one issued at mint, and it works
+    wt = world["worker_tok"]
+    got = p.get(f"/tokens/{wt['token_id']}/secret")
+    assert got.status_code == 200 and got.json() == {"token_id": wt["token_id"], "token": wt["token"]}
+    assert client(got.json()["token"]).get("/me").json()["scope_node_id"] == world["task"]["id"]
+    # admin retrieves a planner's token and it works
+    pb = world["pb"]
+    got = a.get(f"/tokens/{pb['planner_token_id']}/secret")
+    assert got.status_code == 200 and got.json()["token"] == pb["planner_token"]
+    assert client(got.json()["token"]).get("/me").json()["scope_node_id"] == pb["node_id"]
+    # planner retrieves its own
+    me = p.get("/me").json()
+    assert p.get(f"/tokens/{me['token_id']}/secret").status_code == 200
+    # planner 403 on a sibling project's planner token and on a sibling planner in its own project
+    assert p.get(f"/tokens/{pb['planner_token_id']}/secret").status_code == 403
+    sub = a.post("/tokens", json={"label": "sub-pl3", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    assert p.get(f"/tokens/{sub['token_id']}/secret").status_code == 403
+    assert a.get(f"/tokens/{sub['token_id']}/secret").json()["token"] == sub["token"]
+    # worker: 403, even for itself
+    assert w.get(f"/tokens/{wt['token_id']}/secret").status_code == 403
+    # revoked: 409; unknown: 404
+    assert a.delete(f"/tokens/{sub['token_id']}").status_code == 204
+    assert a.get(f"/tokens/{sub['token_id']}/secret").status_code == 409
+    assert a.get("/tokens/999999/secret").status_code == 404
+
+
+def test_rotate_rules_and_effect(world):
+    p, w, a = world["planner"], world["worker"], world["admin"]
+    t = p.post("/tokens", json={"label": "rot", "scope_node_id": world["task"]["id"], "role": "worker"}).json()
+    before = {x["id"]: x for x in p.get("/tokens").json()}[t["token_id"]]
+    assert before["rotated_at"] is None
+    # worker: never, not even itself
+    assert w.post(f"/tokens/{world['worker_tok']['token_id']}/rotate").status_code == 403
+    assert w.post(f"/tokens/{t['token_id']}/rotate").status_code == 403
+    # project B's planner can see project A's token but cannot rotate it
+    assert world["planner_b"].post(f"/tokens/{t['token_id']}/rotate").status_code == 403
+    # project A's planner rotates its own worker: same id, scope, parent; old plaintext dead, new one works
+    r = p.post(f"/tokens/{t['token_id']}/rotate")
+    assert r.status_code == 201
+    new = r.json()
+    assert new["token_id"] == t["token_id"] and new["scope_node_id"] == world["task"]["id"] and new["role"] == "worker"
+    assert new["token"] != t["token"]
+    assert client(t["token"]).get("/me").status_code == 401
+    assert client(new["token"]).get("/me").json()["scope_node_id"] == world["task"]["id"]
+    after = {x["id"]: x for x in p.get("/tokens").json()}[t["token_id"]]
+    assert after["parent_token_id"] == before["parent_token_id"] and after["rotated_at"] is not None
+    assert after["revoked"] is False and after["active"] is True
+    # retrieve now returns the rotated plaintext
+    assert p.get(f"/tokens/{t['token_id']}/secret").json()["token"] == new["token"]
+    # a planner rotates its own token; the old planner plaintext dies
+    me = p.get("/me").json()
+    r = p.post(f"/tokens/{me['token_id']}/rotate")
+    assert r.status_code == 201
+    old_header = p.headers["Authorization"]
+    p.headers["Authorization"] = f"Bearer {r.json()['token']}"
+    assert p.get("/me").json()["token_id"] == me["token_id"]
+    assert client(old_header[7:]).get("/me").status_code == 401
+    # a planner cannot rotate another planner's token in its own project; the admin can
+    sub = a.post("/tokens", json={"label": "sub-pl2", "scope_node_id": world["project"]["id"], "role": "planner"}).json()
+    assert p.post(f"/tokens/{sub['token_id']}/rotate").status_code == 403
+    assert a.post(f"/tokens/{sub['token_id']}/rotate").status_code == 201
+    # revoked tokens are not rotated; cascade is untouched by rotation
+    assert a.delete(f"/tokens/{sub['token_id']}").status_code == 204
+    assert a.post(f"/tokens/{sub['token_id']}/rotate").status_code == 409
+    # unknown token: 404
+    assert a.post("/tokens/999999/rotate").status_code == 404
+
+
 def test_list_tokens(world):
     p, w, a = world["planner"], world["worker"], world["admin"]
     assert w.get("/tokens").status_code == 403
@@ -526,6 +596,28 @@ def _dsn():
     if not dsn:
         pytest.skip("PLANNER_DSN not set (scripts/test_all.py sets it)")
     return dsn
+
+
+def test_admin_secrets_are_never_stored(admin):
+    """token_secrets holds planner and worker plaintexts only. Admin sessions live in memory; the
+    admin password is only ever a salted hash in meta."""
+    import psycopg
+    dsn = _dsn()
+    _, token = admin_login()  # a fresh admin session, so one certainly exists right now
+    assert token.startswith("adm_")
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        secrets = [r[0] for r in conn.execute("SELECT plaintext FROM token_secrets").fetchall()]
+        assert secrets, "mint should have stored planner and worker plaintexts"
+        assert all(s.startswith("pln_") for s in secrets)
+        assert not any(s.startswith("adm_") for s in secrets)
+        assert token not in secrets
+        meta = [str(r[0]) for r in conn.execute("SELECT value FROM meta").fetchall()]
+        assert not any(ADMIN_PASSWORD in v for v in meta)
+        # and no column anywhere in the tokens or secrets tables holds the password or a session token
+        for table in ("tokens", "token_secrets"):
+            rows = conn.execute(f"SELECT * FROM {table}").fetchall()
+            flat = " ".join(str(x) for r in rows for x in r)
+            assert ADMIN_PASSWORD not in flat and token not in flat
 
 
 def test_bootstrap_twice_is_noop():

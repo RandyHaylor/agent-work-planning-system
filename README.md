@@ -11,7 +11,7 @@ Postgres-backed tree of projects, plan nodes, and attached docs, served over HTT
 - `nodes`: `id, parent_id, title, owner, state (open|blocked|done), needs_review, uuid, visible`. Single tree. Fixed children of root: `kb` (2), `plans` (3). A project is a direct child of `plans` with a uuid; a knowledge base is a direct child of `kb` with a uuid. Several of each may exist.
 - `project_kbs`: which kbs a project may read. `project_visibility`: explicit grants to read a hidden project.
 - `docs`: `id, node_id, role, body (markdown), author, answer, resolved`. Roles: `summary` (one per node), `instruction`, `environment`, `survey`, `approval`, `review`, `question` (planner-written); `report`, `spike`, `escalation`, `kb_proposal` (worker-written).
-- `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked`. Stored hashed. Plaintext returned once at mint. Admin is not a token row: it is an in-memory session created by the browser login.
+- `tokens`: `id, label, role (planner|worker), scope_node_id, parent_token_id, revoked, rotated_at`. Auth checks a hash; the plaintext is kept in `token_secrets`, readable by admin for any token and by a planner for its project's workers, so a lost session can be recovered without disrupting anything. Admin is not a token row: it is an in-memory session created by the browser login. The admin password is never stored in plaintext, only as a salted hash, and admin session tokens are never written to any table.
 - `doc_versions`: every previous version of a doc, written by a trigger on update. Append-only; the audit trail. Nodes are immutable: no delete, rename, or reparent.
 
 Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `needs_review`, level 5 raises and the API returns 409. `kb` is exempt.
@@ -64,7 +64,9 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | GET | `/proposals` | unresolved `kb_proposal` docs in scope |
 | POST | `/tokens` | `{label, role, scope_node_id}` → plaintext token |
 | GET | `/tokens` | tokens in scope (planner) |
-| DELETE | `/tokens/{id}` | revoke; any planner whose scope contains the token's scope. Revocation cascades to tokens minted beneath |
+| GET | `/tokens/{id}/secret` | the plaintext; admin for any, planner for its workers and itself |
+| POST | `/tokens/{id}/rotate` | new plaintext, old one ends; same rights as secret |
+| DELETE | `/tokens/{id}` | revoke; admin, or a planner in its project. Revocation cascades to tokens minted beneath |
 
 Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth, 422 bad value.
 

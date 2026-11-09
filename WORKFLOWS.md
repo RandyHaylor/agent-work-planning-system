@@ -50,6 +50,11 @@ uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
 ```
 Every request carries the contents of `server_access_token` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
 
+## Tokens and sessions
+A token lives in the agent's session. Agent harnesses strongly try to train against agents looking into other agents' session files; this system officially leans on that. An admin can retrieve or change any agent's token; a planner can retrieve or change its workers' tokens. Retrieval never disrupts a running session.
+
+One session may hold several task tokens. The planner proposes the split, small tasks together in one session and large ones in separate or forked sessions, and the user approves or alters it before deployment.
+
 ## Isolation
 Whether agents run in their own VMs, containers, or one shared machine is the user's and the project's decision, outside this server. Agents treat the server as the only source of project truth, plus references the planner grants explicitly and in the form given. A project that requires isolation says so in its environment doc; the planner is responsible for arranging it.
 

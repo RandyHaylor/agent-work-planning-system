@@ -24,6 +24,16 @@ CREATE TABLE IF NOT EXISTS tokens (
 -- The admin is never a token row: it is an in-memory session approved by the user (ai_project_planning_server/admin.py).
 ALTER TABLE tokens DROP CONSTRAINT IF EXISTS tokens_role_check;
 ALTER TABLE tokens ADD CONSTRAINT tokens_role_check CHECK (role IN ('planner', 'worker'));
+-- A token's plaintext can be reissued (rotated) without changing its id, scope, role, or minting chain.
+ALTER TABLE tokens ADD COLUMN IF NOT EXISTS rotated_at TIMESTAMPTZ;
+
+-- The plaintext of every token, so the admin (any token) or a planner (its own, and its project's
+-- workers) can retrieve it later. Auth still checks tokens.token_hash; this table is only for retrieval.
+CREATE TABLE IF NOT EXISTS token_secrets (
+    token_id   BIGINT PRIMARY KEY REFERENCES tokens(id) ON DELETE CASCADE,
+    plaintext  TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 ALTER TABLE nodes
     DROP CONSTRAINT IF EXISTS nodes_owner_fkey,

@@ -315,3 +315,13 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - The planner decides which kbs its project sees. Planners read every kb in order to choose. `PATCH /projects/{uuid} {kbs}` is the planner's call for its own project. A task node may override the kb set for the agents beneath it.
 - Admin remains for: writing kbs, hiding projects, granting visibility into hidden projects, applying kb proposals.
 - Admin escalation, harness agnostic: the planner either spawns a new unattached agent to become admin (the user types the password), or instructs the user to start an admin session and passes on what needs doing.
+
+## Added 2026-11-09: where tokens live, and sessions per task
+- A token exists in the agent's session and nowhere else on the agent side. The app does not save it for the agent.
+- Agent harnesses strongly try to train against agents looking into other agents' session files. We officially lean on that.
+- An admin session can retrieve or change the token of any agent at any level. A planner can retrieve or change the token of any dev agent in its project.
+  - The server stores only hashes, so retrieve and change are one operation: rotate. A new plaintext is issued once; the old one stops working.
+- One agent session may hold several task tokens and work several tasks. Encouraged when the tasks are very small, because new sessions are expensive on almost every harness.
+- Large or complex tasks go to separate agents, or to agents forked from another session.
+- The planner suggests the split at its discretion, and invites the user to approve or alter it before deploying.
+- Correction, same day: retrieve means retrieve. The server keeps the plaintext in a table readable only through `GET /tokens/{id}/secret`: admin for any token, a planner for the worker tokens in its project and its own. Nothing is forced to change; rotation exists only as the "change" half, used when wanted. A deadbolt, not a vault door.

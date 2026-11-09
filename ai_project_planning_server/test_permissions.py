@@ -149,3 +149,17 @@ def test_revoke_and_listing():
     assert P.can_revoke(admin, 11, anc, V)
     assert P.can_list_tokens(admin) and P.can_list_tokens(planner) and not P.can_list_tokens(worker)
     assert P.can_manage_projects(admin) and not P.can_manage_projects(planner)
+
+
+def test_rotate():
+    # admin: any token
+    assert P.can_rotate(admin, 2, P.PLANNER, 4, anc, V)
+    assert P.can_rotate(admin, 3, P.WORKER, 11, anc, V)
+    # planner: a worker token in its own project, or itself
+    assert P.can_rotate(planner, 3, P.WORKER, 6, anc, V)
+    assert P.can_rotate(planner, 2, P.PLANNER, 4, anc, V)
+    # planner: not another planner's token in its project, not a worker outside its project
+    assert not P.can_rotate(planner, 5, P.PLANNER, 4, anc, V)
+    assert not P.can_rotate(planner, 9, P.WORKER, 11, anc, V)
+    # worker: nothing, not even itself
+    assert not P.can_rotate(worker, 3, P.WORKER, 6, anc, V)

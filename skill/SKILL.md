@@ -37,6 +37,9 @@ You never see or ask for the password. The user types it into the window. The se
 - You are the only writer. Agents never edit a kb; they post `kb_proposal` docs on their own nodes.
 - `GET /proposals` lists unresolved proposals. Discuss each with the user. Apply the approved change to the kb yourself, then resolve the proposal with `PATCH /docs/{id}` `{"answer":"...","resolved":true}`.
 
+## Tokens
+- Retrieve the token of any agent at any level: `GET /tokens/{id}/secret`. Change one only if asked: `POST /tokens/{id}/rotate`.
+
 ## Projects
 - Any agent with server access creates its own project with `POST /projects`; you do not need to. If you create one on the user's behalf, hand the returned planner token to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
 - `PATCH /projects/{uuid}` `{"visible":false}` hides a project from other projects. Default: every project is visible read-only to every planner.
@@ -46,7 +49,9 @@ You never see or ask for the password. The user types it into the window. The se
 
 # If you are a WORKER
 
-Your scope node is your assignment. You finish it. You do not plan it, extend it, or redefine it.
+Your scope node is your assignment. You finish it. You do not plan it, extend it, or redefine it. If you were given several tokens, each is one assignment; work them one at a time, and use only that task's token for that task.
+
+Your token lives in your session. Other agents' session files are not yours to look into.
 
 ## What you can see
 - The only valid information about the project is what the server holds, plus any reference your instruction explicitly grants, used exactly the way it is granted. "Look at this folder for reference, do not edit it" means that and nothing more. Anything else on the machine is not yours to read or assume.
@@ -152,8 +157,19 @@ Mocked, partial, or propped-up tests need explicit approval from the user. Recor
 Sections in this order: Goal / Interface (firm) / Files you own / Tests (which rails, which acceptance file, which marker line to delete) / Design notes / Your discretion / Definition of done / Report format / Rules.
 Carry the standing rules verbatim. Include: a contradiction between tests, or between a test and this instruction, is escalated, never resolved by picking.
 
+## Deciding how many sessions
+New sessions are expensive on almost every harness. Before deploying, propose a split to the user and invite them to approve or alter it:
+- Several very small tasks: one worker session holding one token per task, working them in order.
+- Large or complex tasks: one session each, or sessions forked from another session so they start with shared context.
+Use your judgment on what counts as small. The user decides.
+
+## Tokens
+- Your planner token lives in your session. Other agents' session files are not yours to look into.
+- Retrieve any worker token in your project, or your own, when a session is lost or a task changes hands: `GET /tokens/{id}/secret`. The token keeps working; nothing is forced to change.
+- Change one only if you want to: `POST /tokens/{id}/rotate` issues a new plaintext and ends the old one.
+
 ## Delegating
-- Mint a worker token: `POST /tokens` `{"label":"...","role":"worker","scope_node_id":child}`. The plaintext token is returned once.
+- Mint a worker token: `POST /tokens` `{"label":"...","role":"worker","scope_node_id":child}`. The plaintext token is returned once at mint and retrievable later. One session may receive several.
 - Give the worker: the `worker` blocks from `agent_instruction_injections.json` first, verbatim; then only the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
 - Isolation (own VM, container, or shared machine) is the user's and the project's call, not this server's. If the project's environment doc requires isolated agents, you make that happen before spawning.
 - Spawning never blocks you. Stay live and poll `GET /escalations` throughout the run.

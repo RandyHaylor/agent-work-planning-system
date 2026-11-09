@@ -290,6 +290,7 @@ def create_project(body: ProjectIn, c: Ctx = Depends(ctx_or_access)):
             "INSERT INTO tokens (label, token_hash, scope_node_id, parent_token_id, role) VALUES (%s, %s, %s, %s, 'planner') RETURNING id",
             (f"planner:{body.title}", db.hash_token(raw), n["id"], c.p.token_id),
         ).fetchone()
+        _store_secret(c, t["id"], raw)
         holder["root"] = n["id"]
     return {**project_out(n, c), "planner_token": raw, "planner_token_id": t["id"]}
 
@@ -598,11 +599,42 @@ def mint(body: TokenIn, c: Ctx = Depends(ctx)):
         "INSERT INTO tokens (label, token_hash, scope_node_id, parent_token_id, role) VALUES (%s, %s, %s, %s, %s) RETURNING id",
         (body.label, db.hash_token(raw), body.scope_node_id, c.p.token_id, body.role),
     ).fetchone()
+    _store_secret(c, t["id"], raw)
     return {"token_id": t["id"], "token": raw, "scope_node_id": body.scope_node_id, "role": body.role}
 
 
+def _store_secret(c: Ctx, token_id: int, raw: str):
+    c.conn.execute(
+        "INSERT INTO token_secrets (token_id, plaintext) VALUES (%s, %s) "
+        "ON CONFLICT (token_id) DO UPDATE SET plaintext = EXCLUDED.plaintext, updated_at = now()",
+        (token_id, raw),
+    )
+
+
+def _token_for_secret(c: Ctx, token_id: int):
+    """Shared by retrieve and rotate: 404 if unknown or not visible, 403 if the role rules refuse, 409 if revoked."""
+    t = c.conn.execute("SELECT id, role, scope_node_id, revoked FROM tokens WHERE id = %s", (token_id,)).fetchone()
+    if not t or not c.can_read(t["scope_node_id"]):
+        raise HTTPException(404, "token not found")
+    if not P.can_rotate(c.p, token_id, t["role"], t["scope_node_id"], c.anc, c.v):
+        raise HTTPException(403, "only the admin, the planner of a worker's project, or the token itself")
+    if t["revoked"]:
+        raise HTTPException(409, "token is revoked; mint a new one instead")
+    return t
+
+
+@app.get("/tokens/{token_id}/secret")
+def retrieve_secret(token_id: int, c: Ctx = Depends(ctx)):
+    """The token's current plaintext. Admin for any token; a planner for its own and its project's workers."""
+    t = _token_for_secret(c, token_id)
+    s = c.conn.execute("SELECT plaintext FROM token_secrets WHERE token_id = %s", (token_id,)).fetchone()
+    if not s:
+        raise HTTPException(404, "no stored secret for this token")
+    return {"token_id": t["id"], "token": s["plaintext"]}
+
+
 def token_out(t, active: bool):
-    out = {k: t[k] for k in ("id", "label", "role", "scope_node_id", "parent_token_id", "revoked", "created_at")}
+    out = {k: t[k] for k in ("id", "label", "role", "scope_node_id", "parent_token_id", "revoked", "created_at", "rotated_at")}
     out["active"] = active  # false if this token or any token in its minting chain is revoked
     return out
 
@@ -633,6 +665,17 @@ def list_tokens(c: Ctx = Depends(ctx)):
         return True
 
     return [token_out(t, active(t["id"])) for t in rows]
+
+
+@app.post("/tokens/{token_id}/rotate", status_code=201)
+def rotate(token_id: int, c: Ctx = Depends(ctx)):
+    """Change a token's plaintext. Same id, label, role, scope, and minting chain; the old plaintext
+    stops working at once. Never required; same rights as retrieve."""
+    t = _token_for_secret(c, token_id)
+    raw = db.new_token()
+    c.conn.execute("UPDATE tokens SET token_hash = %s, rotated_at = now() WHERE id = %s", (db.hash_token(raw), token_id))
+    _store_secret(c, token_id, raw)
+    return {"token_id": token_id, "token": raw, "role": t["role"], "scope_node_id": t["scope_node_id"]}
 
 
 @app.delete("/tokens/{token_id}", status_code=204)

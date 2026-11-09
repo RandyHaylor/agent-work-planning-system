@@ -167,6 +167,18 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
+## Decided 2026-11-09 - tokens live in sessions; sessions per task
+
+A token lives in the agent's session
+- Harnesses strongly try to train against agents looking into other agents' session files; we officially lean on that
+- Admin retrieves or changes any token; planner retrieves or changes its workers'
+  - Plaintext kept server-side for retrieval; nothing forced to change
+
+One session may work several small tasks
+- Large tasks: separate or forked sessions
+- Planner proposes the split; user approves or alters
+
+
 ## Decided 2026-11-09 - starting a project needs no admin
 
 Any agent with server access creates a project
