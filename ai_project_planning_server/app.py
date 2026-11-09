@@ -1,3 +1,4 @@
+import hmac
 import os
 import uuid as _uuid
 from contextlib import contextmanager
@@ -57,17 +58,45 @@ class Ctx:
         return P.can_read(self.p, node_id, self.anc, self.v)
 
 
+def _kbs_for_worker(conn, scope: int, project: int, chain: list[int]) -> set[int]:
+    """The kb set a worker at ``scope`` reads: the nearest node override on the way up to the project,
+    else the project's set. An override with no kbs means none."""
+    for node_id in chain:
+        if conn.execute("SELECT 1 FROM node_kb_overrides WHERE node_id = %s", (node_id,)).fetchone():
+            return {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM node_kbs WHERE node_id = %s", (node_id,)).fetchall()}
+        if node_id == project:
+            break
+    return {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM project_kbs WHERE project_node_id = %s", (project,)).fetchall()}
+
+
 def _build_view(conn, role: str, scope: int, root: int, kb: int, plans: int, anc) -> tuple[Optional[int], P.View]:
     """The project the scope lies in, and what this principal may read beyond it."""
     project = P.project_of(scope, anc, plans)
     projects, kbs = set(), set()
-    if role != P.ADMIN and project is not None:
-        kbs = {r["kb_node_id"] for r in conn.execute("SELECT kb_node_id FROM project_kbs WHERE project_node_id = %s", (project,)).fetchall()}
-        if role == P.PLANNER:
+    if project is not None:
+        if role == P.WORKER:
+            kbs = _kbs_for_worker(conn, scope, project, anc(scope))
+        elif role == P.PLANNER:
             projects = {r["id"] for r in conn.execute("SELECT id FROM nodes WHERE parent_id = %s AND visible", (plans,)).fetchall()}
             projects |= {r["target_project_id"] for r in conn.execute("SELECT target_project_id FROM project_visibility WHERE viewer_project_id = %s", (project,)).fetchall()}
             projects.add(project)
     return project, P.View(root=root, plans=plans, kb=kb, readable_projects=frozenset(projects), readable_kbs=frozenset(kbs))
+
+
+def _check_access(conn, header: Optional[str]) -> None:
+    """Every request carries the server access token (X-Server-Access). Only something with local
+    disk access has it. Checked before any bearer, so a missing or wrong token is always a 401."""
+    expected = db.meta_get(conn, "server_access_hash")
+    if expected is None:
+        raise HTTPException(503, "database not bootstrapped: run `uv run ai-project-planning-server bootstrap`")
+    if not header or not hmac.compare_digest(db.hash_token(header.strip()), expected):
+        raise HTTPException(401, f"missing or wrong server access token ({db.ACCESS_HEADER}); read it from the server_access_token file bootstrap wrote")
+
+
+def require_access(x_server_access: Optional[str] = Header(default=None)):
+    """Dependency for endpoints that take no bearer: the access token alone."""
+    with db.connect() as conn:
+        _check_access(conn, x_server_access)
 
 
 def _meta_ids(conn) -> tuple[int, int, int]:
@@ -77,14 +106,19 @@ def _meta_ids(conn) -> tuple[int, int, int]:
     return tuple(int(meta[k]) for k in ("root_node_id", "kb_node_id", "plans_node_id"))
 
 
-def ctx(authorization: Optional[str] = Header(default=None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "missing bearer token")
-    bearer = authorization[7:]
+def _ctx(authorization: Optional[str], x_server_access: Optional[str], bearer_required: bool):
     conn = db.connect()
     try:
+        _check_access(conn, x_server_access)
         root, kb, plans = _meta_ids(conn)
         anc = db.ancestors_fn(conn)
+        if not authorization or not authorization.startswith("Bearer "):
+            if bearer_required:
+                raise HTTPException(401, "missing bearer token")
+            # Access token only: may create a project and nothing else.
+            yield Ctx(conn, P.Principal(token_id=None, scope_node_id=root, role=P.ACCESS, project_id=None), P.View(root=root, plans=plans, kb=kb))
+            return
+        bearer = authorization[7:]
         if A.is_session_token(bearer):
             # The admin: an in-memory session approved by the user, never a database row.
             if not SESSIONS.touch(bearer):
@@ -114,11 +148,23 @@ def ctx(authorization: Optional[str] = Header(default=None)):
         conn.close()
 
 
+def ctx(authorization: Optional[str] = Header(default=None), x_server_access: Optional[str] = Header(default=None)):
+    """Access token plus a bearer (planner, worker, or admin session)."""
+    yield from _ctx(authorization, x_server_access, bearer_required=True)
+
+
+def ctx_or_access(authorization: Optional[str] = Header(default=None), x_server_access: Optional[str] = Header(default=None)):
+    """Access token, with or without a bearer. Used only where the access token alone is enough."""
+    yield from _ctx(authorization, x_server_access, bearer_required=False)
+
+
 # ---------- admin login: the user approves an agent as admin by typing the password into the browser ----------
 
-@app.post("/admin/nonce", status_code=201)
+@app.post("/admin/nonce", status_code=201, dependencies=[Depends(require_access)])
 def admin_nonce():
-    """Unauthenticated: start a login. The CLI opens /admin/login?nonce=... for the user."""
+    """Access token only: start a login. The CLI opens /admin/login?nonce=... for the user.
+    The nonce is the proof the login was started by something holding the access token, so the
+    browser page itself needs no header."""
     return {"nonce": SESSIONS.new_nonce()}
 
 
@@ -148,7 +194,7 @@ async def admin_login(request: Request):
     return HTMLResponse(A.DONE_PAGE)
 
 
-@app.get("/admin/session/{nonce}")
+@app.get("/admin/session/{nonce}", dependencies=[Depends(require_access)])
 def admin_session(nonce: str):
     """Returns the session token exactly once after the user approved; 404 before and after."""
     token = SESSIONS.pickup(nonce)
@@ -157,7 +203,7 @@ def admin_session(nonce: str):
     return {"token": token}
 
 
-@app.post("/admin/logout", status_code=204)
+@app.post("/admin/logout", status_code=204, dependencies=[Depends(require_access)])
 def admin_logout(authorization: Optional[str] = Header(default=None)):
     if not authorization or not authorization.startswith("Bearer ") or not A.is_session_token(authorization[7:]):
         raise HTTPException(401, "admin session token required")
@@ -167,7 +213,7 @@ def admin_logout(authorization: Optional[str] = Header(default=None)):
 
 
 if TEST_HOOKS:
-    @app.post("/admin/_clear_sessions", status_code=204)
+    @app.post("/admin/_clear_sessions", status_code=204, dependencies=[Depends(require_access)])
     def admin_clear_sessions():
         """Test hook (PLANNER_TEST_HOOKS=1 only): what a server restart does to admin sessions."""
         SESSIONS.clear()
@@ -230,10 +276,12 @@ class ProjectIn(BaseModel):
 
 
 @app.post("/projects", status_code=201)
-def create_project(body: ProjectIn, c: Ctx = Depends(ctx)):
-    """Admin only: a new project under plans with a uuid, and its planner token (returned once)."""
-    if not P.can_manage_projects(c.p):
-        raise HTTPException(403, "admin only")
+def create_project(body: ProjectIn, c: Ctx = Depends(ctx_or_access)):
+    """A new project under plans with a uuid, and its planner token (returned once).
+    Needs no admin: the server access token alone is enough, as is a planner or admin bearer.
+    Workers cannot start projects. Projects are visible by default."""
+    if not P.can_create_project(c.p):
+        raise HTTPException(403, "workers cannot create projects")
     raw = db.new_token()
     with c.write(c.plans) as holder:
         n = c.conn.execute("INSERT INTO nodes (parent_id, title, owner) VALUES (%s, %s, %s) RETURNING *", (c.plans, body.title, c.p.token_id)).fetchone()
@@ -259,12 +307,14 @@ class ProjectPatch(BaseModel):
 
 @app.patch("/projects/{project_uuid}")
 def patch_project(project_uuid: str, body: ProjectPatch, c: Ctx = Depends(ctx)):
-    """Admin only: set visibility and/or replace the set of kbs the project may read."""
-    if not P.can_manage_projects(c.p):
-        raise HTTPException(403, "admin only")
+    """Visibility: admin only. kbs (the set the project's workers read): the project's own planner, or admin."""
     if body.visible is None and body.kbs is None:
         raise HTTPException(422, "nothing to change: give visible or kbs")
     n = node_by_uuid(c, project_uuid, parent=c.plans)
+    if body.visible is not None and not P.can_set_visibility(c.p):
+        raise HTTPException(403, "only the admin sets project visibility")
+    if body.kbs is not None and not P.can_assign_kbs(c.p, n["id"]):
+        raise HTTPException(403, "only the project's planner or the admin assigns its kbs")
     kb_ids = []
     for u in body.kbs or []:
         kb_ids.append(node_by_uuid(c, u, parent=c.kb)["id"])
@@ -402,24 +452,37 @@ def create_node(body: NodeIn, c: Ctx = Depends(ctx)):
 class NodePatch(BaseModel):
     state: Optional[str] = None
     needs_review: Optional[bool] = None
+    kbs: Optional[list[str]] = None  # kb uuids: override the kb set for workers scoped at or beneath this node
 
 
 @app.patch("/nodes/{node_id}")
 def patch_node(node_id: int, body: NodePatch, c: Ctx = Depends(ctx)):
-    """Set state, or clear needs_review after the user has reviewed a level-4 branch."""
-    if body.state is None and body.needs_review is None:
-        raise HTTPException(422, "nothing to change: give state or needs_review")
+    """Set state, clear needs_review after the user has reviewed a level-4 branch, or set a kb override:
+    the kbs workers at or beneath this node read (nearest ancestor override wins, else the project set)."""
+    if body.state is None and body.needs_review is None and body.kbs is None:
+        raise HTTPException(422, "nothing to change: give state, needs_review, or kbs")
     if body.state is not None and body.state not in STATES:
         raise HTTPException(422, f"state must be one of {STATES}")
     get_node(c, node_id)
     if not P.can_set_state(c.p, node_id, c.anc, c.v):
         raise HTTPException(403, "cannot change this node")
+    if body.kbs is not None and P.project_of(node_id, c.anc, c.plans) is None:
+        raise HTTPException(422, "kb overrides apply to nodes inside a project")
+    kb_ids = [node_by_uuid(c, u, parent=c.kb)["id"] for u in (body.kbs or [])]
     with c.write(node_id):
         n = c.conn.execute(
             "UPDATE nodes SET state = COALESCE(%s, state), needs_review = COALESCE(%s, needs_review) WHERE id = %s RETURNING *",
             (body.state, body.needs_review, node_id),
         ).fetchone()
-    return node_out(n)
+        if body.kbs is not None:
+            c.conn.execute("INSERT INTO node_kb_overrides (node_id) VALUES (%s) ON CONFLICT DO NOTHING", (node_id,))
+            c.conn.execute("DELETE FROM node_kbs WHERE node_id = %s", (node_id,))
+            for k in kb_ids:
+                c.conn.execute("INSERT INTO node_kbs (node_id, kb_node_id) VALUES (%s, %s)", (node_id, k))
+    out = node_out(n)
+    if body.kbs is not None:
+        out["kbs"] = body.kbs
+    return out
 
 
 # ---------- docs ----------

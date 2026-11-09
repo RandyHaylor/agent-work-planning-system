@@ -1,6 +1,6 @@
 # Agent Planning Server
 
-Postgres-backed tree of projects, plan nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. An admin agent maintains the knowledge bases and creates projects. A planner agent runs one project: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Rules added at the start of every agent's session, before its custom instructions, by agent type: `agent_instruction_injections.json`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
+Postgres-backed tree of projects, plan nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. Any agent with server access creates a project and becomes its planner: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. An admin session, approved by the user per session, maintains the knowledge bases and project visibility. Every write is mirrored to disk per project. Process and rules: `agent-planning-system.md`. Rules added at the start of every agent's session, before its custom instructions, by agent type: `agent_instruction_injections.json`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
 
 **Why the lanes exist.** Agents given the whole picture build what they imagine instead of what was planned. They wander into sibling modules, redefine interfaces, and invent context. The tokens, the scoped reads, and the read-only instruction docs exist to keep each agent on its own task with exactly the context it needs and nothing more. That is context control, not security. The lanes are a deadbolt, not a vault: they keep honest agents honest and make stepping out of lane an explicit act rather than a drift.
 
@@ -20,14 +20,18 @@ Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `need
 
 | | admin | planner | worker |
 |---|---|---|---|
-| read | everything | own project; other projects that are visible or granted; assigned kbs | scope subtree; ancestor `environment` docs; assigned kbs |
+| read | everything | own project; other projects that are visible or granted; every kb | scope subtree; ancestor `environment` docs; the kbs assigned to its project or overridden on an ancestor node |
 | write docs | anywhere | any role in own project | `report`, `spike`, `escalation`, `kb_proposal` on scope subtree |
 | edit docs | any | any in own project | docs it authored |
 | create nodes | anywhere | in own project | beneath scope |
 | set state, answer escalations | yes | in own project | no |
 | mint tokens | planners, workers | workers in own project | no |
-| create projects, assign kbs, set visibility | yes | no | no |
+| create projects | yes | yes, and any caller with the server access token | no |
+| assign kbs to a project or node | yes | own project | no |
+| hide a project, grant visibility | yes | no | no |
 | write a kb, resolve `kb_proposal` | yes | no | no |
+
+Every request also carries `X-Server-Access`, the contents of `server_access_token` written by bootstrap next to `.env`. Without it the server answers 401. This keeps anything without local disk access off the server.
 
 Other projects and ancestors return 404 to workers. Hidden projects return 404 to planners without a grant. Rules live in `ai_project_planning_server/permissions.py`, pure, with unit tests.
 
@@ -42,16 +46,16 @@ Bearer auth. JSON bodies. Self-signed cert by default.
 | GET / POST | `/admin/login` | the browser page where the user types the admin password |
 | GET | `/admin/session/{nonce}` | the session token, once, after a successful login |
 | POST | `/admin/logout` | end the caller's admin session |
-| POST | `/projects` | admin: `{title, summary}` → `{uuid, node_id, planner_token}` |
+| POST | `/projects` | `{title, summary}` → `{uuid, node_id, planner_token}`; no bearer needed |
 | GET | `/projects` | projects the caller may read |
-| PATCH | `/projects/{uuid}` | admin: `{visible?, kbs?: [uuid]}` |
+| PATCH | `/projects/{uuid}` | `{kbs?: [uuid]}` own planner or admin; `{visible?}` admin |
 | POST / DELETE | `/projects/{uuid}/visibility` | admin: `{viewer: uuid}` grant or revoke read on a hidden project |
 | POST | `/kbs` | admin: `{title, summary}` → kb with uuid |
 | GET | `/kbs` | kbs the caller may read |
 | GET | `/nodes/{id}` | node, docs, `environment` (ancestor env docs) |
 | GET | `/nodes/{id}/tree` | nested `id, title, state` |
 | POST | `/nodes` | `{parent_id, title, summary}`; level 4 adds `warning` |
-| PATCH | `/nodes/{id}` | `{state}` and/or `{needs_review}` |
+| PATCH | `/nodes/{id}` | `{state}`, `{needs_review}`, `{kbs: [uuid]}` (kb override for agents beneath) |
 | GET | `/nodes/review` | nodes flagged `needs_review` in scope |
 | POST | `/nodes/{id}/docs` | `{role, body}` |
 | PATCH | `/docs/{id}` | `{body}`, or `{answer, resolved}` on `escalation` / `kb_proposal` |
@@ -75,20 +79,21 @@ uv run ai-project-planning-server              # HTTPS on 127.0.0.1:8787; cert g
 uv run ai-project-planning-server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
 ```
 
-Server and database bind to localhost. No default passwords. Admin is a session: the password is known only to the user, the agent never sees it, and sessions live in server memory only, so a restart ends them. The admin session creates kbs and projects; each project's planner token is minted at project creation. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews. Roles and handoffs: `WORKFLOWS.md`.
+Server and database bind to localhost. No default passwords. Admin is a session: the password is known only to the user, the agent never sees it, and sessions live in server memory only, so a restart ends them. Admin is not needed to start work; any agent creates a project and gets its planner token in the response. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews. Roles and handoffs: `WORKFLOWS.md`.
 
 Env: `PLANNER_DSN`, `PLANNER_PORT`, `PLANNER_HOST`, `PLANNER_CERT_DIR`, `PLANNER_BACKUP_DIR` (default `backups/`), `PLANNER_DB_PORT` (compose host port, default 5433). Reset with `docker compose down -v`.
 
 Backup: every write under `plans` or `kb`, including project creation, rewrites that project's subtree to `PLANNER_BACKUP_DIR/<project-uuid>/` (kbs under `kb/<uuid>/`) as `tree.json`, `docs/<node>-<role>-<doc>.md`, and `.history.md` beside any doc that has been edited. Written to a temp dir and swapped in. Writes to one project are serialized, so backups run one at a time and later writes wait. A backup failure rolls the write back.
 
-First use: create a kb and a project with the admin token. The response carries the project's planner token.
+First use: create a project. The response carries the project's planner token. No admin needed.
 
 ```
-curl -sk https://localhost:8787/kbs -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H 'content-type: application/json' -d '{"title":"product","summary":"..."}'
-curl -sk https://localhost:8787/projects -H "Authorization: Bearer $ADMIN_TOKEN" \
+A="X-Server-Access: $(cat server_access_token)"
+curl -sk https://localhost:8787/projects -H "$A" \
   -H 'content-type: application/json' -d '{"title":"my project","summary":"..."}'
 ```
+
+Knowledge bases are created by an admin session (`admin-login`, user types the password), then the planner chooses which ones its project uses.
 
 ## Process summary
 

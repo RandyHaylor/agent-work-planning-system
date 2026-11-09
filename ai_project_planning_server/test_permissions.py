@@ -21,6 +21,28 @@ V = P.View(root=1, plans=3, kb=2, readable_projects=frozenset({4, 12}), readable
 admin = P.Principal(token_id=None, scope_node_id=1, role=P.ADMIN)
 planner = P.Principal(token_id=2, scope_node_id=4, role=P.PLANNER, project_id=4)
 worker = P.Principal(token_id=3, scope_node_id=6, role=P.WORKER, project_id=4)
+access = P.Principal(token_id=None, scope_node_id=1, role=P.ACCESS)
+
+
+def test_access_only_creates_projects_and_nothing_else():
+    assert P.can_create_project(access) and P.can_create_project(None)
+    assert P.can_create_project(planner) and P.can_create_project(admin)
+    assert not P.can_create_project(worker)
+    for n in PARENT:
+        assert not P.can_read(access, n, anc, V), n
+        assert not P.can_create_child(access, n, anc, V), n
+        assert not P.can_write_doc(access, n, "report", anc, V), n
+        assert not P.can_edit_doc(access, n, "report", None, anc, V), n
+        assert not P.can_set_state(access, n, anc, V), n
+    assert not P.can_mint(access, 4, P.WORKER, anc, V)
+
+
+def test_kb_selection_and_visibility_rights():
+    assert P.can_assign_kbs(planner, 4) and not P.can_assign_kbs(planner, 12)
+    assert P.can_assign_kbs(admin, 12)
+    assert not P.can_assign_kbs(worker, 4)
+    assert P.can_set_visibility(admin)
+    assert not P.can_set_visibility(planner) and not P.can_set_visibility(worker)
 
 
 def test_project_of_and_kb_of():
@@ -49,9 +71,9 @@ def test_planner_reads_own_visible_and_granted_projects_not_hidden():
     assert P.can_read(planner, 1, anc, V) and P.can_read(planner, 3, anc, V) and P.can_read(planner, 2, anc, V)
 
 
-def test_planner_reads_assigned_kbs_only():
-    assert P.can_read(planner, 8, anc, V) and P.can_read(planner, 9, anc, V)
-    assert not P.can_read(planner, 10, anc, V)
+def test_planner_reads_every_kb_worker_only_selected():
+    for n in (2, 8, 9, 10):
+        assert P.can_read(planner, n, anc, V), n
     assert P.can_read(worker, 8, anc, V) and P.can_read(worker, 9, anc, V)
     assert not P.can_read(worker, 10, anc, V)
     assert not P.can_read(worker, 2, anc, V)

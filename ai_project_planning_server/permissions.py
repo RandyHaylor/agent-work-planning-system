@@ -5,16 +5,19 @@ node ids, ancestor chains, a small Principal record, and a View record that the
 caller fills from the database (which projects and kbs the principal may read).
 The caller supplies an ``ancestors(node_id)`` function returning [node, parent, ..., root].
 
-Three roles:
+Roles:
 - admin: top-level. Not a token in the database but a user-approved session (token_id None).
-  Reads and writes everything. Creates projects and kbs, assigns kbs to projects, controls
-  project visibility, resolves kb proposals, mints planners and workers.
+  Reads and writes everything. Creates kbs, controls project visibility, resolves kb proposals,
+  mints planners and workers.
 - planner: scoped to one project. Full write inside it. Read-only on every other project
-  that is visible (or that explicitly grants its project visibility). Reads only the kbs
-  assigned to its project. Never writes a kb. Mints workers inside its project only.
-- worker: reads its scope subtree, the project's assigned kbs, and ancestor environment
-  docs (the API gathers those). Writes reports, escalations, spikes, kb proposals there,
-  creates nodes beneath, edits only docs it authored.
+  that is visible (or that explicitly grants its project visibility). Reads every kb.
+  Decides which kbs its project's workers see (project-wide, or per node). Never writes a kb.
+  Mints workers inside its project only.
+- worker: reads its scope subtree, the kbs selected for it (nearest node override, else the
+  project set), and ancestor environment docs (the API gathers those). Writes reports,
+  escalations, spikes, kb proposals there, creates nodes beneath, edits only docs it authored.
+- access: a caller holding only the server access token and no bearer. It may create a project
+  (which mints that project's planner token) and nothing else.
 
 Node ownership is a record, never a permission source.
 """
@@ -23,7 +26,7 @@ from typing import Callable, Optional
 
 Ancestors = Callable[[int], list[int]]
 
-ADMIN, PLANNER, WORKER = "admin", "planner", "worker"
+ADMIN, PLANNER, WORKER, ACCESS = "admin", "planner", "worker", "access"
 ROLES = frozenset({ADMIN, PLANNER, WORKER})
 TOKEN_ROLES = frozenset({PLANNER, WORKER})  # roles a database token can carry; admin is a session only
 
@@ -35,7 +38,7 @@ ENV_ROLE = "environment"
 
 @dataclass(frozen=True)
 class Principal:
-    token_id: Optional[int]  # None for the admin session
+    token_id: Optional[int]  # None for the admin session and for an access-only caller
     scope_node_id: int
     role: str
     project_id: Optional[int] = None  # the project (direct child of plans) the scope lies in; None for admin
@@ -48,7 +51,7 @@ class View:
     plans: int
     kb: int
     readable_projects: frozenset = frozenset()  # project node ids a planner may read (own + visible + granted)
-    readable_kbs: frozenset = frozenset()       # kb node ids (direct children of kb) assigned to the project
+    readable_kbs: frozenset = frozenset()       # kb node ids (direct children of kb) a worker may read
 
 
 def in_subtree(node_id: int, root_id: int, ancestors: Ancestors) -> bool:
@@ -80,11 +83,13 @@ def under_kb(node_id: int, ancestors: Ancestors, v: View) -> bool:
 def can_read(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
     if p.role == ADMIN:
         return True
+    if p.role == ACCESS:
+        return False
     if under_kb(node_id, ancestors, v):
+        if p.role == PLANNER:
+            return True  # planners read every kb; they choose what their workers see
         k = kb_of(node_id, ancestors, v.kb)
-        if k is None:  # the kb container itself
-            return p.role == PLANNER
-        return k in v.readable_kbs
+        return k is not None and k in v.readable_kbs
     if node_id in (v.root, v.plans):
         return p.role == PLANNER
     if p.role == PLANNER:
@@ -104,7 +109,24 @@ def can_create_child(p: Principal, parent_id: int, ancestors: Ancestors, v: View
         return False
     if p.role == PLANNER:
         return _own_project(p, parent_id, ancestors, v)
-    return in_subtree(parent_id, p.scope_node_id, ancestors) and project_of(parent_id, ancestors, v.plans) is not None
+    if p.role == WORKER:
+        return in_subtree(parent_id, p.scope_node_id, ancestors) and project_of(parent_id, ancestors, v.plans) is not None
+    return False
+
+
+def can_create_project(p: Optional[Principal]) -> bool:
+    """Anyone holding the server access token may start a project: no bearer, a planner, or the admin.
+    A worker may not."""
+    return p is None or p.role in (ADMIN, PLANNER, ACCESS)
+
+
+def can_set_visibility(p: Principal) -> bool:
+    return p.role == ADMIN
+
+
+def can_assign_kbs(p: Principal, project_id: int) -> bool:
+    """Which kbs a project's agents see is the planner's call (its own project), or the admin's."""
+    return p.role == ADMIN or (p.role == PLANNER and p.project_id == project_id)
 
 
 def can_set_state(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
@@ -122,18 +144,22 @@ def can_write_doc(p: Principal, node_id: int, role: str, ancestors: Ancestors, v
         return False
     if p.role == PLANNER:
         return _own_project(p, node_id, ancestors, v)
-    return role in WORKER_DOC_ROLES and in_subtree(node_id, p.scope_node_id, ancestors)
+    if p.role == WORKER:
+        return role in WORKER_DOC_ROLES and in_subtree(node_id, p.scope_node_id, ancestors)
+    return False
 
 
-def can_edit_doc(p: Principal, node_id: int, role: str, author: int, ancestors: Ancestors, v: View) -> bool:
+def can_edit_doc(p: Principal, node_id: int, role: str, author: Optional[int], ancestors: Ancestors, v: View) -> bool:
     if p.role == ADMIN:
         return True
     if under_kb(node_id, ancestors, v):
         return False
     if p.role == PLANNER:
         return _own_project(p, node_id, ancestors, v)
-    # A worker edits what it authored (its reports, and the summary of a node it created).
-    return in_subtree(node_id, p.scope_node_id, ancestors) and author == p.token_id
+    if p.role == WORKER:
+        # A worker edits what it authored (its reports, and the summary of a node it created).
+        return in_subtree(node_id, p.scope_node_id, ancestors) and author is not None and author == p.token_id
+    return False
 
 
 def can_answer_escalation(p: Principal, node_id: int, ancestors: Ancestors, v: View) -> bool:
@@ -169,4 +195,5 @@ def can_list_tokens(p: Principal) -> bool:
 
 
 def can_manage_projects(p: Principal) -> bool:
+    """Admin-only project management: creating kbs, visibility, visibility grants."""
     return p.role == ADMIN

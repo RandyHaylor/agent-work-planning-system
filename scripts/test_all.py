@@ -3,8 +3,9 @@
     uv run python scripts/test_all.py
 
 Uses its own compose project (`planner-test`), its own DB host port, its own random DB
-password, its own random admin password and a temp backup dir, so the live `docker compose`
-project, its volume, its .env and its backups directory are never touched. The tests obtain
+password, its own random admin password, its own server access token file and a temp backup dir,
+so the live `docker compose` project, its volume, its .env, its access token and its backups
+directory are never touched. The tests obtain
 an admin session through the real login flow (nonce, password form, pickup). Starts a fresh Postgres, bootstraps,
 starts the server, runs unit + integration tests, then stops the server and tears the
 test compose project down with its volume.
@@ -65,8 +66,10 @@ def main() -> int:
     if not port_free(int(PORT)):
         raise SystemExit(f"port {PORT} is already in use; set PLANNER_PORT to a free port so the tests hit the server under test")
     backup_dir = tempfile.mkdtemp(prefix="planner-test-backups-")
+    access_token_file = str(Path(tempfile.mkdtemp(prefix="planner-test-access-")) / "server_access_token")
     env = dict(os.environ, PLANNER_DB_PORT=DB_PORT, PLANNER_DB_PASSWORD=PASSWORD, PLANNER_DSN=DSN,
                PLANNER_PORT=PORT, PLANNER_URL=URL, PLANNER_BACKUP_DIR=backup_dir,
+               PLANNER_SERVER_ACCESS_TOKEN=access_token_file,  # bootstrap writes it here; tests and the CLI read it
                PLANNER_ADMIN_PASSWORD=ADMIN_PASSWORD,     # bootstrap reads it instead of prompting
                PLANNER_ADMIN_FAIL_WINDOW="3",             # short lockout window so the rate-limit test is quick
                PLANNER_TEST_HOOKS="1")                    # enables POST /admin/_clear_sessions (simulated restart)

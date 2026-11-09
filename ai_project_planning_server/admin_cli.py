@@ -2,6 +2,8 @@
 user, poll until the user has approved, print the session token once.
 
 Talks to the local server over HTTPS without verifying the self-signed cert (localhost only).
+Every request carries the server access token (read from the file bootstrap wrote). The nonce is
+registered with that token, so the browser page the user opens needs only the nonce.
 """
 import json
 import os
@@ -13,6 +15,7 @@ import urllib.request
 import webbrowser
 
 from ai_project_planning_server import admin as A
+from ai_project_planning_server import db
 
 TIMEOUT = 120
 
@@ -30,6 +33,7 @@ def _ctx():
 
 def _request(method: str, path: str, token: str = None, data: bytes = None):
     req = urllib.request.Request(base_url() + path, method=method, data=data)
+    req.add_header(db.ACCESS_HEADER, db.read_access_token())
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, context=_ctx(), timeout=10) as r:

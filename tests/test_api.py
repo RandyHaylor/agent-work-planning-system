@@ -15,21 +15,33 @@ ADMIN_PASSWORD = os.environ.get("PLANNER_ADMIN_PASSWORD")
 if not ADMIN_PASSWORD:
     pytest.skip("PLANNER_ADMIN_PASSWORD not set", allow_module_level=True)
 
+from ai_project_planning_server import db as _db  # noqa: E402
+
+ACCESS = {_db.ACCESS_HEADER: _db.read_access_token()}  # every request carries the server access token
+
 
 def client(token):
-    return httpx.Client(base_url=BASE, verify=False, headers={"Authorization": f"Bearer {token}"})
+    return httpx.Client(base_url=BASE, verify=False, headers={**ACCESS, "Authorization": f"Bearer {token}"})
 
 
 def anon():
-    return httpx.Client(base_url=BASE, verify=False)
+    """Access token, no bearer: enough to create a project, nothing else."""
+    return httpx.Client(base_url=BASE, verify=False, headers=ACCESS)
+
+
+def bare(token=None):
+    """No access token at all: every request must be refused before any other auth."""
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    return httpx.Client(base_url=BASE, verify=False, headers=headers)
 
 
 def admin_login(password=ADMIN_PASSWORD):
-    """What `uv run ai-project-planning-server admin-login` plus the user's browser do, programmatically."""
-    with anon() as c:
+    """What `uv run ai-project-planning-server admin-login` plus the user's browser do, programmatically.
+    The nonce is registered with the access token; the browser page and form need only the nonce."""
+    with anon() as c, bare() as browser:
         nonce = c.post("/admin/nonce").json()["nonce"]
         assert c.get(f"/admin/session/{nonce}").status_code == 404  # nothing to pick up before approval
-        r = c.post("/admin/login", data={"nonce": nonce, "password": password})
+        r = browser.post("/admin/login", data={"nonce": nonce, "password": password})
         if r.status_code != 200:
             return r, None
         got = c.get(f"/admin/session/{nonce}")
@@ -53,12 +65,14 @@ def world(admin):
     tree = admin.get(f"/nodes/{me['scope_node_id']}/tree").json()
     kids = {c["title"]: c["id"] for c in tree["children"]}
     plans, kb = kids["plans"], kids["kb"]
-    pa = admin.post("/projects", json={"title": "project A", "summary": "Project A"}).json()
-    pb = admin.post("/projects", json={"title": "project B", "summary": "Project B"}).json()
+    # Projects are started with the access token alone: no admin involved.
+    with anon() as starter:
+        pa = starter.post("/projects", json={"title": "project A", "summary": "Project A"}).json()
+        pb = starter.post("/projects", json={"title": "project B", "summary": "Project B"}).json()
     kb_prod = admin.post("/kbs", json={"title": "Product", "summary": "What the product is"}).json()
     kb_co = admin.post("/kbs", json={"title": "Company", "summary": "Who we are"}).json()
-    admin.patch(f"/projects/{pa['uuid']}", json={"kbs": [kb_prod["uuid"]]})
     planner, planner_b = client(pa["planner_token"]), client(pb["planner_token"])
+    planner.patch(f"/projects/{pa['uuid']}", json={"kbs": [kb_prod["uuid"]]})  # the planner picks its workers' kbs
     project = admin.get(f"/nodes/{pa['node_id']}").json()
     other = admin.get(f"/nodes/{pb['node_id']}").json()
     env = planner.post(f"/nodes/{project['id']}/docs", json={"role": "environment", "body": "Stack: Python 3.12, stdlib only."}).json()
@@ -71,19 +85,35 @@ def world(admin):
 
 
 def test_401_without_token():
-    assert httpx.get(f"{BASE}/me", verify=False).status_code == 401
+    assert anon().get("/me").status_code == 401
     assert client("pln_bogus").get("/me").status_code == 401
     assert client("adm_bogus").get("/me").status_code == 401
 
 
+def test_401_without_server_access_token(world):
+    """The access token is checked before anything else: a valid bearer without it is still refused."""
+    for tok in (world["worker_tok"]["token"], world["pa"]["planner_token"]):
+        with bare(tok) as b:
+            for path in ("/me", "/projects", "/kbs", f"/nodes/{world['task']['id']}", "/escalations", "/tokens"):
+                assert b.get(path).status_code == 401, path
+            assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+            assert b.post(f"/nodes/{world['task']['id']}/docs", json={"role": "report", "body": "x"}).status_code == 401
+    with bare() as b:
+        assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+        assert b.post("/admin/nonce").status_code == 401
+        assert b.get("/admin/session/anything").status_code == 401
+    with httpx.Client(base_url=BASE, verify=False, headers={_db.ACCESS_HEADER: "acc_wrong"}) as b:
+        assert b.post("/projects", json={"title": "x", "summary": "x"}).status_code == 401
+
+
 def test_admin_login_page_and_nonce_rules():
-    with anon() as c:
-        assert c.get("/admin/login?nonce=bogus").status_code == 404
+    with anon() as c, bare() as browser:
+        assert browser.get("/admin/login?nonce=bogus").status_code == 404
         nonce = c.post("/admin/nonce").json()["nonce"]
-        page = c.get(f"/admin/login?nonce={nonce}")
+        page = browser.get(f"/admin/login?nonce={nonce}")  # the browser carries no header: the nonce is the proof
         assert page.status_code == 200 and 'name="password"' in page.text and nonce in page.text
         # an unregistered nonce cannot log in, even with the right password
-        assert c.post("/admin/login", data={"nonce": "forged", "password": ADMIN_PASSWORD}).status_code == 404
+        assert browser.post("/admin/login", data={"nonce": "forged", "password": ADMIN_PASSWORD}).status_code == 404
 
 
 def test_admin_session_single_pickup_and_logout(admin):
@@ -114,12 +144,12 @@ def test_admin_session_does_not_survive_restart(admin):
 def test_admin_wrong_password_rejected_then_rate_limited():
     r, token = admin_login("not the password")
     assert r.status_code == 401 and token is None and "Wrong password" in r.text
-    with anon() as c:
+    with anon() as c, bare() as browser:
         for _ in range(4):
             nonce = c.post("/admin/nonce").json()["nonce"]
-            assert c.post("/admin/login", data={"nonce": nonce, "password": "still wrong"}).status_code == 401
+            assert browser.post("/admin/login", data={"nonce": nonce, "password": "still wrong"}).status_code == 401
         nonce = c.post("/admin/nonce").json()["nonce"]
-        assert c.post("/admin/login", data={"nonce": nonce, "password": ADMIN_PASSWORD}).status_code == 429
+        assert browser.post("/admin/login", data={"nonce": nonce, "password": ADMIN_PASSWORD}).status_code == 429
     # the runner sets PLANNER_ADMIN_FAIL_WINDOW=3 so the lockout clears quickly
     time.sleep(float(os.environ.get("PLANNER_ADMIN_FAIL_WINDOW", "60")) + 0.5)
     _, token = admin_login()
@@ -143,11 +173,18 @@ def test_me_reports_role_and_project(world):
 
 
 def test_project_creation_returns_working_planner_token(world):
+    """Starting a project needs no admin: the access token alone, a planner, or the admin. Not a worker."""
     pa = world["pa"]
     assert set(pa) >= {"uuid", "node_id", "planner_token", "planner_token_id", "kbs", "visible"}
     assert pa["visible"] is True and len(pa["uuid"]) == 36
     assert world["planner"].get(f"/nodes/{pa['node_id']}").json()["uuid"] == pa["uuid"]
-    assert world["planner"].post("/projects", json={"title": "x", "summary": "x"}).status_code == 403
+    with anon() as starter:
+        r = starter.post("/projects", json={"title": "started with access only", "summary": "x"})
+        assert r.status_code == 201 and client(r.json()["planner_token"]).get("/me").json()["role"] == "planner"
+        assert starter.get("/projects").status_code == 401  # access alone reads nothing
+    r = world["planner"].post("/projects", json={"title": "started by a planner", "summary": "x"})
+    assert r.status_code == 201 and r.json()["visible"] is True
+    assert world["admin"].post("/projects", json={"title": "started by admin", "summary": "x"}).status_code == 201
     assert world["worker"].post("/projects", json={"title": "x", "summary": "x"}).status_code == 403
     listed = {p["uuid"]: p for p in world["admin"].get("/projects").json()}
     assert listed[pa["uuid"]]["kbs"] == [world["kb_prod"]["uuid"]]
@@ -168,16 +205,23 @@ def test_worker_404_on_ancestors_and_siblings(world):
 
 
 def test_kb_assignment_rules(world):
-    """Planner and worker read only the kbs assigned to their project; nobody but admin writes a kb."""
+    """A planner reads every kb and picks which ones its workers see; workers read only those; nobody but admin writes a kb."""
     p, w, a = world["planner"], world["worker"], world["admin"]
     prod, co = world["kb_prod"]["node_id"], world["kb_co"]["node_id"]
     assert p.get(f"/nodes/{prod}").status_code == 200 and w.get(f"/nodes/{prod}").status_code == 200
-    assert p.get(f"/nodes/{co}").status_code == 404 and w.get(f"/nodes/{co}").status_code == 404
-    assert [k["uuid"] for k in p.get("/kbs").json()] == [world["kb_prod"]["uuid"]]
-    assert {k["uuid"] for k in a.get("/kbs").json()} == {world["kb_prod"]["uuid"], world["kb_co"]["uuid"]}
-    # the kb container shows a planner only its assigned kbs
-    assert [c["id"] for c in p.get(f"/nodes/{world['kb']}").json()["children"]] == [prod]
+    assert p.get(f"/nodes/{co}").status_code == 200  # unassigned to its project, still readable by the planner
+    assert w.get(f"/nodes/{co}").status_code == 404
+    both = {world["kb_prod"]["uuid"], world["kb_co"]["uuid"]}
+    assert {k["uuid"] for k in p.get("/kbs").json()} == both
+    assert [k["uuid"] for k in w.get("/kbs").json()] == [world["kb_prod"]["uuid"]]
+    assert {k["uuid"] for k in a.get("/kbs").json()} == both
+    assert {c["id"] for c in p.get(f"/nodes/{world['kb']}").json()["children"]} == {prod, co}
     assert w.get(f"/nodes/{world['kb']}").status_code == 404
+    # the kb set is the planner's call for its own project only; visibility stays the admin's
+    assert world["planner_b"].patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
+    assert p.patch(f"/projects/{world['pb']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code == 403
+    assert w.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_co"]["uuid"]]}).status_code in (403, 404)
+    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"visible": False}).status_code == 403
     # admin writes; planner and worker never do, not even on an assigned kb
     page = a.post("/nodes", json={"parent_id": prod, "title": "Glossary", "summary": "terms"})
     assert page.status_code == 201
@@ -190,11 +234,37 @@ def test_kb_assignment_rules(world):
     # proposals are written on the agent's own node
     assert w.post(f"/nodes/{world['task']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
     assert p.post(f"/nodes/{world['project']['id']}/docs", json={"role": "kb_proposal", "body": "Add: ..."}).status_code == 201
-    # reassignment takes effect at once
-    a.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"], world["kb_co"]["uuid"]]})
-    assert p.get(f"/nodes/{co}").status_code == 200
-    a.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"]]})
-    assert p.get(f"/nodes/{co}").status_code == 404
+    # reassignment by the planner takes effect for its workers at once
+    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"], world["kb_co"]["uuid"]]}).status_code == 200
+    assert w.get(f"/nodes/{co}").status_code == 200
+    assert p.patch(f"/projects/{world['pa']['uuid']}", json={"kbs": [world["kb_prod"]["uuid"]]}).status_code == 200
+    assert w.get(f"/nodes/{co}").status_code == 404
+
+
+def test_node_level_kb_override_for_workers(world):
+    """A planner can narrow or widen the kb set for workers at or beneath one node; nearest override wins."""
+    p, w, tid = world["planner"], world["worker"], world["task"]["id"]
+    prod, co = world["kb_prod"], world["kb_co"]
+    assert w.get(f"/nodes/{prod['node_id']}").status_code == 200 and w.get(f"/nodes/{co['node_id']}").status_code == 404
+    assert w.patch(f"/nodes/{tid}", json={"kbs": [co["uuid"]]}).status_code == 403
+    assert world["planner_b"].patch(f"/nodes/{tid}", json={"kbs": [co["uuid"]]}).status_code == 403
+    r = p.patch(f"/nodes/{tid}", json={"kbs": [co["uuid"]]})
+    assert r.status_code == 200 and r.json()["kbs"] == [co["uuid"]]
+    assert w.get(f"/nodes/{co['node_id']}").status_code == 200 and w.get(f"/nodes/{prod['node_id']}").status_code == 404
+    assert [k["uuid"] for k in w.get("/kbs").json()] == [co["uuid"]]
+    # a worker scoped beneath the overridden node inherits the override
+    sub = p.post("/nodes", json={"parent_id": tid, "title": "sub task", "summary": "s"}).json()
+    sub_tok = p.post("/tokens", json={"label": "sub-w", "scope_node_id": sub["id"], "role": "worker"}).json()
+    with client(sub_tok["token"]) as sw:
+        assert [k["uuid"] for k in sw.get("/kbs").json()] == [co["uuid"]]
+        # a nearer override on the sub node wins over the task's
+        assert p.patch(f"/nodes/{sub['id']}", json={"kbs": []}).status_code == 200
+        assert sw.get("/kbs").json() == [] and sw.get(f"/nodes/{co['node_id']}").status_code == 404
+    assert [k["uuid"] for k in w.get("/kbs").json()] == [co["uuid"]]  # the task's own override unchanged
+    # an override on the task equal to the project set restores the default view for the rest of the suite
+    assert p.patch(f"/nodes/{tid}", json={"kbs": [prod["uuid"]]}).status_code == 200
+    assert w.get(f"/nodes/{prod['node_id']}").status_code == 200 and w.get(f"/nodes/{co['node_id']}").status_code == 404
+    assert p.patch(f"/nodes/{world['kb_prod']['node_id']}", json={"kbs": []}).status_code in (403, 422)
 
 
 def test_worker_sees_ancestor_environment_doc(world):
@@ -222,6 +292,7 @@ def test_hidden_project_until_admin_grants_visibility(world):
     hidden = a.post("/projects", json={"title": "secret", "summary": "hush"}).json()
     hp = client(hidden["planner_token"])
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 200  # visible by default
+    assert hp.patch(f"/projects/{hidden['uuid']}", json={"visible": False}).status_code == 403  # its own planner cannot hide it
     r = a.patch(f"/projects/{hidden['uuid']}", json={"visible": False})
     assert r.status_code == 200 and r.json()["visible"] is False
     assert pa.get(f"/nodes/{hidden['node_id']}").status_code == 404
@@ -411,7 +482,7 @@ def test_backup_written_on_every_write(world):
     assert f.exists()
     assert f.read_text(encoding="utf-8").endswith("\n\nfirst draft ")
     assert "author: worker" in f.read_text(encoding="utf-8")
-    # the admin-authored project summary is attributed to "admin"
+    # the project was started with the access token (no bearer): no author token, rendered as "admin"
     summary = next(p for p in (proj_dir / "docs").iterdir() if p.name.startswith(f"{pid}-summary-"))
     assert "author: admin" in summary.read_text(encoding="utf-8")
     world["worker"].patch(f"/docs/{r['id']}", json={"body": "second draft"})
@@ -466,6 +537,7 @@ def test_bootstrap_twice_is_noop():
     r = subprocess.run(["uv", "run", "ai-project-planning-server", "bootstrap"], cwd=repo, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert "Already bootstrapped" in r.stdout and "adm_" not in r.stdout
+    assert _db.read_access_token() == ACCESS[_db.ACCESS_HEADER]  # a second run does not rotate the access token
     with psycopg.connect(dsn, autocommit=True) as conn:
         assert conn.execute("SELECT count(*) FROM nodes WHERE parent_id IS NULL").fetchone()[0] == 1
         assert conn.execute("SELECT count(*) FROM meta WHERE key='root_node_id'").fetchone()[0] == 1

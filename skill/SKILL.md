@@ -5,7 +5,7 @@ description: How to run and follow the agent planning process against the hosted
 
 # Planning server
 
-Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
+Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN` and `X-Server-Access: <contents of the server_access_token file at the server location>`. Without the second header the server answers nothing.The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
 
 ```
 H="Authorization: Bearer $PLANNER_TOKEN"
@@ -38,10 +38,10 @@ You never see or ask for the password. The user types it into the window. The se
 - `GET /proposals` lists unresolved proposals. Discuss each with the user. Apply the approved change to the kb yourself, then resolve the proposal with `PATCH /docs/{id}` `{"answer":"...","resolved":true}`.
 
 ## Projects
-- `POST /projects` `{"title":"...","summary":"..."}` creates the project with a uuid and mints its planner token. The token is returned once; hand it to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
-- `PATCH /projects/{uuid}` `{"kbs":[...kb uuids...]}` assigns which kbs that project may read. `{"visible":false}` hides it from other projects.
+- Any agent with server access creates its own project with `POST /projects`; you do not need to. If you create one on the user's behalf, hand the returned planner token to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
+- `PATCH /projects/{uuid}` `{"visible":false}` hides a project from other projects. Default: every project is visible read-only to every planner.
 - `POST /projects/{uuid}/visibility` `{"viewer":"<other project uuid>"}` lets a specific project read a hidden one.
-- Default: every project is visible read-only to every planner.
+- Which kbs a project uses is the planner's call, not yours.
 
 
 # If you are a WORKER
@@ -103,13 +103,19 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 
 You run one project. The user works through you and never touches the server directly.
 Owning a node means you delegate its work. You never do the work of a node you own.
-Your token came from the admin when the project was created. `/me` gives your project's node id.
+
+## Starting a project
+With the server up, create it yourself: `POST /projects` `{"title":"...","summary":"..."}`. The response carries the project's uuid and its planner token, once. Hold that token; you are the planner. No admin is needed. `/me` gives your project's node id.
 
 ## Your rights
 - Full read and write on everything in your project: summaries, instructions, environment, questions, state, children, worker tokens.
 - Read-only on every other project that is visible to you (`GET /projects`). Use them for context, never write there.
-- Read-only on the knowledge bases assigned to your project (`GET /kbs`). You never edit a kb. Propose changes as `kb_proposal` docs on your project node; the admin applies them after talking with the user.
+- Read every knowledge base (`GET /kbs`) and decide which ones your project uses: `PATCH /projects/{uuid}` `{"kbs":[...]}`. Workers see only that set. A task node can override the set for the agents beneath it: `PATCH /nodes/{id}` `{"kbs":[...]}`.
+- You never edit a kb. Propose changes as `kb_proposal` docs on your project node; the admin applies them after talking with the user.
 - You mint workers only, and only inside your project.
+
+## When you need an admin
+Writing a kb, hiding a project, granting visibility into a hidden one, applying a proposal: these need an admin session, which only the user can approve. Either spawn a new unattached agent and tell it to run `admin-login` and what to do once in, or tell the user to start an admin session and pass on the instruction. Then continue.
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 

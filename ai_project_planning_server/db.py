@@ -9,6 +9,33 @@ from psycopg.rows import dict_row
 REPO = Path(__file__).resolve().parent.parent
 ENV_FILE = REPO / ".env"
 SCHEMA = Path(__file__).with_name("schema.sql")
+ACCESS_HEADER = "X-Server-Access"
+
+
+def access_token_path() -> Path:
+    """The server access token file: next to .env by default. PLANNER_SERVER_ACCESS_TOKEN overrides the path.
+    Every request to the server must carry this token in the X-Server-Access header, so only something with
+    local disk access can talk to the server at all."""
+    return Path(os.environ.get("PLANNER_SERVER_ACCESS_TOKEN") or (ENV_FILE.parent / "server_access_token"))
+
+
+def read_access_token() -> str:
+    path = access_token_path()
+    if not path.exists():
+        raise SystemExit(f"no server access token at {path}: run `uv run ai-project-planning-server bootstrap`, or set PLANNER_SERVER_ACCESS_TOKEN to the file")
+    return path.read_text(encoding="utf-8").strip()
+
+
+def write_access_token(path: Path | None = None) -> str:
+    """Generate the server access token file (owner-only permissions) and return the token."""
+    path = path or access_token_path()
+    token = "acc_" + secrets.token_urlsafe(32)
+    path.write_text(token + "\n", encoding="utf-8")
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+    return token
 
 
 def read_env_file(path: Path = ENV_FILE) -> dict:

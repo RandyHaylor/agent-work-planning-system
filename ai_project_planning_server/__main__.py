@@ -13,8 +13,12 @@ Becoming admin (an agent runs this; the user types the password into the browser
 
 `python -m ai_project_planning_server <cmd>` is equivalent.
 
+Starting a project needs no admin: anything holding the server access token may POST /projects and
+receives that project's planner token.
+
 Env: PLANNER_DSN overrides .env; PLANNER_DB_PORT (default 5433) is read by init-env and compose;
-PLANNER_ADMIN_IDLE_HOURS (default 8) ends idle admin sessions.
+PLANNER_ADMIN_IDLE_HOURS (default 8) ends idle admin sessions; PLANNER_SERVER_ACCESS_TOKEN overrides
+where the server access token file is read from and written to (default: server_access_token next to .env).
 """
 import os
 import sys

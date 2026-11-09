@@ -130,3 +130,15 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS nodes_depth_guard ON nodes;
 CREATE TRIGGER nodes_depth_guard BEFORE INSERT ON nodes FOR EACH ROW EXECUTE FUNCTION nodes_depth_guard();
+
+-- Node-level kb override: the planner narrows (or widens) which kbs workers scoped at or beneath
+-- this node may read. The nearest ancestor override wins; without one, the project's set applies.
+-- A row in node_kb_overrides with no node_kbs rows means "no kbs" for that subtree.
+CREATE TABLE IF NOT EXISTS node_kb_overrides (
+    node_id BIGINT PRIMARY KEY REFERENCES nodes(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS node_kbs (
+    node_id    BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    kb_node_id BIGINT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    PRIMARY KEY (node_id, kb_node_id)
+);

@@ -167,6 +167,23 @@ Three live tests, scored on dev worker deviations
 - wordfreq, Fable planner on the two-role server, two modules: zero deviations, zero escalations
 
 
+## Decided 2026-11-09 - starting a project needs no admin
+
+Any agent with server access creates a project
+- `POST /projects` returns the planner token; that agent is the planner
+- Visible by default
+
+Server access token
+- A file at the server location, written by bootstrap
+- Required on every request; keeps anything without local disk access off the server
+
+The planner picks the kbs
+- Reads every kb, assigns a set to its project, may override per task node
+
+Admin only for kb writes, hiding, visibility grants, proposals
+- Planner spawns an admin agent or relays through the user
+
+
 ## Decided 2026-11-09 - admin is a user-approved session
 
 No standing admin token

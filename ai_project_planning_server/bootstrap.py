@@ -5,7 +5,10 @@ A second run on a bootstrapped database is a no-op that says so.
 
 No admin token is minted or printed. The admin is a session approved by the user through the
 browser login (``uv run ai-project-planning-server admin-login``). The password is asked for interactively;
-PLANNER_ADMIN_PASSWORD in the environment overrides the prompt, for tests and automation."""
+PLANNER_ADMIN_PASSWORD in the environment overrides the prompt, for tests and automation.
+
+Also writes the server access token file (``server_access_token`` next to .env, or the path in
+PLANNER_SERVER_ACCESS_TOKEN) and stores its hash: every request must carry it in X-Server-Access."""
 import getpass
 import os
 import sys
@@ -40,15 +43,27 @@ def store_password(conn, password: str) -> None:
         conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", (k, v))
 
 
+def store_access_token(conn) -> str:
+    """Write the server access token file and store its hash. Every request must carry the token."""
+    token = db.write_access_token()
+    conn.execute("INSERT INTO meta (key, value) VALUES ('server_access_hash', %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", (db.hash_token(token),))
+    return token
+
+
 def main():
     with db.connect() as conn:
         conn.execute("SELECT 1")  # fail early on a bad DSN before asking for a password
         db.apply_schema(conn)
         if db.meta_get(conn, "root_node_id"):
+            if not db.meta_get(conn, "server_access_hash"):
+                with conn.transaction():
+                    store_access_token(conn)
+                print(f"Server access token written to {db.access_token_path()}")
             print("Already bootstrapped. Use `uv run ai-project-planning-server set-admin-password` to change the admin password.")
             return
         password = read_password()
         with conn.transaction():
+            store_access_token(conn)
             root = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (NULL, 'root') RETURNING id").fetchone()["id"]
             conn.execute("INSERT INTO docs (node_id, role, body) VALUES (%s, 'summary', 'Root of the planning tree.')", (root,))
             kb = conn.execute("INSERT INTO nodes (parent_id, title) VALUES (%s, 'kb') RETURNING id", (root,)).fetchone()["id"]
@@ -59,6 +74,7 @@ def main():
                 conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s)", (k, str(v)))
             store_password(conn, password)
         print(f"root_node_id={root} kb_node_id={kb} plans_node_id={plans}")
+        print(f"Server access token written to {db.access_token_path()} (every request carries it in {db.ACCESS_HEADER})")
         print("Admin password set. Become admin with: uv run ai-project-planning-server admin-login")
 
 

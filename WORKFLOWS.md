@@ -14,16 +14,17 @@ Every agent's session begins with the blocks from `agent_instruction_injections.
 - Never touches the server directly.
 
 ## Admin agent
-A session, not a standing role. Exists only after the user types the password, dies on server restart or logout.
+A session, not a standing role, and not required to start work. Exists only after the user types the password, dies on server restart or logout.
 - Creates knowledge bases and writes their content from conversation with the user.
-- Creates projects. Each creation mints that project's planner token, which the admin hands to the planner with the skill file.
-- Assigns which kbs a project may read.
 - Hides a project, or grants one project visibility into a hidden one.
 - Reads kb proposals from projects, discusses them with the user, applies the approved ones, resolves the proposal docs.
 - Does not plan projects. Does not build anything.
 
+When a planner needs one of these, it either spawns a new unattached agent to become admin, with the user typing the password, or tells the user to start an admin session and passes on the instruction.
+
 ## Planner agent
-One project, start to finish, holding that project's planner token.
+One project, start to finish. Any agent with server access starts a project with `POST /projects` and receives that project's planner token in the response. That agent is the planner.
+- Decides which knowledge bases its project uses, and may override the set on a specific task node.
 - Outlines with the user, surveys what exists, runs spikes only for what must be proven.
 - Writes the formal plan with the user and puts it on the server; the user approves the server text.
 - Builds the hollow skeleton, proves it with the reference run, commits the baseline.
@@ -44,11 +45,10 @@ One node, holding that node's worker token.
 ```
 uv run ai-project-planning-server init-env            # DB password into .env, once per machine
 docker compose up -d --wait
-uv run ai-project-planning-server bootstrap           # user types the admin password; nothing is printed
+uv run ai-project-planning-server bootstrap           # user types the admin password; writes server_access_token; nothing else printed
 uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
-uv run ai-project-planning-server admin-login         # opens the login window; user types the password; prints ADMIN_TOKEN once
 ```
-The admin session then creates kbs and projects. Each project's planner token comes back from project creation.
+Every request carries the contents of `server_access_token` in the `X-Server-Access` header, so only processes with local disk access reach the server. An agent then starts a project with `POST /projects` and becomes its planner. An admin session (`admin-login`, user types the password) is needed only for kb writes, hiding projects, visibility grants, and applying proposals.
 
 ## Isolation
 Whether agents run in their own VMs, containers, or one shared machine is the user's and the project's decision, outside this server. Agents treat the server as the only source of project truth, plus references the planner grants explicitly and in the form given. A project that requires isolation says so in its environment doc; the planner is responsible for arranging it.
@@ -57,7 +57,8 @@ Whether agents run in their own VMs, containers, or one shared machine is the us
 | From | To | What is handed over |
 |---|---|---|
 | User | Admin | Injected instruction blocks for `admin`, then the skill file; a typed password in the login window, per session |
-| Admin | Planner | Injected instruction blocks for `planner`, then project planner token and skill file |
+| Server | Planner | Project planner token, in the `POST /projects` response |
+| Planner | Admin | A spawned admin agent, or an instruction relayed through the user, for kb writes, hiding, visibility, proposals |
 | Planner | Worker | Injected instruction blocks for `worker`, then worker token, workspace path, skill file, scratch folder name |
 | Worker | Planner | Report doc on the node; escalation docs when blocked |
 | Planner | User | Plan text as written on the server; escalations outside scope; closure summary |
