@@ -344,3 +344,4 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - The per-write markdown mirror stays and is called what it is: a live export, not the backup.
 - Nodes are editable by the project's planner or the global admin: title, parent (within the project, depth rule enforced on the move too), and delete. Supersedes "nodes are immutable for now".
 - A project planner can hand off the project planner role to a new agent when needed, and is permitted to pass the planner token to that agent with the permission of the user.
+- Retention clarified: backups are backups, not part of regular use. On-demand backups are wanted. Any backup that is not the week or month backup counts toward the 10 latest, whatever triggered it. No special case for the newest file.

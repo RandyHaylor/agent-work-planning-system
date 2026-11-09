@@ -10,11 +10,12 @@ def _ts(day: int, hour: int = 0, year: int = 2026, month: int = 1) -> datetime:
     return datetime(year, month, day, hour, tzinfo=timezone.utc)
 
 
-def test_retention_keeps_last_ten_task_backups():
-    entries = [(_ts(1) + timedelta(minutes=i), i) for i in range(25)]  # 25 task backups, same day
+def test_retention_keeps_last_ten_backups_outside_week_and_month_pins():
+    # 25 backups on one day, mixed task and on-demand (None); 0 is pinned as week and month
+    entries = [(_ts(1) + timedelta(minutes=i), (i if i % 3 else None)) for i in range(25)]
     keep = FB.select_to_keep(entries)
-    assert set(range(15, 25)) <= keep          # the 10 most recent task completions
-    assert 0 in keep                            # oldest of the day, week, month
+    assert 0 in keep                            # oldest of the day, week, month: pinned
+    assert set(range(15, 25)) <= keep          # the 10 most recent of everything else, trigger ignored
     assert not any(i in keep for i in range(1, 15))
 
 
@@ -25,14 +26,20 @@ def test_retention_keeps_oldest_per_day_week_month():
             entries.append((_ts(day, hour), None))
     keep = FB.select_to_keep(entries)
     kept = sorted(entries[i][0] for i in keep)
-    assert len(kept) == 31                      # exactly one per day
-    assert all(t.hour == 3 for t in kept)       # the oldest that day
+    daily = [t for t in kept if t.hour == 3]
+    assert len(daily) == 31                     # the oldest of every day
+    # plus the 10 latest non-pinned backups, whatever triggered them; some of those are already daily picks
+    latest_ten = sorted(t for t, _ in entries)[-10:]
+    assert all(t in kept for t in latest_ten)
+    assert set(kept) == set(daily) | set(latest_ten)
 
 
 def test_retention_week_and_month_survive_when_days_are_sparse():
     entries = [(_ts(2, 1), 1), (_ts(2, 9), 2), (_ts(20, 1), 3), (_ts(20, 9), 4), (_ts(5, 1, month=2), 5)]
     keep = FB.select_to_keep(entries, keep_last_tasks=1)
-    assert keep == {0, 2, 4}                    # oldest per day covers week and month too; last task is index 4
+    # 0, 2, 4 are the oldest of their day, week, and month (pinned); 4 is pinned so it sits outside the count,
+    # and the single counted slot goes to the latest non-pinned backup, index 3
+    assert keep == {0, 2, 3, 4}
 
 
 def test_retention_empty():
@@ -75,13 +82,12 @@ def test_backup_file_roundtrip_and_tamper_detection():
         pass
 
 
-def test_apply_retention_spares_the_backup_just_written(tmp_path):
+def test_apply_retention_keeps_an_on_demand_backup_by_the_last_ten_rule(tmp_path):
     older = tmp_path / FB.file_name("20260109T010000Z", 1)
     newer_manual = tmp_path / FB.file_name("20260109T120000Z", None)
     older.write_bytes(b"x")
     newer_manual.write_bytes(b"x")
-    assert FB.apply_retention(tmp_path, just_written=newer_manual) == []
-    assert FB.apply_retention(tmp_path) == [newer_manual]  # without protection the same-day manual one goes
+    assert FB.apply_retention(tmp_path) == []  # older is pinned (week, month, day); manual is within the last ten
 
 
 def test_file_names_parse(tmp_path):

@@ -178,7 +178,7 @@ Planner is the project's admin, full stop
 Backup is a full encrypted database dump
 - Taken on every task completion and on demand; restore replaces the database
 - Keypair at bootstrap: public key encrypts, private key unlocked by the admin password on restore
-- Retention: last 10 tasks, oldest per day, one per week, one per month
+- Retention: week and month pins outside the count; 10 latest of everything else; oldest per day
 - The per-write markdown mirror is a live export, not the backup
 
 One local file for what disk access grants

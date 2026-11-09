@@ -221,34 +221,37 @@ def list_backups(directory: Optional[Path] = None) -> list[BackupFile]:
 # ---------- retention (pure) ----------
 
 def select_to_keep(entries: Iterable[tuple[datetime, Optional[int]]], keep_last_tasks: int = KEEP_LAST_TASKS) -> set[int]:
-    """Indexes into ``entries`` to keep. Keeps: the ``keep_last_tasks`` most recent task-completion
-    backups; the oldest backup of each day; the oldest of each ISO week; the oldest of each month."""
+    """Indexes into ``entries`` to keep. The oldest backup of each ISO week and of each month are
+    pinned and sit outside the count. Of everything else, whatever triggered it, the ``keep_last_tasks``
+    most recent are kept. The oldest backup of each day is also kept."""
     items = list(entries)
     keep: set[int] = set()
     order = sorted(range(len(items)), key=lambda i: items[i][0])
-    task_backups = [i for i in order if items[i][1] is not None]
-    keep.update(task_backups[-keep_last_tasks:])
+    pinned: set[int] = set()
     seen_day, seen_week, seen_month = set(), set(), set()
     for i in order:  # oldest first, so the first of each bucket is the oldest
         ts = items[i][0]
         day, week, month = ts.date(), ts.isocalendar()[:2], (ts.year, ts.month)
+        if week not in seen_week:
+            seen_week.add(week); pinned.add(i)
+        if month not in seen_month:
+            seen_month.add(month); pinned.add(i)
         if day not in seen_day:
             seen_day.add(day); keep.add(i)
-        if week not in seen_week:
-            seen_week.add(week); keep.add(i)
-        if month not in seen_month:
-            seen_month.add(month); keep.add(i)
+    keep.update(pinned)
+    counted = [i for i in order if i not in pinned]
+    keep.update(counted[-keep_last_tasks:])
     return keep
 
 
 def apply_retention(directory: Optional[Path] = None, just_written: Optional[Path] = None) -> list[Path]:
-    """Delete backups outside the retention rules. The backup just written is never deleted, so an
-    on-demand backup survives even when an older one already covers that day. Returns the deleted paths."""
+    """Delete backups outside the retention rules. Returns the deleted paths. ``just_written`` is
+    accepted for call compatibility; the newest backup is always inside the last-ten rule."""
     files = list_backups(directory)
     keep = select_to_keep([(b.timestamp, b.task_node_id) for b in files])
     deleted = []
     for i, b in enumerate(files):
-        if i not in keep and b.path != just_written:
+        if i not in keep:
             b.path.unlink()
             deleted.append(b.path)
     return deleted
