@@ -4,14 +4,14 @@ Runs in one transaction: either the whole tree, meta and password exist afterwar
 A second run on a bootstrapped database is a no-op that says so.
 
 No admin token is minted or printed. The admin is a session approved by the user through the
-browser login (``python -m server admin-login``). The password is asked for interactively;
+browser login (``uv run ai-project-planning-server admin-login``). The password is asked for interactively;
 PLANNER_ADMIN_PASSWORD in the environment overrides the prompt, for tests and automation."""
 import getpass
 import os
 import sys
 
-from server import admin as A
-from server import db
+from ai_project_planning_server import admin as A
+from ai_project_planning_server import db
 
 
 def read_password(purpose: str = "Admin password") -> str:
@@ -45,7 +45,7 @@ def main():
         conn.execute("SELECT 1")  # fail early on a bad DSN before asking for a password
         db.apply_schema(conn)
         if db.meta_get(conn, "root_node_id"):
-            print("Already bootstrapped. Use `python -m server set-admin-password` to change the admin password.")
+            print("Already bootstrapped. Use `uv run ai-project-planning-server set-admin-password` to change the admin password.")
             return
         password = read_password()
         with conn.transaction():
@@ -59,13 +59,13 @@ def main():
                 conn.execute("INSERT INTO meta (key, value) VALUES (%s, %s)", (k, str(v)))
             store_password(conn, password)
         print(f"root_node_id={root} kb_node_id={kb} plans_node_id={plans}")
-        print("Admin password set. Become admin with: uv run python -m server admin-login")
+        print("Admin password set. Become admin with: uv run ai-project-planning-server admin-login")
 
 
 def set_admin_password():
     with db.connect() as conn:
         if not db.meta_get(conn, "root_node_id"):
-            raise SystemExit("not bootstrapped: run `uv run python -m server bootstrap` first")
+            raise SystemExit("not bootstrapped: run `uv run ai-project-planning-server bootstrap` first")
         with conn.transaction():
             store_password(conn, read_password("New admin password"))
         print("Admin password updated. Existing admin sessions stay valid until the server restarts or they log out.")

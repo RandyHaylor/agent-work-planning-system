@@ -2,7 +2,7 @@
 
 The admin is not a token in the database. It is a user-approved session:
 - bootstrap stores a salted PBKDF2-HMAC-SHA256 hash of a password only the user knows;
-- an agent that wants to act as admin runs ``python -m server admin-login``, which opens a
+- an agent that wants to act as admin runs ``uv run ai-project-planning-server admin-login``, which opens a
   browser page where the user types the password directly into the server;
 - the server hands back a session token (``adm_...``) kept only in this process's memory,
   so it never survives a server restart and ends at ``POST /admin/logout`` or after idling.

@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 import webbrowser
 
-from server import admin as A
+from ai_project_planning_server import admin as A
 
 TIMEOUT = 120
 

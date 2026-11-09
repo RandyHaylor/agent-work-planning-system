@@ -4,7 +4,7 @@ import json
 import uuid
 from pathlib import Path
 
-from server import backup as B
+from ai_project_planning_server import backup as B
 
 TS = datetime.datetime(2026, 11, 6, 1, 2, 3, tzinfo=datetime.timezone.utc)
 U = uuid.UUID("12345678-1234-5678-1234-567812345678")

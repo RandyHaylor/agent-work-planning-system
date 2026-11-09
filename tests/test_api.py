@@ -25,7 +25,7 @@ def anon():
 
 
 def admin_login(password=ADMIN_PASSWORD):
-    """What `python -m server admin-login` plus the user's browser do, programmatically."""
+    """What `uv run ai-project-planning-server admin-login` plus the user's browser do, programmatically."""
     with anon() as c:
         nonce = c.post("/admin/nonce").json()["nonce"]
         assert c.get(f"/admin/session/{nonce}").status_code == 404  # nothing to pick up before approval
@@ -463,7 +463,7 @@ def test_bootstrap_twice_is_noop():
     from pathlib import Path
     dsn = _dsn()
     repo = Path(__file__).resolve().parent.parent
-    r = subprocess.run(["uv", "run", "python", "-m", "server", "bootstrap"], cwd=repo, capture_output=True, text=True)
+    r = subprocess.run(["uv", "run", "ai-project-planning-server", "bootstrap"], cwd=repo, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert "Already bootstrapped" in r.stdout and "adm_" not in r.stdout
     with psycopg.connect(dsn, autocommit=True) as conn:

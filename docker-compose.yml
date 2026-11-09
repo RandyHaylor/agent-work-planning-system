@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: planner
-      POSTGRES_PASSWORD: ${PLANNER_DB_PASSWORD:?run `uv run python -m server init-env` first}
+      POSTGRES_PASSWORD: ${PLANNER_DB_PASSWORD:?run `uv run ai-project-planning-server init-env` first}
       POSTGRES_DB: planner
     ports:
       - "127.0.0.1:${PLANNER_DB_PORT:-5433}:5432"

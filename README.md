@@ -27,7 +27,7 @@ Depth is enforced by a `BEFORE INSERT` trigger: level 4 under `plans` sets `need
 | create projects, assign kbs, set visibility | yes | no | no |
 | write a kb, resolve `kb_proposal` | yes | no | no |
 
-Other projects and ancestors return 404 to workers. Hidden projects return 404 to planners without a grant. Rules live in `server/permissions.py`, pure, with unit tests.
+Other projects and ancestors return 404 to workers. Hidden projects return 404 to planners without a grant. Rules live in `ai_project_planning_server/permissions.py`, pure, with unit tests.
 
 ## API
 
@@ -66,11 +66,11 @@ Errors: 401 bad token, 403 role denies, 404 not found or not visible, 409 depth,
 
 ```
 uv sync --extra test
-uv run python -m server init-env     # random DB password into .env (gitignored), once per machine
+uv run ai-project-planning-server init-env     # random DB password into .env (gitignored), once per machine
 docker compose up -d --wait          # Postgres 16 on 127.0.0.1:5433
-uv run python -m server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively
-uv run python -m server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
-uv run python -m server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
+uv run ai-project-planning-server bootstrap    # schema, root/kb/plans; the user sets the admin password interactively
+uv run ai-project-planning-server              # HTTPS on 127.0.0.1:8787; cert generated into certs/
+uv run ai-project-planning-server admin-login  # opens a browser login window; the user types the password; prints a session ADMIN_TOKEN once
 ```
 
 Server and database bind to localhost. No default passwords. Admin is a session: the password is known only to the user, the agent never sees it, and sessions live in server memory only, so a restart ends them. The admin session creates kbs and projects; each project's planner token is minted at project creation. Tokens keep agents in their lane; the server does not gate process steps such as `done` on reports or reviews. Roles and handoffs: `WORKFLOWS.md`.
@@ -101,7 +101,7 @@ curl -sk https://localhost:8787/projects -H "Authorization: Bearer $ADMIN_TOKEN"
 
 ```
 uv run python scripts/test_all.py    # clean volume, bootstrap, serve, pytest, stop
-uv run pytest server                 # permissions unit tests only
+uv run pytest ai_project_planning_server                 # permissions unit tests only
 ```
 
 Integration tests run over real HTTPS against real Postgres: every endpoint, every permission rule and denial, depth trigger via direct SQL, backup files on every write, revocation cascade. The runner uses its own compose project `planner-test` on DB port 5434 and a temp backup dir, so the live database is never touched. It refuses to start if `PLANNER_PORT` is in use. Needs docker compose, uv, Python 3.10+. Verified on Linux; macOS and Windows untested.
@@ -109,7 +109,7 @@ Integration tests run over real HTTPS against real Postgres: every endpoint, eve
 ## Layout
 
 ```
-server/   app.py permissions.py schema.sql bootstrap.py db.py tls.py __main__.py
+ai_project_planning_server/   app.py permissions.py schema.sql bootstrap.py db.py tls.py __main__.py
 tests/    test_api.py
 skill/    SKILL.md
 scripts/  test_all.py

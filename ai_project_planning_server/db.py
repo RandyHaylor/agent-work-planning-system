@@ -26,7 +26,7 @@ def get_dsn() -> str:
     """PLANNER_DSN from the environment, else from the repo's .env (written by init-env)."""
     dsn = os.environ.get("PLANNER_DSN") or read_env_file().get("PLANNER_DSN")
     if not dsn:
-        raise SystemExit("no PLANNER_DSN: run `uv run python -m server init-env` first (writes .env), or set PLANNER_DSN")
+        raise SystemExit("no PLANNER_DSN: run `uv run ai-project-planning-server init-env` first (writes .env), or set PLANNER_DSN")
     return dsn
 
 

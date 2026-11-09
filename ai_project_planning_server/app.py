@@ -11,10 +11,10 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from server import admin as A
-from server import backup as B
-from server import db
-from server import permissions as P
+from ai_project_planning_server import admin as A
+from ai_project_planning_server import backup as B
+from ai_project_planning_server import db
+from ai_project_planning_server import permissions as P
 
 app = FastAPI(title="Agent Planning Server", version="0.3.0")
 SESSIONS = A.SessionStore()  # admin sessions: this process only; a restart clears them
@@ -73,7 +73,7 @@ def _build_view(conn, role: str, scope: int, root: int, kb: int, plans: int, anc
 def _meta_ids(conn) -> tuple[int, int, int]:
     meta = {k: db.meta_get(conn, k) for k in ("root_node_id", "kb_node_id", "plans_node_id", "admin_pw_hash")}
     if any(v is None for v in meta.values()):
-        raise HTTPException(503, "database not bootstrapped: run `uv run python -m server bootstrap`")
+        raise HTTPException(503, "database not bootstrapped: run `uv run ai-project-planning-server bootstrap`")
     return tuple(int(meta[k]) for k in ("root_node_id", "kb_node_id", "plans_node_id"))
 
 

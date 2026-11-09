@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     revoked         BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- The admin is never a token row: it is an in-memory session approved by the user (server/admin.py).
+-- The admin is never a token row: it is an in-memory session approved by the user (ai_project_planning_server/admin.py).
 ALTER TABLE tokens DROP CONSTRAINT IF EXISTS tokens_role_check;
 ALTER TABLE tokens ADD CONSTRAINT tokens_role_check CHECK (role IN ('planner', 'worker'));
 

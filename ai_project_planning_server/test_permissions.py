@@ -1,5 +1,5 @@
 """Unit tests for the isolated permissions module. Pure, no IO."""
-from server import permissions as P
+from ai_project_planning_server import permissions as P
 
 # Tree:  1(root) -> 2(kb) -> 8(kb Product) -> 9
 #                         -> 10(kb Company)

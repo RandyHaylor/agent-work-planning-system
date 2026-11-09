@@ -25,11 +25,11 @@ Admin is a session the user approves. There is no standing admin token.
 ## Stand up the server and become admin
 ```
 uv sync --extra test
-uv run python -m server init-env       # database password into .env, once per machine
+uv run ai-project-planning-server init-env       # database password into .env, once per machine
 docker compose up -d --wait
-uv run python -m server bootstrap      # the user types the admin password; nothing is printed
-uv run python -m server                # HTTPS on 127.0.0.1:8787
-uv run python -m server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
+uv run ai-project-planning-server bootstrap      # the user types the admin password; nothing is printed
+uv run ai-project-planning-server                # HTTPS on 127.0.0.1:8787
+uv run ai-project-planning-server admin-login    # opens a login window for the user; prints ADMIN_TOKEN once
 ```
 You never see or ask for the password. The user types it into the window. The session token works until logout, idle expiry, or a server restart. If a call returns 401, run `admin-login` again and ask the user to approve.
 

@@ -1,5 +1,5 @@
 """Unit tests for the admin password and session store. Pure, no IO."""
-from server import admin as A
+from ai_project_planning_server import admin as A
 
 
 def test_password_hash_roundtrip():

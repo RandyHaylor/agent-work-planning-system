@@ -38,11 +38,11 @@ One node, holding that node's worker token.
 
 ## Startup, in order
 ```
-uv run python -m server init-env            # DB password into .env, once per machine
+uv run ai-project-planning-server init-env            # DB password into .env, once per machine
 docker compose up -d --wait
-uv run python -m server bootstrap           # user types the admin password; nothing is printed
-uv run python -m server                     # HTTPS on 127.0.0.1:8787
-uv run python -m server admin-login         # opens the login window; user types the password; prints ADMIN_TOKEN once
+uv run ai-project-planning-server bootstrap           # user types the admin password; nothing is printed
+uv run ai-project-planning-server                     # HTTPS on 127.0.0.1:8787
+uv run ai-project-planning-server admin-login         # opens the login window; user types the password; prints ADMIN_TOKEN once
 ```
 The admin session then creates kbs and projects. Each project's planner token comes back from project creation.
 

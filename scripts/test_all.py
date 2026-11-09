@@ -76,13 +76,13 @@ def main() -> int:
     log = open(ROOT / "planner-server.log", "w")
     try:
         run(["uv", "sync", "--extra", "test", "--quiet"], env)
-        out = run(["uv", "run", "python", "-m", "server", "bootstrap"], env, capture=True).stdout
+        out = run(["uv", "run", "ai-project-planning-server", "bootstrap"], env, capture=True).stdout
         print(out, end="")
         if not re.search(r"^root_node_id=", out, re.M):
             raise SystemExit("bootstrap did not report the root tree")
-        server = subprocess.Popen(["uv", "run", "python", "-m", "server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+        server = subprocess.Popen(["uv", "run", "ai-project-planning-server"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
         wait_for_server()
-        return subprocess.run(["uv", "run", "pytest", "-q", "server", "tests"], cwd=ROOT, env=env).returncode
+        return subprocess.run(["uv", "run", "pytest", "-q", "ai_project_planning_server", "tests"], cwd=ROOT, env=env).returncode
     finally:
         if server is not None:
             server.terminate()
