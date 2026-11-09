@@ -6,6 +6,8 @@ description: How to run and follow the agent planning process against the hosted
 # Planning server
 
 Three roles: admin, planner, worker. Read the section for yours. Every call is JSON with `Authorization: Bearer $PLANNER_TOKEN`.
+
+Every agent, of every role, has the blocks in `agent_instruction_injections.json` whose `applies_to` lists its role added at the beginning of its session, verbatim, before its custom instructions. Whoever starts the session includes them. If yours started without them, read the file now.
 The cert may be self-signed: use `curl -k`. Put JSON payloads in files and send `-d @file.json`.
 
 ```
@@ -39,7 +41,7 @@ You never see or ask for the password. The user types it into the window. The se
 - `GET /proposals` lists unresolved proposals. Discuss each with the user. Apply the approved change to the kb yourself, then resolve the proposal with `PATCH /docs/{id}` `{"answer":"...","resolved":true}`.
 
 ## Projects
-- `POST /projects` `{"title":"...","summary":"..."}` creates the project with a uuid and mints its planner token. The token is returned once; hand it to the planner with this skill file.
+- `POST /projects` `{"title":"...","summary":"..."}` creates the project with a uuid and mints its planner token. The token is returned once; hand it to the planner with the `planner` blocks from `agent_instruction_injections.json` first, then this skill file.
 - `PATCH /projects/{uuid}` `{"kbs":[...kb uuids...]}` assigns which kbs that project may read. `{"visible":false}` hides it from other projects.
 - `POST /projects/{uuid}/visibility` `{"viewer":"<other project uuid>"}` lets a specific project read a hidden one.
 - Default: every project is visible read-only to every planner.
@@ -78,8 +80,8 @@ Your scope node is your assignment. You finish it. You do not plan it, extend it
 - Spike: `{"role":"spike","body":"..."}` with proof attached or referenced. If you cannot honestly validate the result, say so and ask for human validation in the doc.
 - Propose a knowledge-base change: `{"role":"kb_proposal","body":"..."}`. You cannot write in `kb`.
 
-## Never make up details or rules
-You infer and guess far too much. When translating your instruction into work, do not add a detail, a limit, a number, or a rule it did not state. "Be brief" does not mean "one line". If something is undecided and you must fill it, it is either your named discretion, recorded in your report as your assumption, or it is an escalation.
+## Do not add or change details
+The injected block `do-not-add-or-change-details` applies to everything you do with your instruction. If something is undecided and you must fill it, it is either your named discretion, recorded in your report as your assumption, or it is an escalation.
 
 ## Escalate when you are blocked
 An escalation is a blocker. You post it and you stop. You do not pick.
@@ -114,7 +116,7 @@ Your token came from the admin when the project was created. `/me` gives your pr
 
 "The user" is whoever called you: a person, an agent, a team. Approval comes from the caller.
 
-Never make up details or rules. When translating requirements or instructions, do not add detail. Where the plan has a gap, say so, mark your proposal as yours, and ask. Instructions you hand to workers carry only what was decided.
+The injected block `do-not-add-or-change-details` applies to every plan, instruction, and environment doc you write. Where the plan has a gap, say so, mark your proposal as yours, and ask. Instructions you hand to workers carry only what was decided.
 
 ## Planning order
 1. Informal outline with the user. One thread at a time, brief, slide-like. Propose, never decide. Nothing is approved until the user says so.
@@ -149,7 +151,7 @@ Carry the standing rules verbatim. Include: a contradiction between tests, or be
 
 ## Delegating
 - Mint a worker token: `POST /tokens` `{"label":"...","role":"worker","scope_node_id":child}`. The plaintext token is returned once.
-- Give the worker only: the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
+- Give the worker: the `worker` blocks from `agent_instruction_injections.json` first, verbatim; then only the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
 - Isolation (own VM, container, or shared machine) is the user's and the project's call, not this server's. If the project's environment doc requires isolated agents, you make that happen before spawning.
 - Spawning never blocks you. Stay live and poll `GET /escalations` throughout the run.
 

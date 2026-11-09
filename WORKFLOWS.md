@@ -2,6 +2,8 @@
 
 Four parties. Each has one job. Nothing moves up a level without the party above saying so.
 
+Every agent's session begins with the blocks from `agent_instruction_injections.json` that list its type, verbatim, before its custom instructions. The party that starts the session includes them.
+
 ## User
 - Approves plans, in chat, as written on the server.
 - Approves knowledge base changes.
@@ -52,9 +54,9 @@ Whether agents run in their own VMs, containers, or one shared machine is the us
 ## Handoffs
 | From | To | What is handed over |
 |---|---|---|
-| User | Admin | A typed password in the login window, per session |
-| Admin | Planner | Project planner token, skill file |
-| Planner | Worker | Worker token, workspace path, skill file, scratch folder name |
+| User | Admin | Injected instruction blocks for `admin`, then the skill file; a typed password in the login window, per session |
+| Admin | Planner | Injected instruction blocks for `planner`, then project planner token and skill file |
+| Planner | Worker | Injected instruction blocks for `worker`, then worker token, workspace path, skill file, scratch folder name |
 | Worker | Planner | Report doc on the node; escalation docs when blocked |
 | Planner | User | Plan text as written on the server; escalations outside scope; closure summary |
 | Planner, Worker | Admin | `kb_proposal` docs |
