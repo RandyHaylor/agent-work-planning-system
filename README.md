@@ -106,6 +106,10 @@ uv run pytest ai_project_planning_server                 # permissions unit test
 
 Integration tests run over real HTTPS against real Postgres: every endpoint, every permission rule and denial, depth trigger via direct SQL, backup files on every write, revocation cascade. The runner uses its own compose project `planner-test` on DB port 5434 and a temp backup dir, so the live database is never touched. It refuses to start if `PLANNER_PORT` is in use. Needs docker compose, uv, Python 3.10+. Verified on Linux; macOS and Windows untested.
 
+## Customization
+
+Agent rules live in `agent_instruction_injections.json`. Each entry has an `id`, an `applies_to` list of agent types (`admin`, `planner`, `worker`), and the rule `text`. The blocks that apply to an agent's type are added at the start of its session, before its custom instructions, by whoever starts the session. Add, edit, or remove rules there; no code change is needed.
+
 ## Layout
 
 ```
