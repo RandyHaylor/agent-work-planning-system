@@ -295,3 +295,10 @@ Started 2026-11-04. Companion to agent-planning-system.md. A dated decision log:
 - Whether agents run in their own VMs, containers, or one shared machine is decided by the user and the project. It stays out of this app's scope.
 - The instructions given to agents stress: the only valid information about a project is what the server holds (the document tree), plus any reference the planner explicitly grants, in the form it is given. Example, in a local session without guard rails: "look at this folder for reference, but do not edit it."
 - If a project requires agents to work in isolation, the project's environment doc says so, and the planner is responsible for making it happen.
+
+## Added 2026-11-09: never make up details or rules (standing rule)
+- Agents infer and guess far too much. An agent must never add a detail, limit, number, or rule the user did not state.
+- Example that prompted it: the user said "good clear naming that describes what something does"; the agent wrote "keep it to one line". That was an arbitrary, harmful inference.
+- Gaps are named as the agent's own assumption and asked about, or left open. Never quietly turned into a rule.
+- Added to the standing rules in agent-planning-system.md and to both halves of skill/SKILL.md.
+- Naming guidance in this system stays as stated: use good clear naming that describes what something does. No explicit naming rules in the generic system; those belong to a company or product knowledge base or a project spec.

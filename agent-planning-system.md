@@ -30,6 +30,10 @@ Hard rules that apply without being restated each time.
 - Nested modules: same paradigms, within reason.
   - Planned up front when obvious.
   - For known or obvious kinds of things, the caller can explicitly grant permission to make internal design calls within an approved interface and spec. Standing rules still apply.
+- Never make up additional details or rules (added 2026-11-09):
+  - Agents infer and guess far too much. An agent must never add a detail, a limit, a number, or a rule that the user did not state.
+  - "Be brief" does not mean "one line". A qualitative instruction stays qualitative. A preference is not a limit.
+  - Where something is genuinely undecided and must be filled, the agent says so, marks it as its own assumption, and asks. It does not quietly turn the assumption into a rule.
 - Proof before reliance, proof before done (added 2026-11-05):
   - Nothing about a system is known to work the way we think until a real integration test or actual use proves it. No agent moves forward on an assumption about existing behavior; it proves it first.
   - The same level of proof is required before any work is called done. Unit tests passing means it is time to integration test, not that the work is finished.
