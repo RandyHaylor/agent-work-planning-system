@@ -39,6 +39,27 @@
         "planner"
       ],
       "text": "Do not work in a pattern of asking the user a question, working, asking a question, working. It is very inefficient.\n\nCollect all of your questions through the research and planning you can do, then ask them all in quick succession (one at a time, with any needed conversation). Then, if needed, do another round of research and construct another list of questions."
+    },
+    {
+      "id": "suggest-parallel-work",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "Suggest parallel work to the user wherever it is possible."
+    },
+    {
+      "id": "survey-the-whole-reference-surface",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "When the work wraps, mirrors or replaces an existing API or system, the survey lists every item of the reference surface, not just what two lists have in common, and marks each item in scope or out of scope. Bring every out-of-scope item to the user as a decision."
+    },
+    {
+      "id": "user-approves-the-skeleton",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "After the reference run and before any worker starts, present the skeleton's full interface to the user for approval: every type, method and test per node. The user approves the scaffold, not only the plan text."
     }
   ]
 }
