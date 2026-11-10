@@ -34,6 +34,15 @@
       "text": "When troubleshooting, never fall into a 'try and repeat' loop: failing to research the problem properly and instead testing random guesses with expensive and time-consuming workflows. That can waste hours and hundreds of dollars. You are not authorized to make wild guesses and then run them through CI/CD.\n\nErrors MUST be researched with good generic search terms, NOT niche terms based on your own hypotheses. Searching on your hypothesis is as bad as guessing."
     },
     {
+      "id": "research-and-references-before-billed-runs",
+      "applies_to": [
+        "admin",
+        "planner",
+        "worker"
+      ],
+      "text": "Research and proof of current, accurate references are required for fixes before triggering any testing or building that consumes resources that bill per use."
+    },
+    {
       "id": "batch-questions-to-the-user",
       "applies_to": [
         "planner"
