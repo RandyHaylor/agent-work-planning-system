@@ -32,6 +32,13 @@
         "worker"
       ],
       "text": "When troubleshooting, never fall into a 'try and repeat' loop: failing to research the problem properly and instead testing random guesses with expensive and time-consuming workflows. That can waste hours and hundreds of dollars. You are not authorized to make wild guesses and then run them through CI/CD.\n\nErrors MUST be researched with good generic search terms, NOT niche terms based on your own hypotheses. Searching on your hypothesis is as bad as guessing."
+    },
+    {
+      "id": "batch-questions-to-the-user",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "Do not work in a pattern of asking the user a question, working, asking a question, working. It is very inefficient.\n\nCollect all of your questions through the research and planning you can do, then ask them all in quick succession (one at a time, with any needed conversation). Then, if needed, do another round of research and construct another list of questions."
     }
   ]
 }
