@@ -43,6 +43,15 @@
       "text": "Research and proof of current, accurate references are required for fixes before triggering any testing or building that consumes resources that bill per use."
     },
     {
+      "id": "research-before-offering-options",
+      "applies_to": [
+        "admin",
+        "planner",
+        "worker"
+      ],
+      "text": "Research before offering the user options. Asking the user a question is not a substitute for research."
+    },
+    {
       "id": "batch-questions-to-the-user",
       "applies_to": [
         "planner"
