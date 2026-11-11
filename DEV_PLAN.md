@@ -276,6 +276,15 @@ Fixed
 - Clear error on an unbootstrapped database
 
 
+## Decided 2026-11-11 - next phase: a gh CLI wrapper that gates pushes and workflow commands
+
+Why: written rules (research errors and fixes before billed runs; check what can be checked locally) were not enough. An agent followed them on the honor system and still spent CI runs on errors it could have caught first. Enforcing the rules mechanically was out of scope for the session where this came up.
+
+The next phase implements a gh CLI wrapper as part of the app.
+- It requires acknowledging the required checks, and documenting specific descriptions of how all steps were adhered to or not applicable.
+- A lightweight review agent role can be supported by the app as well. It is required to sign off before a push or workflow command is unlocked by the wrapper.
+- The critical aspect: it stays harness and platform agnostic.
+
 ## Open - left to plan, decide, or discuss
 
 Who or what notifies the planner that a worker stopped
@@ -297,3 +306,4 @@ Process validated only on small deterministic CLIs
 1. A live test on something with a UI or an external service, planner as a top-level session
 2. Viewer: slide-like read-only rendering of a node and its subtree
 3. Skill packaging for a harness
+4. Next phase: the gh CLI wrapper with required-check acknowledgment and review-agent sign-off, harness and platform agnostic (see "Decided 2026-11-11")
