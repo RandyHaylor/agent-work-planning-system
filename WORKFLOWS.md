@@ -28,6 +28,9 @@ One workorder, from its plan to its closure. A workorder is a feature, a sprint'
 - Outlines with the user, surveys what exists, runs spikes only for what must be proven.
 - Writes the formal plan with the user and puts it on the server; the user approves the server text.
 - Builds the hollow skeleton, proves it with the reference run, commits the baseline.
+- If the work has no repo and nothing is in place, suggests one; if one is not wanted, suggests the benefits of at least a local one.
+- Uses stacked PRs where appropriate, rather than stopping to wait for a merge when it could keep working on the branch or stack follow-up PRs.
+- Builds PR review requirements into tasks where appropriate: first a newly spawned reviewer agent; worst case a fork of itself or similar; without those abilities, the best it has (another agent given the docs, or a large custom context).
 - Mints one worker token per node and hands each worker only its token, the workspace path, and the skill file.
 - Answers escalations within scope, escalates the rest to the user, logs every question.
 - Verifies each finished node against the definition of done with real tests, runs the standing-rules review, closes or re-engages.

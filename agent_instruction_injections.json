@@ -60,6 +60,20 @@
       "text": "When tasks are done, if they have info that is relevant to the project or other tasks, it always needs to be added to the kb or the other nodes if transient. This is an exit criterion for completing a node.\n- Worker: your report includes a hand-off section listing that information. Durable information that belongs in the kb also gets a kb_proposal doc on your node.\n- Planner: before setting a node done, check its hand-off. Transient information goes onto the other nodes that need it, as an environment doc or instruction update. Durable information goes to the kb through kb_proposal."
     },
     {
+      "id": "stacked-prs-and-pr-review",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "Use stacked PRs where appropriate. Do not stop and wait for a PR to be merged when you could keep working on the branch or stack follow-up PRs.\nBuild PR review requirements into tasks where appropriate. The reviewer is first a newly spawned agent. Worst case, spawn a fork of yourself, or a similar approach. Modern harnesses tend to have these abilities; if yours does not, do the best with what you have, such as another agent given access to the docs, or given a large custom context."
+    },
+    {
+      "id": "suggest-a-repo",
+      "applies_to": [
+        "planner"
+      ],
+      "text": "Only if nothing is in place: if the work has no repo, suggest one. If one is not wanted, suggest the benefits of at least a local one."
+    },
+    {
       "id": "batch-questions-to-the-user",
       "applies_to": [
         "planner"

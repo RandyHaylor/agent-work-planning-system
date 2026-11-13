@@ -138,6 +138,7 @@ The injected block `do-not-add-or-change-details` applies to every plan, instruc
 ## Planning order
 1. Informal outline with the user. One thread at a time, brief, slide-like. Propose, never decide. Nothing is approved until the user says so.
 2. Survey what exists, when the work touches an existing system. Reading code gives only "it seems to".
+   - Only if nothing is in place: if the work has no repo, suggest one. If one is not wanted, suggest the benefits of at least a local one.
    - Start from the knowledge base (`kb` subtree) and the user: "does it do this?"
    - Targeted checks only. No sweeping the codebase.
    - Prove each claim with a real test through the real entry point: an existing integration test, an edited one, or a new one, including a small test app if needed. Survey tests are committed to the repo at the matching layer of the stack.
@@ -153,6 +154,7 @@ The injected block `do-not-add-or-change-details` applies to every plan, instruc
    - Modules and names. Nothing is named for its implementation. Every module that can stand alone does, with its own docs and tests.
    - Formatting of everything that has a form: every output, error, work product, document, and server entry. Whitespace, line endings, header versus body, message shapes, file layout, section order. A format you leave undecided is declared dev discretion by name.
    - Delegation order, where nodes depend on each other.
+   - PR review requirements for tasks, where appropriate (see Delegating).
 5. Write the plan to the server. On your workorder node: update `summary`, write `instruction` (including flow and user story), and an `environment` doc (generic workorder summary, tech stack, dependencies, shared assets, conventions, framed as the environment workers are within and not building). One child node per module with `summary` and `instruction`. Before delegating, send the user the workorder node's docs as written on the server; that text is what the user approves.
 6. Build every node hollow. A node is not a node until it has its scaffolding: folders, types, stubs returning something, rails tests green against the stubs, acceptance tests with exact values under a strict expected-fail marker. Documentation exists as named sections marked to be filled.
 7. Reference run, required. Implement the rules once as a throwaway outside the workspace, never delivered. Every acceptance test must pass against it. A failure is a wrong expected value or a missing rule. Fix before commit. Then walk every exact value and name the rule it follows from.
@@ -182,6 +184,8 @@ Use your judgment on what counts as small. The user decides.
 - Give the worker: the `worker` blocks from `agent_instruction_injections.json` first, verbatim; then only the workspace path, `PLANNER_URL`, its token, this skill file, and a scratch folder named after its node. Nothing else. Any reference material beyond the server is granted explicitly in the instruction, with how it may be used: "look at this folder for reference, do not edit it."
 - Isolation (own VM, container, or shared machine) is the user's and the workorder's call, not this server's. If the workorder's environment doc requires isolated agents, you make that happen before spawning.
 - Spawning never blocks you. Stay live and poll `GET /escalations` throughout the run.
+- Use stacked PRs where appropriate. Do not stop and wait for a PR to be merged when you could keep working on the branch or stack follow-up PRs.
+- PR review, where appropriate: the reviewer is first a newly spawned agent. Worst case, spawn a fork of yourself, or a similar approach. Modern harnesses tend to have these abilities; if yours does not, do the best with what you have, such as another agent given access to the docs, or given a large custom context.
 
 ## Escalations
 - Answer within your scope: `PATCH /docs/{id}` `{"answer":"...","resolved":true}`. Log it: `{"role":"question","body":"From node / Question / Answer / Answered by / Scope"}` on the workorder node.
