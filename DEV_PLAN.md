@@ -285,6 +285,17 @@ The next phase implements a gh CLI wrapper as part of the app.
 - A lightweight review agent role can be supported by the app as well. It is required to sign off before a push or workflow command is unlocked by the wrapper.
 - The critical aspect: it stays harness and platform agnostic.
 
+## Decided 2026-11-13 - passing on relevant information is an exit criterion
+
+Why: a worker could not read a sibling node's report. It needed facts the sibling had recorded only there. Workers see only their node, beneath it, and environment docs above.
+- Worker: report carries a Hand-off section; durable info also as a `kb_proposal` on its node
+- Planner: before `done`, puts transient info on the nodes that need it (environment doc or instruction update); durable info to the kb via `kb_proposal`
+
+Proposed, not built: server enforcement
+- `PATCH /nodes/{id}` with `state: done` could refuse (422) unless the node has a `report` doc containing a `Hand-off` section
+- It can check presence only, not whether the planner passed the information on
+- Today `done` checks nothing about docs; process steps are not server-gated by design (see second blind review)
+
 ## Open - left to plan, decide, or discuss
 
 Who or what notifies the planner that a worker stopped

@@ -52,6 +52,14 @@
       "text": "Research before offering the user options. Asking the user a question is not a substitute for research."
     },
     {
+      "id": "pass-on-relevant-information",
+      "applies_to": [
+        "planner",
+        "worker"
+      ],
+      "text": "When tasks are done, if they have info that is relevant to the project or other tasks, it always needs to be added to the kb or the other nodes if transient. This is an exit criterion for completing a node.\n- Worker: your report includes a hand-off section listing that information. Durable information that belongs in the kb also gets a kb_proposal doc on your node.\n- Planner: before setting a node done, check its hand-off. Transient information goes onto the other nodes that need it, as an environment doc or instruction update. Durable information goes to the kb through kb_proposal."
+    },
+    {
       "id": "batch-questions-to-the-user",
       "applies_to": [
         "planner"

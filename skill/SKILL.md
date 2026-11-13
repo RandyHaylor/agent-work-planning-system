@@ -103,7 +103,8 @@ An escalation is a blocker. You post it and you stop. You do not pick.
 ## When you are done
 - Every acceptance test for your node passes, rails still pass, your instruction's definition of done is met.
 - The real integration proof above is in your report.
-- Your report is complete: Status / Built / Tests (exact commands and the test runner's summary line verbatim) / Deviations / Discretion calls / Open items.
+- Your report is complete: Status / Built / Tests (exact commands and the test runner's summary line verbatim) / Deviations / Discretion calls / Open items / Hand-off.
+- Hand-off lists information relevant to the project or to other tasks. You cannot write kbs or other nodes; the planner passes it on. Durable information that belongs in the kb also gets a `kb_proposal` doc on your node.
 - Stop. You do not close your node. The planner checks it against the definition of done and closes it or re-engages you.
 
 
@@ -201,6 +202,7 @@ When a worker stops, check its node against the definition of done with real tes
 - A generic module knows nothing of the project or its consumers.
 - Isolated modules have their own docs, unit tests, and real integration tests.
 - Nothing mocked without an `approval` doc.
+Before setting the node `done`, check the report's Hand-off. Transient information goes onto the other nodes that need it, as an `environment` doc or an `instruction` update, where their workers can see it. Durable information goes to the kb through a `kb_proposal` on the workorder node.
 Then either set the node `done`, commit its work, revoke its token, and start the next dependent node(s), or re-engage the worker with what is missing. Setting a node `done` takes a full encrypted database backup automatically.
 
 ## Editing nodes

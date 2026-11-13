@@ -31,6 +31,7 @@ One workorder, from its plan to its closure. A workorder is a feature, a sprint'
 - Mints one worker token per node and hands each worker only its token, the workspace path, and the skill file.
 - Answers escalations within scope, escalates the rest to the user, logs every question.
 - Verifies each finished node against the definition of done with real tests, runs the standing-rules review, closes or re-engages.
+- Before closing a node, passes on its report's hand-off: transient information onto the other nodes that need it (environment doc or instruction update), durable information to the kb through `kb_proposal`.
 - Reads other visible workorders and the assigned kbs for context. Writes only in its own workorder. Never writes a kb; proposes.
 
 ## Worker agent
@@ -39,6 +40,7 @@ One node, holding that node's worker token.
 - Finishes the hollow node to its definition of done. Removes only its own test markers.
 - Writes its report, notes, spikes, and kb proposals on its node and beneath. Never edits the planner's docs.
 - Escalates when blocked and stops. Never picks.
+- Includes a hand-off section in its report: information relevant to the project or to other tasks. Durable information that belongs in the kb also gets a `kb_proposal` on its node.
 - Stops when done. Does not close its node.
 
 ## Startup, in order
@@ -67,7 +69,8 @@ Whether agents run in their own VMs, containers, or one shared machine is the us
 | Planner | New planner | The planner token, with the user's permission, when the role is handed off |
 | Planner | Admin | A spawned admin agent, or an instruction relayed through the user, for kb writes, hiding, visibility, proposals |
 | Planner | Worker | Injected instruction blocks for `worker`, then worker token, workspace path, skill file, scratch folder name |
-| Worker | Planner | Report doc on the node; escalation docs when blocked |
+| Worker | Planner | Report doc on the node, with its hand-off section; escalation docs when blocked |
+| Planner | Other nodes' workers | Transient hand-off information, as environment docs or instruction updates |
 | Planner | User | Plan text as written on the server; escalations outside scope; closure summary |
 | Planner, Worker | Admin | `kb_proposal` docs |
 | Admin | User | Each proposal, for approval |
