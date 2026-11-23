@@ -8,43 +8,147 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 2. **Node content (researched, approved).** Nodes stay an adjacency list (`parent_id`). The node row holds title, level label, context summary and its last-verified date. Everything else (requirements, notes, research, worker responses) is content items attached to the node, each with descriptive tags (not fixed roles), its own version history and permissions. Quote pointers link a content item to a quote and a range. Sources: [tree models compared](https://dev.to/dowerdev/implementing-hierarchical-data-structures-in-postgresql-ltree-vs-adjacency-list-vs-closure-table-2jpb), [Neon ltree docs](https://neon.tech/docs/extensions/ltree). The content-item split is the agent's reasoning, not from a source.
 3. **The core (researched, approved).** Ports and adapters: a new core holding all operations, with no HTTP or database code; storage behind an interface with Postgres as the implementation; FastAPI and the CLI are thin layers over the same operations; Gradio calls HTTP. Written fresh against the new schema, reusing the existing pure parts where they fit (the `permissions.py` approach, admin sessions, backups, the isolated test runner). Sources: [ports and adapters in Python](https://dev.to/elpic/hexagonal-architecture-in-python-wiring-adapters-dependency-injection-and-the-application-layer-61l), [FastAPI and CLI over shared services](https://github.com/eefahd/python-clean-architecture).
 
-## Initial design: module list (DRAFT v2, not approved)
+## Initial design: module list (DRAFT v3, not approved)
 
-**Why v2.** The first draft grouped work by data and features ("content items", "approval queue", "escalations", "task acceptance"), which produces chunks of work, not modules. User: "they need to be modules separated logically not just 'groupings of stuff'." v2 was reworked with good judgement, using the accepted approaches in `03-high-level-plan.md`, so modules are separated logically rather than grouped by data or features.
+**Module** means a normal code module: a cohesive unit with a clear responsibility and an interface, often small (a single file of helpers, one strategy implementation, or a small folder). Modules can be broken down into task-sized work. Earlier drafts (v1, v2) listed subsystem-sized boxes instead of modules; v3 lists actual modules, grouped by area. Areas are only for reading; they are not modules.
 
-Every module has documentation, an interface, types, a definition of done and tests. "Package" marks the ones that make sense as their own package.
+Every module has documentation, an interface, types, a definition of done and tests. Paths are proposals. "(carried)" means adapted from the existing repo; "(SoT)", "(fastReader)", "(quick-json-reader)" mean adapted from that repo.
 
-| # | Module | What it's responsible for | Rough interface | Package? |
-|---|---|---|---|---|
-| 1 | Access rules | Who may do what: the permission policy for admin, planner, worker and the quote-submission credential; visibility; knowledge-base exposure. Pure, no I/O | `can_<action>(principal, target)` | yes |
-| 2 | Authentication | How identity is proven: token hashing, minting, rotation, revocation cascade, admin sessions, quote credentials | `authenticate(request_credential) -> principal`, `mint`, `revoke` | no |
-| 3 | Project tree | The tree's invariants: one generic node type and its content, levels 1-4 linear, summary and last-verified date on every create or update, moves, content version history, node states, and safe claiming of a node by a client (so two reviewers never take the same one). Reviews, escalations and proposals are ordinary nodes or content; "queues" are read-only views of nodes by state | `create_node`, `update_node`, `move_node`, `add_content`, `get_subtree`, `claim_node`, `list_by_state` | no |
-| 4 | Context assembly | How a worker's pre-prompt is composed from ancestor summaries and inherited requirements. Pure | `assemble_context(ancestor_chain) -> text` | yes |
-| 5 | User quotes | Quote integrity: append-only storage, pointers with ranges, resolving quote text, validation, supersession links, approval tied to the exact text shown | `submit_quote`, `resolve(pointer)`, `validate(pointers)`, `supersede` | no |
-| 6 | Source fetcher | How a URL becomes text: plain HTTP plus HTML/PDF converters, behind a swappable strategy | `fetch(url) -> text, metadata` | yes |
-| 7 | Document reader | How text's structure is found and read: scanners (from fastReader), JSON reading (from quick-json-reader), get lines. Pure over text | `toc`, `get_section`, `search`, `get_lines` | yes |
-| 8 | Document sources | Document quotes: the registry of cached sources (document ID, origin URL, date cached, whether to re-check), pointers citing a document by ID and line range, and rendering the quoted text server-side | `register_source`, `cite(doc_id, start, end)`, `resolve(pointer)` | no |
-| 9 | Review criteria | How a node is judged against its quotes: building the review prompt, parsing the verdict, title checks (adapted from SoT). Pure | `build_review_prompt(node, quotes)`, `parse_verdict(text)` | yes |
-| 10 | Storage | That storage is Postgres: fresh schema, migrations, and the implementations of the storage interfaces the other modules declare | per-module repository interfaces | no |
-| 11 | System operations | The use cases that combine the modules, such as "worker turns in a task" (check access, record response, pause or accept) or "user approves with a note" (record approval, create quote). The one API every interface calls | one function per operation | no |
-| 12 | HTTPS API | The protocol: FastAPI routes mapping requests to system operations; the OpenAPI spec | routes | no |
-| 13 | CLI | Command-line presentation, generated from the OpenAPI spec; an HTTPS client | commands | no |
-| 14 | Web UI | Gradio presentation; an HTTPS client; no logic | pages | yes |
-| 15 | Local client | Local-side behaviour: linking a session to a project, turning captured prompts into quote submissions, acting as a reviewer by claiming review nodes; holds the quote credential; defines the harness adapter interface | `capture`, `run_reviewer` | yes |
-| 16 | Claude Code adapter | Claude Code specifics: hooks, `claude -p` sessions | implements the adapter interface | inside 15 |
-| 17 | Codex adapter | Codex specifics: hooks, `codex exec` sessions | implements the adapter interface | inside 15 |
-| 18 | Backups and export | Carried over: encrypted full backups and the readable live export | existing commands | no |
+### Access and identity
+| Module | Responsibility | Interface |
+|---|---|---|
+| `access/principal_types.py` | Principal and role types: admin, planner, worker, quote submitter | types |
+| `access/permission_policy.py` (carried) | Pure permission decisions, visibility, knowledge-base exposure | `can_<action>(principal, target)` |
+| `authentication/password_hashing.py` (carried) | Hashing and checking the admin password | `hash_password`, `check_password` |
+| `authentication/admin_sessions.py` (carried) | In-memory admin sessions from the browser login | `start`, `lookup`, `end` |
+| `authentication/token_hashing.py` (carried) | Hashing bearer tokens for lookup | `hash_token` |
+| `authentication/token_lifecycle.py` | Mint, rotate, revoke with cascade, including quote-submission credentials | `mint`, `rotate`, `revoke` |
+| `authentication/credential_resolution.py` | Turning a request's credential into a principal | `principal_for(credential)` |
 
-**Folded in, and why**
-- Content items into the project tree: a node and its content are one thing.
-- No separate queue. Reviews, escalations and proposals are ordinary nodes or content in the one tree; "queues" are views of nodes by state, and clients claim nodes. User, on a separate queue with job kinds: "this seems more like subject separation vs function separation. odd module separation. the nodes also need to be interchangeable across, right? why would we plan for nodes ot have different types" and "yes I kind of assumed it was like that all along."
-- Approval: user quotes (approval valid only for the exact text) plus system operations (the approve use case).
-- Escalations: content on the node that raised it, the node's paused state, and system operations (raise, resolve, resume).
-- Verification is assigned by the planner like any task.
-- Document quotes got their own module (Document sources), a gap found during review.
-- Task acceptance into system operations: it's a use case, not a hidden decision.
-- The document cache split into the source fetcher (how text is obtained) and storage (where it's kept).
-- The isolated integration test runner is development tooling, not part of the system.
+### Project tree
+| Module | Responsibility | Interface |
+|---|---|---|
+| `tree/node_types.py` | Node, content, node state and level-label types | types |
+| `tree/level_placement_rules.py` | Pure: levels 1-4 one node each in a line; where a node may go | `check_placement(parent, node)` |
+| `tree/node_operations.py` | Create, update, move, delete; summary and last-verified date required on every create or update | `create_node`, `update_node`, `move_node`, `delete_node` |
+| `tree/node_content_operations.py` | Adding and editing content on a node, with version history | `add_content`, `edit_content`, `content_history` |
+| `tree/node_claiming.py` | Safely claiming a node for one client | `claim_node`, `release_node` |
+| `tree/node_state_views.py` | Read-only views of nodes by state ("queues") | `list_by_state` |
+| `tree/tree_storage_port.py` | The storage interface the tree modules use | protocol |
+
+### Context
+| Module | Responsibility | Interface |
+|---|---|---|
+| `context/context_assembly.py` | Pure: ancestor summaries and inherited requirements into a pre-prompt | `assemble_context(ancestor_chain)` |
+
+### User quotes
+| Module | Responsibility | Interface |
+|---|---|---|
+| `quotes/quote_types.py` | Quote, pointer and range types | types |
+| `quotes/quote_pointer_validation.py` (SoT) | Pure: pointer ranges are valid and continuous | `validate(pointers, quotes)` |
+| `quotes/quote_text_resolution.py` (SoT) | Resolving a pointer to its exact text | `resolve(pointer)` |
+| `quotes/quote_supersession.py` | Supersession links and marking superseded quotes | `supersede`, `superseded_by` |
+| `quotes/approved_text_binding.py` | An approval is valid only for the exact text shown; any edit voids it | `bind(text)`, `still_valid(binding, text)` |
+| `quotes/quote_storage_port.py` | Storage interface for quotes | protocol |
+
+### Document sources
+| Module | Responsibility | Interface |
+|---|---|---|
+| `sources/source_fetcher_interface.py` | The fetch strategy interface | protocol |
+| `sources/http_source_fetcher.py` (fastReader `web.py`) | Plain HTTP fetch | implements the interface |
+| `sources/html_to_text.py` (fastReader) | HTML to text | `html_to_text(html)` |
+| `sources/pdf_to_text.py` | PDF to text | `pdf_to_text(bytes)` |
+| `sources/source_registry.py` | Cached-source records: ID, origin, date cached, re-check flag | `register_source`, `source_metadata` |
+| `sources/document_citation.py` | Citing by document ID and line range; rendering the quoted text | `cite`, `resolve` |
+| `sources/source_storage_port.py` | Storage interface for sources | protocol |
+
+### Document reader (pure over text)
+| Module | Responsibility | Interface |
+|---|---|---|
+| `reader/structure_marker_types.py` (fastReader) | Marker and manifest types | types |
+| `reader/heading_scanner.py` (fastReader) | Chapter, section, page and block markers | `scan(text)` |
+| `reader/indent_depth_scanner.py` (fastReader) | Indentation-depth markers | `scan(text)` |
+| `reader/bracket_depth_scanner.py` (fastReader) | JSON bracket-depth markers | `scan(text)` |
+| `reader/tag_depth_scanner.py` (fastReader) | HTML/XML tag-depth markers | `scan(text)` |
+| `reader/table_of_contents.py` (fastReader) | Table of contents from markers | `toc(manifest, options)` |
+| `reader/section_extraction.py` (fastReader) | Getting one section | `get_section(text, manifest, marker)` |
+| `reader/text_search.py` (fastReader) | Search with container context | `search(text, manifest, query)` |
+| `reader/line_slicing.py` | Getting lines by range | `get_lines(text, start, end)` |
+| `reader/json_reader.py` (quick-json-reader) | JSON search, exclude, prune, render | `read_json(value, options)` |
+
+### Review
+| Module | Responsibility | Interface |
+|---|---|---|
+| `review/review_prompt_builder.py` (SoT) | Building the prompt that judges a node against its quotes | `build_review_prompt(node, quotes)` |
+| `review/verdict_parser.py` (SoT) | Parsing a reviewer's verdict | `parse_verdict(text)` |
+| `review/title_rules.py` (SoT) | Title checks: a title names a topic and makes no claim | `title_review_prompt`, `parse_title_result` |
+
+### System operations (use cases every interface calls)
+| Module | Responsibility |
+|---|---|
+| `operations/project_operations.py` | Starting projects, levels, knowledge-base exposure |
+| `operations/planning_operations.py` | Planners creating and updating nodes and content |
+| `operations/worker_operations.py` | A worker reading its task and context, turning in its response |
+| `operations/review_operations.py` | Submitting for review, a reviewer claiming and recording a verdict |
+| `operations/approval_operations.py` | Proposing, approving (with note), rejecting |
+| `operations/escalation_operations.py` | Raising, resolving with notes, resuming |
+| `operations/acceptance_operations.py` | Accepting work, recording branch and merge |
+| `operations/admin_operations.py` | Tokens, credentials, visibility, knowledge bases |
+
+### Storage (Postgres)
+| Module | Responsibility |
+|---|---|
+| `storage/schema.sql` | Fresh schema, version triggers |
+| `storage/database_connection.py` (carried) | Connections and transactions |
+| `storage/postgres_tree_store.py` | Implements the tree storage port |
+| `storage/postgres_quote_store.py` | Implements the quote storage port |
+| `storage/postgres_source_store.py` | Implements the source storage port |
+| `storage/postgres_credential_store.py` | Token and credential records |
+
+### HTTPS API
+| Module | Responsibility |
+|---|---|
+| `http_api/application.py` | FastAPI app wiring, TLS (carried) |
+| `http_api/credential_dependency.py` | Resolving the request's principal |
+| `http_api/routes_<area>.py` | One routes file per operations module, mapping requests to operations |
+| `http_api/error_mapping.py` | Operation errors to HTTP status codes |
+
+### CLI (HTTPS client)
+| Module | Responsibility |
+|---|---|
+| `cli/api_client.py` | Calling the HTTPS API with a credential |
+| `cli/openapi_command_generator.py` | Building commands from the server's OpenAPI spec |
+| `cli/entry_point.py` | Command-line entry |
+
+### Web UI (Gradio, HTTPS client, no logic)
+| Module | Responsibility |
+|---|---|
+| `web_ui/gradio_application.py` | App and page wiring |
+| `web_ui/tree_view_page.py` | Viewing the tree, adding addendums |
+| `web_ui/approval_page.py` | The approval view |
+| `web_ui/escalation_page.py` | The escalation view |
+| (uses `cli/api_client.py` or a shared client package) | |
+
+### Local client (Python)
+| Module | Responsibility |
+|---|---|
+| `local_client/client_configuration.py` | Server address, quote credential, reviewer settings |
+| `local_client/session_project_link.py` | Linking a harness session to a project |
+| `local_client/prompt_capture.py` (SoT) | Captured prompt plus context range into a quote submission |
+| `local_client/transcript_context_reader.py` (SoT) | Reading the preceding agent text from a transcript |
+| `local_client/reviewer_loop.py` | Claiming review nodes and running reviews through an adapter |
+| `local_client/harness_adapter_interface.py` (SoT) | The adapter interface |
+| `adapters/claude_code/hook_entry.py` (SoT) | Claude Code hooks into prompt capture |
+| `adapters/claude_code/headless_session.py` (SoT) | `claude -p` sessions |
+| `adapters/codex/hook_entry.py` | Codex hooks into prompt capture |
+| `adapters/codex/headless_session.py` | `codex exec` sessions |
+
+### Operations (carried)
+| Module | Responsibility |
+|---|---|
+| `operations_tooling/live_export.py` (carried) | Readable mirror of each project |
+| `operations_tooling/encrypted_backup.py` (carried) | Encrypted full backups and restore |
+| `operations_tooling/bootstrap.py` (carried) | First-time setup |
 
 ## Round 2 decisions (user, 2026-11-23)
 
