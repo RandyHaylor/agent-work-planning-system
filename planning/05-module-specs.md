@@ -8,6 +8,53 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 2. **Node content (researched, approved).** Nodes stay an adjacency list (`parent_id`). The node row holds title, level label, context summary and its last-verified date. Everything else (requirements, notes, research, worker responses) is content items attached to the node, each with descriptive tags (not fixed roles), its own version history and permissions. Quote pointers link a content item to a quote and a range. Sources: [tree models compared](https://dev.to/dowerdev/implementing-hierarchical-data-structures-in-postgresql-ltree-vs-adjacency-list-vs-closure-table-2jpb), [Neon ltree docs](https://neon.tech/docs/extensions/ltree). The content-item split is the agent's reasoning, not from a source.
 3. **The core (researched, approved).** Ports and adapters: a new core holding all operations, with no HTTP or database code; storage behind an interface with Postgres as the implementation; FastAPI and the CLI are thin layers over the same operations; Gradio calls HTTP. Written fresh against the new schema, reusing the existing pure parts where they fit (the `permissions.py` approach, admin sessions, backups, the isolated test runner). Sources: [ports and adapters in Python](https://dev.to/elpic/hexagonal-architecture-in-python-wiring-adapters-dependency-injection-and-the-application-layer-61l), [FastAPI and CLI over shared services](https://github.com/eefahd/python-clean-architecture).
 
+## Initial design: module list (DRAFT, not approved)
+
+Names say what each module is or does. "Package" marks the ones that make sense as their own package; the rest are folders or files inside the app. Every module has documentation, an interface, types, a definition of done and tests.
+
+**Core (no HTTP, no database code)**
+
+| # | Module | Owns | Rough interface | Package? |
+|---|---|---|---|---|
+| 1 | Access rules | Pure permission decisions: admin, planner, worker, quote-submission credential; visibility; knowledge-base exposure | `can_<action>(principal, target) -> allowed` | yes |
+| 2 | Project tree operations | Create, update, move and delete nodes; level labels; levels 1-4 linear; summary and last-verified date required on every create or update | `create_node`, `update_node`, `move_node`, `get_subtree` | no |
+| 3 | Context assembly | Pure: ancestors' summaries and inherited requirements into a worker's pre-prompt | `assemble_context(ancestor_chain) -> text` | yes |
+| 4 | Content items | Items attached to nodes, descriptive tags, version history, per-item write rules | `add_item`, `edit_item`, `item_history` | no |
+| 5 | User quotes | Append-only quotes, pointers with ranges, validation, unapproved/approved lifecycle, supersession raising a discrepancy | `submit_quote` (quote credential only), `reference_quote`, `supersede` | no |
+| 6 | Document cache | Fetching through a swappable fetcher (plain HTTP plus HTML/PDF converters), storing text and metadata, document IDs | `fetch_source(url) -> doc_id`, `source_metadata` | no |
+| 7 | Document reader | Scanners adapted from fastReader, JSON reading from quick-json-reader; table of contents, get, search, get lines | `toc`, `get_section`, `search`, `get_lines(doc_id, start, end)` | yes |
+| 8 | Work queue | Generic Postgres queue: enqueue, claim, complete, list | `enqueue`, `claim(kind, client)`, `complete` | yes |
+| 9 | Node review | Review jobs on submission, verdicts applied, title checks (prompts adapted from SoT) | `submit_for_review`, `record_verdict` | no |
+| 10 | Approval queue | Proposals, approve or approve with note (note becomes a quote), approval void if text changes | `propose`, `approve`, `reject` | no |
+| 11 | Escalations | Raise (node pauses, user alerted), resolve with notes, resume with instruction | `raise_escalation`, `resolve`, `resume_task` | no |
+| 12 | Task acceptance | Worker response and its "built to pass the tests" confirmation, acceptance, verification jobs, branch record, merge record | `turn_in`, `accept`, `request_verification` | no |
+| 13 | Credentials | Tokens (mint, rotate, revoke with cascade), admin sessions, quote credentials | `mint`, `revoke`, `start_admin_session` | no |
+| 14 | Storage port and Postgres store | Storage interface for the core; Postgres implementation; fresh schema | repository interfaces | no |
+
+**Interfaces (thin, no business logic)**
+
+| # | Module | Notes | Package? |
+|---|---|---|---|
+| 15 | HTTPS API | FastAPI routes calling the core | no |
+| 16 | CLI | Same operations as HTTPS | no |
+| 17 | Web UI | Gradio, an HTTP client only | yes |
+
+**Local side (Python)**
+
+| # | Module | Owns | Package? |
+|---|---|---|---|
+| 18 | Local client | Session-to-project link, prompt capture into quote submission, reviewer role pulling review jobs | yes |
+| 19 | Harness adapter interface | One strict interface: capture, tools, run a headless session | inside 18 |
+| 20 | Claude Code adapter | Hooks, `claude -p` review sessions (adapted from SoT) | inside 18 |
+| 21 | Codex adapter | Hooks, `codex exec` review sessions | inside 18 |
+
+**Operations (carried over)**
+
+| # | Module | Notes |
+|---|---|---|
+| 22 | Live export and encrypted backups | From the existing repo |
+| 23 | Isolated integration test runner | From the existing repo |
+
 ## Round 2 decisions (user, 2026-11-23)
 
 1. **Agent acting as the user is admin.** The agent uses an admin session, obtained the same way (the user types the password in a login window), and can do everything admin can.
