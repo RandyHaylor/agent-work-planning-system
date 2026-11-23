@@ -4,7 +4,7 @@ Level 3. Approved by the user on 2026-11-23. User: "otherwise yes thi sis soundi
 
 ## General approach
 
-1. **One core, thin interfaces.** All operations, including user actions, live in a core that knows nothing about HTTP. HTTP, the CLI, the MCP-style interface and the Gradio UI are thin layers over that core, so each one can do everything and none of them holds business logic. (DoD 13, 17, 18)
+1. **One core, thin interfaces.** All operations, including user actions, live in a core that knows nothing about HTTP. HTTP, the CLI and the Gradio UI are thin layers over that core, so each one can do everything and none of them holds business logic. (DoD 13, 17, 18)
    - Today `app.py` (777 lines) mixes routes, SQL and HTTP errors in each function, with no service layer. The first step is pulling the operations out of it.
    - What already separates cleanly: `permissions.py` (pure), the admin session store, the backup renderer, encrypted backups, the version trigger, and the isolated test runner.
 2. **Storage behind an interface.** The core talks to a storage interface, and Postgres is the one implementation. Copied-in tools that use files today get the same treatment.
@@ -23,7 +23,7 @@ Each piece is conceptual and will not be split into nodes. Modules come later, a
 | Document quotes | The service fetches, caches and logs sources; agents read through a reader and cite by document ID and line range; the server renders the text | No path lets an agent see the cache or supply quote text |
 | Queues | One generic queue mechanism for review jobs, the approval queue and escalations | Each queue's items can be listed, acted on and resolved through every interface |
 | Task work and acceptance | Workers turn in responses only; tests decide acceptance; outside verification for deep modules; escalation and resume; the planner merges each task's work on acceptance | A worker's permissions can't touch its task, tests or definition of done |
-| Interfaces | HTTP, CLI with the same interface, MCP-style interface, Gradio UI | Any action through one interface is possible through all |
+| Interfaces | HTTP, CLI with the same interface, Gradio UI; no separate MCP server, instead a permission level lets an agent act as the user over HTTPS (refined at level 5) | Any action through one interface is possible through all |
 | Local client and harness adapters | Generic client, plus Claude Code and Codex adapters for capture, tools, review sessions | Both harnesses capture quotes and run reviews |
 | Operations | Backups, live export, running on the host, web exposure for testing (Cloudflare or similar) | Carried-over behaviour works; web agents can reach it in a test |
 
