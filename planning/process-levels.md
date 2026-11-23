@@ -1,0 +1,40 @@
+# Process levels
+
+Agreed with the user on 2026-11-22. This replaces the 8 levels in the Philosophy doc ("Top-Down Planning: Philosophy", Nov 22, 2026) for this project.
+
+## Levels
+
+```
+1 What we're doing
+└─ 2 Definition of done
+   └─ 3 High-level plan  (one node; names the pieces inside it)
+      └─ 4 Walkthroughs  (one node; whole system)
+         └─ 5 Module specs  ← first branching: one node per module
+            └─ 6 Test scaffold (per module)
+               └─ 7 Build (task nodes per module)
+```
+
+Spike tasks can hang off any layer.
+
+1. **What we're doing.** User: "the top level is 'what are we doing - who needs what to work and generally, how'"
+2. **Definition of done.** User: "'definition of done' and include real hard requirements/constraints/etc for the top level goal"
+3. **High-level plan.** User: "big pieces needs to be more formally the whiteboard plan or high level plan to indicate that it's more than just big pieces"; "big pieces also include dod, requirements, for them"; "the high level plan identifies the pieces ... there's no reason the high level plan would be split into nodes"
+   - **Spikes** are tasks. User: "spikes should be honestly performed as tasks". They are allowed at any layer, and a spike done at a layer is visible there as information for that layer. User: "spikes should actually be allowed at any layer, but if they are done at a layer, they are visible at that layer as info for the layer". Spike findings do not pass down by default. User: "the spikes findings are not included by default. if they prove something then it can be noted/shown but if it's just there it doesn't gurantee it's relevant"
+4. **Walkthroughs.** One node. User: "walkthorughs are whole system, not per module/part"
+5. **Module specs.** User: "the module specs will be modules that might not line up with big pieces from level 3 which is more conceptual. there may be many more modules than big pieces."
+6. **Test scaffold.**
+7. **Build.**
+
+Levels 1 to 4 form a straight line, and branching starts at level 5. User: "yes I like this. benefits include going up teh layers where there are issues/planning."
+
+## Related decisions
+
+- **Knowledge bases are not a level.** User: "the knowledgebases are, like in current agent planing tool, separate things that can be or not be exposed to a project (work order). kbs are not a level"
+- **No separate requirement branches.** User: "sticking them into completely separeat branches is a failing proposition"
+- **Requirements live on the node they govern, and always pass down to every node below** (user's answers to the clarifying questions).
+- **Honor system.** The agent does the research and includes links, with no file-and-line citation system. User: "the honor system means you trust the agent to do the research. yes include links"
+- **Questions** go to a backlog and are asked in batches (user's answer to the clarifying questions).
+- **Work on `main`**, with no branches until agents split off to work on separate modules.
+
+- **Level 3 is named "High-level plan"** (user's choice).
+- **The Philosophy and Plan docs are updated to match** (user approved). Copies are in this folder.
