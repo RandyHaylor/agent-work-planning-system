@@ -8,7 +8,112 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 2. **Node content (researched, approved).** Nodes stay an adjacency list (`parent_id`). The node row holds title, level label, context summary and its last-verified date. Everything else (requirements, notes, research, worker responses) is content items attached to the node, each with descriptive tags (not fixed roles), its own version history and permissions. Quote pointers link a content item to a quote and a range. Sources: [tree models compared](https://dev.to/dowerdev/implementing-hierarchical-data-structures-in-postgresql-ltree-vs-adjacency-list-vs-closure-table-2jpb), [Neon ltree docs](https://neon.tech/docs/extensions/ltree). The content-item split is the agent's reasoning, not from a source.
 3. **The core (researched, approved).** Ports and adapters: a new core holding all operations, with no HTTP or database code; storage behind an interface with Postgres as the implementation; FastAPI and the CLI are thin layers over the same operations; Gradio calls HTTP. Written fresh against the new schema, reusing the existing pure parts where they fit (the `permissions.py` approach, admin sessions, backups, the isolated test runner). Sources: [ports and adapters in Python](https://dev.to/elpic/hexagonal-architecture-in-python-wiring-adapters-dependency-injection-and-the-application-layer-61l), [FastAPI and CLI over shared services](https://github.com/eefahd/python-clean-architecture).
 
-## Initial design: module tree (DRAFT v4, not approved)
+## Module tree v5 (APPROVED by the user, 2026-11-23, in Slack: "approve v5")
+
+Boundary level: every module, small and big, with nesting. Interfaces and types come next, module by module (level 5 phase 2).
+
+```
+main.py                                   knows nothing concrete: loads generic interfaces, passes each its config uninterpreted
+configuration/                            reads injected config files; hands each module its own section
+
+server/
+  domain/                                 no I/O, no HTTP, no database
+    access/                               who may do what
+      principal                           who is acting: admin, worker, reviewer, quote client
+      permission_policy                   rules, incl. who may change a node's state (carried)
+    authentication/                       credential -> principal
+      password_hashing                    PBKDF2 (carried)
+      token_hashing                       SHA-256 digests (carried)
+      agent_session_keys                  persistent keys so agents can resume (carried pattern)
+      admin_session                       temporary; human types a password only they know in a popup (carried pattern)
+      credential_issuer                   mint, rotate, revoke; per-install quote key
+      credential_storage_port
+    project_tree/                         one generic node type
+      node                                node, state, level label, context summary + last verified
+      level_placement_rules               levels 1-4 linear, branching from 5
+      node_editor                         create, update, move, delete; summary updated on every change
+      node_content                        content on a node; text stored as references TextVersions
+      tree_storage_port
+    context_assembly/
+      context_assembler                   ancestor summaries + inherited requirements -> pre-prompt
+    references/                           one reference system for user quotes AND documents
+      reference_types                     Source (origin field), TextVersion (immutable), Citation (version + line range)
+      citing_and_rendering                pointer validation, server-rendered quoted text, supersession links
+      temp_cache_lifecycle                shared temp cache: TTL, promotion on first citation, purge
+      ingestion                           quote capture in; fetch -> document_extraction in
+      reference_storage_port
+      source_fetcher_port
+    review_dispatch/                      sends a review node to an available reviewer client, never to two
+    task_assignment/                      planner/admin assigns a task node and mints the worker's scoped token
+  commands/                               every action, reads and writes
+    command_runner                        permission check -> transaction (read-only for reads) -> run
+    request_authorizer
+    <one class per command>               nested only by shared mechanics, never by subject
+  storage/                                SQLAlchemy Core (no ORM)
+    engine_setup                          engine + transactions (with engine.begin() is the unit of work)
+    postgres_tree_store                   implements tree_storage_port
+    postgres_reference_store              implements reference_storage_port
+    postgres_credential_store             implements credential_storage_port
+    migrations/                           Alembic
+  adapters/
+    http_source_fetcher                   implements source_fetcher_port; plain HTTP; catches HTTP errors and failure markers
+  http_api/                               protocol only
+    application                           FastAPI wiring, TLS (carried)
+    credential_dependency
+    command_routes                        every route -> a command
+    error_mapping
+  database_backup/                        one module: encrypted pg_dump, retention, restore (carried)
+  bootstrap/                              first-time setup: migrations, root nodes, admin password, backup keypair
+
+document_extraction/                      own package; bytes + metadata -> citable text; no network, no DB
+  text_decoding                           header charset -> meta tag -> charset_normalizer
+  content_type_detection                  header + leading bytes
+  fallback_runner                         generic: tries interchangeable strategies in order; reports which one was used
+  text_normalization                      line endings, soft wrap, JSON pretty-print -> citable form
+  strategies/                             one per extractor
+    trafilatura_markdown
+    readabilipy_markdownify
+    whole_page_markdownify
+    pypdf_text
+    pdfminer_text
+    text_passthrough
+    json_pretty_print
+    jsonl_passthrough
+
+document_reader/                          own package; pure over citable text (fastReader + quick-json-reader)
+  structure/
+    marker, manifest, line_index
+    scanners/                             heading, indent depth, bracket depth, tag depth
+  navigation/                             table of contents, section -> line range, previews
+  search/                                 hits with containing sections
+  json_view/                              quick-json-reader Python port; line ranges of the stored text
+
+api_client/                               one client for the HTTPS API, used by cli, web_ui, local_client
+admin_login/                              the password popup that starts an admin session (cli, web_ui, agent)
+cli/                                      generated from OpenAPI by the library the spike picks
+  entry_point
+web_ui/                                   Gradio; no logic; same API as an admin agent (true MVC)
+  gradio_application
+  pages/
+    node_list_page                        filtered by state
+    node_detail_page
+    login_page
+local_client/                             Python, beside the agent harness
+  quote_capture/                          prompt capture, transcript context reader (SoT)
+  review_worker/                          receives review jobs from the server, runs them via a harness adapter
+  harness_adapters/
+    claude_code/
+      capture_hook
+      session_runner                      claude -p
+    codex/
+      capture_hook
+      session_runner                      codex exec
+  client_credentials                      the install's quote key
+```
+
+Dropped since v4: tree_export, operations_tooling, user_quotes and document_sources (merged into references), node_claimer and claiming, node_state_views (now read commands), quality checks, a separate queries module, yoyo, schema.sql.
+
+## Superseded: module tree v4 (kept for history; v5 above replaces it)
 
 **Module** means a normal code module: a cohesive unit with a clear responsibility and an interface, often small (a single file, one strategy, or a folder). Modules nest: a parent module exposes one public interface and keeps its children private. Siblings use each other only through those public interfaces, never each other's children.
 
