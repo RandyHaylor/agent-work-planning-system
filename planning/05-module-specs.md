@@ -10,7 +10,7 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 
 ## Initial design: module list (DRAFT v3, not approved)
 
-**Module** means a normal code module: a cohesive unit with a clear responsibility and an interface, often small (a single file of helpers, one strategy implementation, or a small folder). Modules can be broken down into task-sized work. Earlier drafts (v1, v2) listed subsystem-sized boxes instead of modules; v3 lists actual modules, grouped by area. Areas are only for reading; they are not modules.
+**Module** means a normal code module: a cohesive unit with a clear responsibility and an interface, often small (a single file of helpers, one strategy implementation, or a small folder). Modules can be broken down into task-sized work. Earlier drafts (v1, v2) listed subsystem-sized boxes instead of modules; v3 lists actual modules, grouped by area. **Every row is a module. The headings are only groupings for reading; they are not modules.**
 
 Every module has documentation, an interface, types, a definition of done and tests. Paths are proposals. "(carried)" means adapted from the existing repo; "(SoT)", "(fastReader)", "(quick-json-reader)" mean adapted from that repo.
 
@@ -51,13 +51,17 @@ Every module has documentation, an interface, types, a definition of done and te
 | `quotes/approved_text_binding.py` | An approval is valid only for the exact text shown; any edit voids it | `bind(text)`, `still_valid(binding, text)` |
 | `quotes/quote_storage_port.py` | Storage interface for quotes | protocol |
 
-### Document sources
+### Grouping: fetching
 | Module | Responsibility | Interface |
 |---|---|---|
-| `sources/source_fetcher_interface.py` | The fetch strategy interface | protocol |
-| `sources/http_source_fetcher.py` (fastReader `web.py`) | Plain HTTP fetch | implements the interface |
-| `sources/html_to_text.py` (fastReader) | HTML to text | `html_to_text(html)` |
-| `sources/pdf_to_text.py` | PDF to text | `pdf_to_text(bytes)` |
+| `fetching/source_fetcher_interface.py` | The fetch strategy interface | protocol |
+| `fetching/http_source_fetcher.py` (fastReader `web.py`) | Plain HTTP fetch | implements the interface |
+| `fetching/html_to_text.py` (fastReader) | HTML to text | `html_to_text(html)` |
+| `fetching/pdf_to_text.py` | PDF to text | `pdf_to_text(bytes)` |
+
+### Grouping: sources and citation
+| Module | Responsibility | Interface |
+|---|---|---|
 | `sources/source_registry.py` | Cached-source records: ID, origin, date cached, re-check flag | `register_source`, `source_metadata` |
 | `sources/document_citation.py` | Citing by document ID and line range; rendering the quoted text | `cite`, `resolve` |
 | `sources/source_storage_port.py` | Storage interface for sources | protocol |
@@ -76,12 +80,7 @@ Every module has documentation, an interface, types, a definition of done and te
 | `reader/line_slicing.py` | Getting lines by range | `get_lines(text, start, end)` |
 | `reader/json_reader.py` (quick-json-reader) | JSON search, exclude, prune, render | `read_json(value, options)` |
 
-### Review
-| Module | Responsibility | Interface |
-|---|---|---|
-| `review/review_prompt_builder.py` (SoT) | Building the prompt that judges a node against its quotes | `build_review_prompt(node, quotes)` |
-| `review/verdict_parser.py` (SoT) | Parsing a reviewer's verdict | `parse_verdict(text)` |
-| `review/title_rules.py` (SoT) | Title checks: a title names a topic and makes no claim | `title_review_prompt`, `parse_title_result` |
+**Review is not a code area.** A review is an ordinary task: a reviewer client claims the review node, gets standard review instructions (configuration text adapted from SoT, including title checks), and turns in its verdict as its response. `operations/review_operations.py` submits nodes for review and records verdicts.
 
 ### System operations (use cases every interface calls)
 | Module | Responsibility |
