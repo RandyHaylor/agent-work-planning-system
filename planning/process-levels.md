@@ -28,6 +28,40 @@ Spike tasks can hang off any layer.
 
 Levels 1 to 4 form a straight line, and branching starts at level 5. User: "yes I like this. benefits include going up teh layers where there are issues/planning."
 
+## Module design (level 5 and all code)
+
+Approved by the user 2026-11-23. These shape this project AND the system's own prompting and docs. User: "we need some commandments or something, as well as optoins for approaches."
+
+### Commandments (adhere to these strongly)
+
+1. **Separate modules well for whatever paradigm fits the approach.** User: "Modules need - good separation for whatever paradigm is fitting the aproach"
+2. **Cohesion decides what goes together:** things that belong together mechanically, never a shared subject, audience or label. User: "cohesion in module separation approach"
+3. **Don't shy away from small modules.** User: "Do NOT shy away from small modules - if a small module makes sense, then it's a small module."
+4. **Nest modules where appropriate,** especially to break up larger modules. User: "nesting modules where appropriate (especially to break up larger modules)"
+5. **List every module, small and big.** User: "Small modules can be grouped into bigger modules, that doens't mean you don't list the smaller and bigger modules in the list"
+6. **Every module, nested or not, gets its interface and external integration tests designed and mocked up front.** User: "nested modules still get their interfaces and external integration tests designed/mocked up front."
+7. **Lean on proven design; don't reinvent wheels** (see level 5 above).
+8. **Encapsulate and organize complexity.** Each module hides its complexity behind a simple interface; callers never handle its internals. User: "we need a focus on complexity encapsulation"
+9. **Never mix levels of detail.** Every function, and every module's public surface, works at one scope. A high-level function calls only things of similar scope, reading as a list of steps; string handling, raw conditionals and I/O live in the lower-level functions those steps call. The goal is organizing complexity, not reader comfort. User: "what is VERY IMPORTANT is not mixing levels of detail in code. for example a top level main() fucntion calls things. It should have similar SCOPE calls. it should NOT look like: loadStorageHandler(), showLogin(), if login = x then y, using \"string\".. plus ... then do this..." and "our goal isn't so much 'keep the humans from switching modes' as it is 'don't fill up the box of clipboards with loose sheets of paper' because we hve to manage the groups of paper...."
+
+### Approaches for reference (to help, not to apply mechanically)
+
+Use these wherever possible to keep code cohesive and to organize complexity effectively.
+
+- **Cohesion types** (Constantine and Yourdon, *Structured Design*), strongest to weakest ([Wikipedia](https://en.wikipedia.org/wiki/Cohesion_(computer_science)), [history](https://arxiv.org/pdf/2507.09596)):
+  1. Functional: every part contributes to one well-defined task.
+  2. Sequential: one part's output is the next part's input.
+  3. Communicational: the parts work on the same data.
+  4. Procedural: the parts follow a set order of execution.
+  5. Temporal: the parts run at the same time (e.g. "startup").
+  6. Logical: the parts share only a category (e.g. "operations tooling"). Avoid.
+  7. Coincidental: no meaningful relation (a "utils" grab-bag). Avoid.
+- **Information hiding** (Parnas, 1972): split by design decisions likely to change; each module hides one, rather than following processing steps. ([paper](https://www.cse.sc.edu/~mgv/csce590f20/ParnasCriteria.pdf))
+- **Single Responsibility and Common Closure** (Martin): "Gather together the things that change for the same reasons. Separate those things that change for different reasons." CCP applies it to packages. ([Clean Code blog](https://blog.cleancoder.com/uncle-bob/2014/05/08/SingleReponsibilityPrinciple.html), [CCP](https://oowisdom.csse.canterbury.ac.nz/index.php/Common_closure_principle))
+- **Deep modules** (Ousterhout): a simple interface over substantial hidden work; beware shallow pass-through pieces ("classitis"). Use it to judge interfaces, not to argue against small modules. ([Stanford lecture](https://web.stanford.edu/~ouster/cgi-bin/cs190-spring16/lecture.php?topic=modularDesign), [review](https://blog.pragmaticengineer.com/a-philosophy-of-software-design-review/))
+- **Composed Method / SLAP** (Beck; named the Single Level of Abstraction Principle by Ford; restated by Martin): keep all operations in a method at the same level of abstraction. ([c2 wiki](https://c2.com/ppr/wiki/WikiPagesAboutRefactoring/ComposedMethod.html), [O'Reilly](https://www.oreilly.com/library/view/the-productive-programmer/9780596519780/ch13.html), [DZone](https://dzone.com/articles/the-single-level-of-abstraction-principle))
+- **Coupling** (Constantine): modules depend on each other as little and as plainly as possible. Sub-types not yet researched.
+
 ## Related decisions
 
 - **Knowledge bases are not a level.** User: "the knowledgebases are, like in current agent planing tool, separate things that can be or not be exposed to a project (work order). kbs are not a level"

@@ -22,6 +22,8 @@ This repo is the base for the **agent planning system**: one harness-agnostic sy
 
 ## Software design rules (for this project AND for the system's own prompting and docs)
 
+**Module commandments and reference approaches: `planning/process-levels.md`, "Module design". Read them before proposing any module.** In short: separation that fits the paradigm; cohesion (never group by shared subject or label); don't shy away from small modules; nest to break up big ones and list both; every module, nested or not, gets interfaces and external integration tests mocked up front; encapsulate and organize complexity; never mix levels of detail in one function (SLAP).
+
 - A **module** is a normal code module: a cohesive unit with a clear responsibility and an interface, often small (one file of helpers, one strategy, a small folder). Modules can be broken down into task-sized work.
 - Module separations MUST be chosen for good software architecture and encapsulation, NOT by subject matter or by upstream lists of project needs. Never "X operations/service/manager" groupings of everything about a subject.
 - **Nest modules** where it makes sense rather than sprawling siblings with cross-dependencies. A parent exposes one public interface; children stay private.
