@@ -106,7 +106,7 @@ Node state is a plain attribute on the node; who may change it to what is a rule
 |---|---|
 | `http_api/application.py` | FastAPI app wiring, TLS (carried) |
 | `http_api/credential_dependency.py` | Resolving the request's principal |
-| `http_api/routes_<area>.py` | One routes file per operations module, mapping requests to operations |
+| `http_api/command_routes.py` | Maps each route to its command class |
 | `http_api/error_mapping.py` | Operation errors to HTTP status codes |
 
 ### CLI (HTTPS client)
