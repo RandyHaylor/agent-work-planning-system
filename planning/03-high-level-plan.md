@@ -50,7 +50,7 @@ Modules are chosen with the user involved, using good judgement to separate func
 
 Each module has clear documentation, an interface, types, a definition of done and tests (see Repo layout below).
 
-Module separations MUST be chosen for good software architecture and encapsulation, NOT necessarily by subject matter or by upstream lists of project needs (user, at level 5). Prioritize good, proven software engineering patterns (strategy, adapter, facade, factory, etc.), but not for their own sake: only where they add efficiency and value and reduce or encapsulate complexity (user, at level 5).
+Module separations MUST be chosen for good software architecture and encapsulation, NOT necessarily by subject matter or by upstream lists of project needs (user, at level 5). Prioritize good, proven software engineering patterns (strategy, adapter, facade, factory, etc.), but not for their own sake: only where they add efficiency and value and reduce or encapsulate complexity (user, at level 5). Nest modules where it makes sense instead of making many sibling modules with cross-dependencies; lean on tried-and-true software design: SOLID, maintainable, sensible, readable (user, at level 5).
 
 **Accepted approaches** (guidance for judgement, not operating restrictions):
 - **Information hiding.** A module hides a design decision, especially one likely to change. ([Parnas 1972](https://www.cse.sc.edu/~mgv/csce590f20/ParnasCriteria.pdf))
