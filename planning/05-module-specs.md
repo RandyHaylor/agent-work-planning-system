@@ -178,6 +178,7 @@ Approved one at a time: `access`, `authentication`, `project_tree`, `context_ass
 - **Recheck 3, storage:** one `postgres_reference_store`, `migrations/` (plain SQL) replacing `schema.sql`, `postgres_unit_of_work`; each implements exactly one domain port.
 - **Recheck 4, node content reuses references' immutable text versions** (one version mechanism for all text).
 - **No claiming.** "Claiming" was the agent's wording, not the user's design. User: "I feel like this system is set up so a planner/admin assigns tasks." Task nodes are assigned by the planner or admin, who mints the worker's scoped token; workers never pull work. Reviews are sent by the server to an available reviewer client; never sending one review to two reviewers is an internal detail of review dispatch. `node_claimer` and the claim command are dropped; the level 3 queue row is corrected. The research row on SKIP LOCKED stays as background for review dispatch.
+- **Recheck 6 and 7, reads are commands.** User: "isn't read also a command". One `commands` module and one `CommandRunner`; read commands (nodes by state, worker context, reading a cited source through `document_reader`, table of contents, search) only read, run in a read-only transaction with the same permission check. No separate queries module; `node_state_views` leaves `project_tree`.
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 
 ### Findings behind round 4 (2026-11-23)
