@@ -25,6 +25,8 @@ Level 2. Approved by the user on 2026-11-23.
 
 19. **Final acceptance runs a user story.** One user story, chosen at random from the level 4 list, is run end to end on the real system. The user stories are therefore realistic, runnable end-to-end tests. User: "for the final review/acceptance task once all work is done, I think a user story is a good candidate for a run through, chose and random from the list - so the user stories should be realistic end to end tests as well."
 
+20. **The system teaches its own design rules.** Its agent prompting and the contents of its docs carry the module and design rules: module separations chosen for good architecture and encapsulation, not by subject matter or upstream need lists; proven patterns only where they add value; nesting over sibling sprawl; tried-and-true design (SOLID, maintainable, sensible, readable); and no reinventing wheels. User: "this MUST inform the system itself and prompting we add (and contents of the docs as well)."
+
 ## Hard constraints
 
 - Built on the existing repo: Python, FastAPI, psycopg and Postgres 16.
