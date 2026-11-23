@@ -26,7 +26,7 @@ The process is the system's documentation, and following it means building wiki 
 
 - **One Philosophy doc** describes the process, and also works as the reference for following it without tools.
 - **The process is the deliverable.** Review in this version is light: it checks that each quote matches its claim, without running code or anything complex. The process makes clear that an end result reached without the process counts as a failure.
-- **Fewer levels for smaller requests.** The process offers clear options, chosen by the scope and size of the request.
+- **All levels, every time.** Every request that uses the process goes through all the levels. Simple, immediate requests that stand on their own don't need the process; spikes or research relevant to a project belong in that project.
 - **Walkthroughs before scaffolding.** Once the modules are identified, step-by-step use-case walkthroughs and user stories refine the design.
 - **Findings move back up, without halting.** Finish what's possible at the current level, carry the issue list up to the level that has to address it, then work back down updating each level.
 - **Nothing enters the plan without explicit approval.** Proposals go to the user as a list, and only items the user explicitly approves are added to a formal planning doc. This applies to this plan and to the system being built.

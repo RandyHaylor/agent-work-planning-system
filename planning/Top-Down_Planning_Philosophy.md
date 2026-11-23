@@ -71,7 +71,7 @@ Work moves down through seven levels in order. At each level, plan as far as pos
 
 **Knowledge bases are not a level.** They are separate stores that can be exposed to a project, or not.
 
-**Scale to the job.** The process offers clear options with fewer levels for smaller requests. The option is chosen from the scope and size of the request, so a small change doesn't carry a large project's ceremony.
+**All levels, every time.** Every request that uses this process goes through all the levels. They aren't heavy, even for a small request. Simple, immediate requests that stand on their own, such as "do this tech spike" or "look up this thing", don't need the process. A spike or research relevant to a project belongs in that project, as a task at whatever layer needs it. An unrelated aside can be kept out of the project.
 
 ## Moving back up a level
 
@@ -135,7 +135,6 @@ Use this list to follow the process without any tools enforcing it. The SoT tool
 - [ ] Spikes a node depends on are done before that node's work goes ahead
 - [ ] Documentation matches what was actually built
 
-* [ ] Level option chosen to fit the size and scope of the request
 * [ ] Requirements pieced together from discussion have a captured user confirmation
 * [ ] Use-case walkthroughs done before module specs and scaffolding
 * [ ] Issues that force higher-level changes are carried up, and levels re-walked on the way back down

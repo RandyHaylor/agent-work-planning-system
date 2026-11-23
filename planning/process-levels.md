@@ -36,5 +36,7 @@ Levels 1 to 4 form a straight line, and branching starts at level 5. User: "yes 
 - **Questions** go to a backlog and are asked in batches (user's answer to the clarifying questions).
 - **Work on `main`**, with no branches until agents split off to work on separate modules.
 
+- **All levels, every time.** No reduced level sets for small requests; simple standalone requests don't use the process. User: "honestly all levels aren't really bad even for a small request so the previous idea that we use different number of layers for smaller requests is wrong."
+- **Broader than a workorder.** The README rule that a workorder never holds a whole project is old guidance. User: "this plan supports more broad plans/goals"
 - **Level 3 is named "High-level plan"** (user's choice).
 - **The Philosophy and Plan docs are updated to match** (user approved). Copies are in this folder.
