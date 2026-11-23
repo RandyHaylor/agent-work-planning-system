@@ -61,7 +61,7 @@ Work moves down through seven levels in order. At each level, plan as far as pos
 2. **Definition of done.** For the top-level goal, including the real hard requirements and constraints.
 3. **High-level plan.** The whiteboard plan: the general approach and the conceptual pieces, each with its own definition of done and requirements. One node; the pieces are named inside it, not split into nodes. Repo structure is decided here based on project size and context.
 4. **Walkthroughs.** One node covering the whole system: step-by-step walkthroughs of use-case scenarios and user stories, showing how the system will work. These refine the design before any scaffolding or code.
-5. **Module specs.** The actual modules, which need not line up with the level 3 pieces and may be many more. For each module: interfaces, types, rules and definition of done.
+5. **Module specs.** The actual modules, which need not line up with the level 3 pieces and may be many more. For each module: interfaces, types, rules and definition of done. This level requires many technical choices that may not have been made yet, and they must involve the user. Work in rounds: come up with questions, have them answered, do research and initial design, come up with the next round of questions, and repeat.
 6. **Test scaffold.** Mocked integration tests for every module at its interface, all passing, before real development starts. This is a formal planning layer and gets extra effort.
 7. **Build.** Build to spec.
 

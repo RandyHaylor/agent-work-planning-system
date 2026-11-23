@@ -245,7 +245,7 @@ The levels are recorded in `process-levels.md`.
    - A worker that can't meet its spec: it finishes what it can, escalates, turns in its work, and the node pauses.
    - A quote superseded, raising a discrepancy task for the user.
    - A deep module failing outside verification and escalating as a user review event.
-5. **Module specs.** Propose the modules, which need not match the level 3 pieces. Each has clear documentation, an interface, types, a definition of done and tests, and is its own package only when that makes sense. External integrations get generic strategy-style wrappers.
+5. **Module specs.** Many technical choices are made here for the first time, with the user. Work in rounds: come up with questions, have them answered, do research and initial design, come up with the next round of questions, and repeat. Propose the modules, which need not match the level 3 pieces. Each has clear documentation, an interface, types, a definition of done and tests, and is its own package only when that makes sense. External integrations get generic strategy-style wrappers.
 6. **Test scaffold.** Build hollow modules and integration tests that pass against mocks, before any real development.
 7. **Build.** Create task nodes, mint scoped worker tokens, and assign them. Workers build to pass the tests; outside agents verify against the original tests.
 
