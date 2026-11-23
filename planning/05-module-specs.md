@@ -156,3 +156,16 @@ Per the no-reinventing-wheels rule, each module that may have an off-the-shelf a
 7. **Queues:** Postgres tables.
 8. **Reviewers:** the server deploys reviews to a connected client instance configured to act as a reviewer. User: "it was clearly stated that the server deploys the reviews from a connected client instance configured to act as a reviewer"
 
+## Round 4 decisions (user, 2026-11-23)
+
+1. **fastReader and quick-json-reader are their own package in this repo, adapted for our needs, not bolted on as is.** User: "quick-json-reader and fastReader coming in DO need to be adapted and possibly not just wrenched on as is but converted for the purpose we have some specific needs for them. even though we're including them, they still do need to be treated as their own module/package in this repo, so we need to plan that well". Module tree v4 is therefore not approved yet.
+2. **Broad website support, tested.** User: "we do want to ensure it works broadly and brings in features - we may need to extend it to ensure it supports a broad range of website, etc, so we'll want to do some testing as well. we can also do inital testing directly with fast reader/json reader directly as they currently are functional after all."
+3. **Two cache tiers.** User: "lets say reserched sites are stored to a temp cache, but then referenced docs are moved to a permanent project repo to reference". Details not yet designed.
+4. **Web extraction is a strategy pattern with selection and automatic fallback.** User: "We need a clean strategy pattern for web extraction so we can port in and choose from a list of different options - even automatically trying mlutiple approaches after failtures." Concrete strategies and failure checks come from background research and testing; the design proceeds without waiting. User: "saying 'we need a generic strategy adapter/wrapper and way to choose/fall back to strategies' solves the design issue at a higher level letting us continue here"
+
+### Findings behind round 4 (2026-11-23)
+
+- fastReader (about 2,200 lines, 108 tests pass): the scanners, TOC, search and section boundaries are pure logic and reuse cleanly. Its file cache (8-character hash keys, global `~/.fastReader`, `/tmp` outputs) and file-bound `commands/*` need replacing. Section indexes depend on scanner config, so citations must use line ranges.
+- quick-json-reader (one 1,030-line JS file, Apache-2.0, 25 tests pass): a Python port is low effort. Its line numbers belong to its rendered view, not the stored text, so citations must point at the stored text.
+- Baseline on 29 real pages: fastReader's current HTML-to-text returned nothing on 17 of 22 HTML pages (void `meta`/`link` tags in its skip list never close), never emits headings, decodes everything as UTF-8 and turns PDFs into garbage. trafilatura (markdown mode) handled most HTML well but truncated some pages (RFC 9110 to one section) and returns nothing for PDF, text and JSON. 4 sites blocked plain HTTP behind Cloudflare.
+
