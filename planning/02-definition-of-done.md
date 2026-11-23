@@ -27,7 +27,7 @@ Level 2. Approved by the user on 2026-11-23.
 
 - Built on the existing repo: Python, FastAPI, psycopg and Postgres 16.
 - The source repos (source-of-truth-agent-tool, ai-agent-fastReader, quick-json-reader) are left untouched. Code is copied in and adapted.
-- Every module is a standalone tool with its own README, interface, types, definition of done and integration tests. External integrations get generic strategy-style wrappers.
+- Every module has clear documentation, an interface, types, a definition of done and tests. It is its own package only when that makes sense; a non-package module that doesn't make sense to integration-test on its own can rely on unit tests (see `03-high-level-plan.md`). External integrations get generic strategy-style wrappers.
 - Harness-agnostic: no harness-specific code outside the adapters.
 - No business logic in the web, Gradio or UI code.
 - The HTTP interface and the CLI can do everything, including user actions.

@@ -43,7 +43,7 @@ The agent planning system is the base. SoT, fastReader and quick-json-reader are
 
 Modules are chosen with the user involved, using good judgement to separate functionality into clean modules with good professional separation. User: "I say we just include a list of different accepted approaches like that, and specify that user should be involved, and use good judgement to separate out functionality into clean movules iwth good professional separation."
 
-Each module is a standalone tool with its own README, interface, types, definition of done and integration tests (Philosophy doc; `agent-planning-system.md`).
+Each module has clear documentation, an interface, types, a definition of done and tests (see Repo layout below).
 
 **Accepted approaches** (guidance for judgement, not operating restrictions):
 - **Information hiding.** A module hides a design decision, especially one likely to change. ([Parnas 1972](https://www.cse.sc.edu/~mgv/csce590f20/ParnasCriteria.pdf))

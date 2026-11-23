@@ -108,7 +108,8 @@ Every point must link back to the exact words it rests on.
 
 Modules are kept far more separate than is typical, enough that each could stand alone as its own tool.
 
-- Each module has its own README, interface, types, definition of done and integration tests.
+- Each module has clear documentation, an interface, types, a definition of done and tests.
+- A module is not always a package. It becomes its own package only when that makes sense; otherwise it can be a folder, a file or an interface inside the app. A non-package module that doesn't make sense to integration-test on its own can rely on unit tests.
 - Modules interact only through documented interfaces, never through each other's internals.
 - A project starts with mocked integration tests for every module, all passing at the interface level.
 - Existing code is reused only where it fits a clean modular design. It never forces awkward patterns onto the new design.
@@ -130,7 +131,7 @@ Use this list to follow the process without any tools enforcing it. The SoT tool
 - [ ] No paraphrase is used as evidence
 - [ ] Titles are generic topics, not claims
 - [ ] Open questions and spikes are in their backlogs, and resolved in batches
-- [ ] Every module has an interface, types, definition of done and integration tests
+- [ ] Every module has documentation, an interface, types, a definition of done and tests
 - [ ] Mocked integration tests pass for every module before development starts
 - [ ] Spikes a node depends on are done before that node's work goes ahead
 - [ ] Documentation matches what was actually built

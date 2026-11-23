@@ -172,7 +172,7 @@ Mainstream harnesses already have what's needed to start agents on tasks. This a
 The agent planning system repo is the base. It's iterated to bring in features from SoT, fastReader and the JSON reader.
 
 - **Build on the agent planning system.** Its repo is the scaffold to iterate. The SoT repo stays as it is for now.
-- **Extreme modularity.** Every module stands alone, with its own README, interface, types, definition of done and integration tests. Mocked passing tests come before development.
+- **Extreme modularity.** Every module has clear documentation, an interface, types, a definition of done and tests. A module is its own package only when that makes sense; a non-package module that doesn't make sense to integration-test on its own can rely on unit tests. Mocked passing tests come before development.
 - **Modules are consumed as dependencies.** The finished product pulls them in seamlessly. External integrations are wrapped in generic strategy-style wrappers.
 - **Adapt, don't modify.** fastReader and quick-json-reader are copied in and adapted. Their original repos stay untouched.
 
@@ -245,7 +245,7 @@ The levels are recorded in `process-levels.md`.
    - A worker that can't meet its spec: it finishes what it can, escalates, turns in its work, and the node pauses.
    - A quote superseded, raising a discrepancy task for the user.
    - A deep module failing outside verification and escalating as a user review event.
-5. **Module specs.** Propose the modules, which need not match the level 3 pieces. Each is a standalone tool with its own README, interface, types, definition of done and integration tests. External integrations get generic strategy-style wrappers.
+5. **Module specs.** Propose the modules, which need not match the level 3 pieces. Each has clear documentation, an interface, types, a definition of done and tests, and is its own package only when that makes sense. External integrations get generic strategy-style wrappers.
 6. **Test scaffold.** Build hollow modules and integration tests that pass against mocks, before any real development.
 7. **Build.** Create task nodes, mint scoped worker tokens, and assign them. Workers build to pass the tests; outside agents verify against the original tests.
 
