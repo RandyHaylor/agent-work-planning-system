@@ -90,7 +90,7 @@ document_reader/                          own package; pure over citable text (f
 
 api_client/                               one client for the HTTPS API, used by cli, web_ui, local_client
 admin_login/                              the password popup that starts an admin session (cli, web_ui, agent)
-cli/                                      generated from OpenAPI by the library the spike picks
+cli/                                      very thin hand-written wrapper so agents can call the server (uses api_client)
   entry_point
 web_ui/                                   Gradio; no logic; same API as an admin agent (true MVC)
   gradio_application
@@ -293,6 +293,7 @@ Approved one at a time: `access`, `authentication`, `project_tree`, `context_ass
   - **12, composition root: main knows nothing concrete.** User: "main is completely abstracted and knows nothing about anything: not the UI stack, not the database type, nothing concrete. It calls generic interfaces and passes in their config without interpreting it, e.g. load user interface, passing a user-interface config.json. Concrete choices come only from injected config."
   - **13, authentication sessions kept as in the original app.** User: "Already decided in the original app: agent sessions have keys and persist so agents can resume. This is about keeping agents honest, not high security. Admin sessions are temporary: a popup asks the human for a password only they know, and then an agent can act as admin. Keep that pattern; I like patterns that keep agents out of something no matter what they do."
 - **Module tree v5** (redrawn, posted in Slack as `module-tree-v5.md`): `configuration/` approved (user, Slack).
+- **CLI is hand-written and thin; no OpenAPI generation, no spike.** The "generated from OpenAPI" wording was added by the agent in session 1 (commit b2b3eec) without a user quote. User: "Don't launch the spike. I don't want a generated CLI. The CLI should be a very thin hand-written wrapper so agents can call the server, which is what I thought we were doing." The round 3 research row on CLI generators is void.
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 
 ### Findings behind round 4 (2026-11-23)
