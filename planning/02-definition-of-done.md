@@ -23,6 +23,8 @@ Level 2. Approved by the user on 2026-11-23.
 17. **A Gradio UI that is only a UI.** Every action, including the user's own actions, can be done directly through the HTTP interface and the CLI. User: "stick with gradio for the ui. It's also essential that the ui remain simply the ui, DO NOT PUT BUSINESS LOGIC IN THE WEB/GRADOI/UI CODE - REMEMBER THAT THERE'S A CLI AND HTTP INTERFACE THAT MUST DO EVERYTHING DIRECTLY - EVEN USER ACTIONS."
 18. **An MCP-style interface,** so an agent given the admin credential can read and edit for the user. User: "we'll likely want to include mcp-like interface as well so an agent can read/edit/etc FOR the user if given the admin access credential"
 
+19. **Final acceptance runs a user story.** One user story, chosen at random from the level 4 list, is run end to end on the real system. The user stories are therefore realistic, runnable end-to-end tests. User: "for the final review/acceptance task once all work is done, I think a user story is a good candidate for a run through, chose and random from the list - so the user stories should be realistic end to end tests as well."
+
 ## Hard constraints
 
 - Built on the existing repo: Python, FastAPI, psycopg and Postgres 16.
