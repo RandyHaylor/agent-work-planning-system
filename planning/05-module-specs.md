@@ -187,6 +187,7 @@ Approved one at a time: `access`, `authentication`, `project_tree`, `context_ass
   - **11, database_backup stays one module.**
   - **12, composition root: main knows nothing concrete.** User: "main is completely abstracted and knows nothing about anything: not the UI stack, not the database type, nothing concrete. It calls generic interfaces and passes in their config without interpreting it, e.g. load user interface, passing a user-interface config.json. Concrete choices come only from injected config."
   - **13, authentication sessions kept as in the original app.** User: "Already decided in the original app: agent sessions have keys and persist so agents can resume. This is about keeping agents honest, not high security. Admin sessions are temporary: a popup asks the human for a password only they know, and then an agent can act as admin. Keep that pattern; I like patterns that keep agents out of something no matter what they do."
+- **Module tree v5** (redrawn, posted in Slack as `module-tree-v5.md`): `configuration/` approved (user, Slack).
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 
 ### Findings behind round 4 (2026-11-23)
