@@ -10,11 +10,11 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 
 ## Initial design: module list (DRAFT v2, not approved)
 
-**Why v2.** The first draft grouped work by data and features ("content items", "approval queue", "escalations", "task acceptance"), which produces chunks of work, not modules. User: "they need to be modules separated logically not just 'groupings of stuff'." v2 keeps a module only if it hides one design decision that could change on its own, behind an interface that could be built and tested without the rest.
+**Why v2.** The first draft grouped work by data and features ("content items", "approval queue", "escalations", "task acceptance"), which produces chunks of work, not modules. User: "they need to be modules separated logically not just 'groupings of stuff'." v2 was reworked with good judgement, using the accepted approaches in `03-high-level-plan.md`, so modules are separated logically rather than grouped by data or features.
 
 Every module has documentation, an interface, types, a definition of done and tests. "Package" marks the ones that make sense as their own package.
 
-| # | Module | Design decision it hides | Rough interface | Package? |
+| # | Module | What it's responsible for | Rough interface | Package? |
 |---|---|---|---|---|
 | 1 | Access rules | Who may do what: the permission policy for admin, planner, worker and the quote-submission credential; visibility; knowledge-base exposure. Pure, no I/O | `can_<action>(principal, target)` | yes |
 | 2 | Authentication | How identity is proven: token hashing, minting, rotation, revocation cascade, admin sessions, quote credentials | `authenticate(request_credential) -> principal`, `mint`, `revoke` | no |
@@ -42,8 +42,6 @@ Every module has documentation, an interface, types, a definition of done and te
 - Task acceptance into system operations: it's a use case, not a hidden decision.
 - The document cache split into the source fetcher (how text is obtained) and storage (where it's kept).
 - The isolated integration test runner is development tooling, not part of the system.
-
-**Lesson for the app's own prompting (proposal, not approved).** When an agent proposes modules at level 5, it states for each module the design decision it hides and why that decision could change independently. A module that is a grouping of data or features is rejected.
 
 ## Round 2 decisions (user, 2026-11-23)
 
