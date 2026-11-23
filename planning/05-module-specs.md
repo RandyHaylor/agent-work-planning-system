@@ -169,6 +169,9 @@ Approved one at a time: `access`, `authentication`, `project_tree`, `context_ass
 
 - **User quotes and document sources are one reference system** (`server/domain/references/`). User: "We need to actually evaluate whether or not we can make this code overlap with the code for storing references from sources. I feel like we're building two very similar systems for referencing and hty're gion to be built very differently. I'd rather they share the same strcture/types/logic/etc". The user then approved merging them into `references`, with origin-specific rules as small policies and separate ingestion paths.
 
+- Approved: `commands`, `storage`, `http_api`.
+- **`operations_tooling` is split into three modules** (it grouped unrelated things): `tree_export` (renders a node subtree as readable files, plus an atomic file writer; from `backup.py`), `database_backup` (encrypted pg_dump, retention, restore; triggered when a task is done or on demand; from `full_backup.py`), `bootstrap` (first-time setup in one transaction: migrations, root nodes, admin password and backup keypair via authentication; from `bootstrap.py`). User: "split into three - I am noticing you having a MASSIVE pressure to group things to 1: avoid small modules or 2: group dissimilar things into modules because they share some common attribute, despite being mechanically different. It keeps coming up. We need to ensure you stop, and we need to ensure prompting goes in that is super clear in this system how to split up these modules."
+
 ### Findings behind round 4 (2026-11-23)
 
 - fastReader (about 2,200 lines, 108 tests pass): the scanners, TOC, search and section boundaries are pure logic and reuse cleanly. Its file cache (8-character hash keys, global `~/.fastReader`, `/tmp` outputs) and file-bound `commands/*` need replacing. Section indexes depend on scanner config, so citations must use line ranges.
