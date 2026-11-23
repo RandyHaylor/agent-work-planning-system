@@ -36,7 +36,6 @@ server/
       level_placement_rules.py             levels 1-4 linear; where a node may go
       node_editor.py                       create, update, move, delete; summary + verified date on every change
       node_content_editor.py               add and edit content, with version history
-      node_claimer.py                      one client per node
       node_state_views.py                  read-only views by state ("queues")
       tree_storage_port.py
     context_assembly/                      public: ContextAssembler
@@ -68,7 +67,7 @@ document_reader/                           APPROVED (round 4) own package; pure 
     command_runner.py                      authorize -> unit of work -> run command
     request_authorizer.py
     unit_of_work.py
-    <command_name>.py                      one small class per command (ApproveWithNote, RaiseEscalation, TurnInTask, ClaimReviewNode, ...)
+    <command_name>.py                      one small class per command (ApproveWithNote, RaiseEscalation, TurnInTask, AssignTask, ...)
   storage/                                 Postgres; implements the ports (Adapter)
     schema.sql                             fresh schema, version triggers
     database_connection.py (carried)
@@ -105,7 +104,7 @@ local_client/                              own package; public: LocalClient
   session_project_link.py
   prompt_capture.py (SoT)
   transcript_context_reader.py (SoT)
-  reviewer_loop.py                         claims review nodes, runs them through an adapter
+  reviewer_loop.py                         receives review jobs sent by the server, runs them through an adapter
   harness_adapters/                        public: HarnessAdapter (strategy), AdapterFactory
     harness_adapter.py (SoT)               interface
     adapter_factory.py                     picks the adapter for the configured harness
@@ -117,7 +116,7 @@ local_client/                              own package; public: LocalClient
       headless_session.py                  codex exec
 ```
 
-**Review is not a code area.** A review is an ordinary task: a reviewer client claims the review node, gets standard review instructions (configuration text adapted from SoT, including title checks), and turns in its verdict as its response. Submitting for review and recording a verdict are command classes.
+**Review is not a code area.** A review is an ordinary task: the server sends the review node to an available reviewer client, which, gets standard review instructions (configuration text adapted from SoT, including title checks), and turns in its verdict as its response. Submitting for review and recording a verdict are command classes.
 
 Node state is a plain attribute on the node; who may change it to what is a rule in the permission policy.
 
