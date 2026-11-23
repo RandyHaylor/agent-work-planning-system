@@ -32,14 +32,14 @@ server/
       node                                node, state, level label, context summary + last verified
       level_placement_rules               levels 1-4 linear, branching from 5
       node_editor                         create, update, move, delete; summary updated on every change
-      node_content                        content on a node; text stored as references TextVersions
+      node_content                        content on a node; text stored as fixed references (superseded-by chain on edit)
       tree_storage_port
     context_assembly/
       context_assembler                   ancestor summaries + inherited requirements -> pre-prompt
     references/                           one reference system for user quotes AND documents
-      reference_types                     Source (origin field), TextVersion (immutable), Citation (version + line range)
-      citing_and_rendering                pointer validation, server-rendered quoted text, supersession links
-      temp_cache_lifecycle                shared temp cache: TTL, promotion on first citation, purge
+      reference_types                     Reference (one fixed item: origin, SHA-256, metadata, superseded-by), Citation (reference ID + line range)
+      citing_and_rendering                pointer validation, server-rendered quoted text, follows superseded-by chain
+      temp_cache_lifecycle                per-agent temp cache (fetching agent + admin only): promotion on first citation, purge
       ingestion                           quote capture in; fetch -> document_extraction in
       reference_storage_port
       source_fetcher_port
@@ -294,6 +294,19 @@ Approved one at a time: `access`, `authentication`, `project_tree`, `context_ass
   - **13, authentication sessions kept as in the original app.** User: "Already decided in the original app: agent sessions have keys and persist so agents can resume. This is about keeping agents honest, not high security. Admin sessions are temporary: a popup asks the human for a password only they know, and then an agent can act as admin. Keep that pattern; I like patterns that keep agents out of something no matter what they do."
 - **Module tree v5** (redrawn, posted in Slack as `module-tree-v5.md`): `configuration/` approved (user, Slack).
 - **CLI is hand-written and thin; no OpenAPI generation, no spike.** The "generated from OpenAPI" wording was added by the agent in session 1 (commit b2b3eec) without a user quote. User: "Don't launch the spike. I don't want a generated CLI. The CLI should be a very thin hand-written wrapper so agents can call the server, which is what I thought we were doing." The round 3 research row on CLI generators is void.
+## Phase 2: references (user, 2026-11-23, Slack questions2.md)
+
+These override earlier wording where they conflict (the TextVersion type, "approval of user text", the shared temp cache, reuse within TTL).
+
+1. **A user source is one captured exchange.** User: "A source is always a single item: one captured exchange, which is the user's message plus zero or an expandable amount of agent text before it. This was already specified and shouldn't have been asked. The full session transcript stays local in the harness client; when something is referenced, the client sends only that reference to the server to be stored. Everything uses the same singular format. Stop creating different types and formats for different situations when it isn't necessary."
+2. **Web fetches.** User: "Cache each fetch with its URL, when it was pulled, and the other metadata. If content is identical (same hash), reuse what's there. No heavy reuse beyond that: a new web search does a new web search. This was already decided earlier."
+3. **References are fixed; reading always goes live.** User: "References are fixed in time and are never updated or overwritten. Reading a page only puts it in the temp cache; once it's cited it becomes a permanent reference. The agent picks the extraction strategy through the interface and is told which one was used; if the result is bad, it tries another and moves on. Agents can see references and their metadata (URL, date pulled) and can read the cited lines within the larger stored text with line numbers; that's reading our store, not browsing. When an agent visits a URL, even one it found in a reference, the reader always goes to the live web and never to the local cache." This replaces round 4's "within the TTL a URL is reused" (agent flagged the conflict in Slack): always fetch live, dedupe identical content by hash; the TTL only purges uncited temp entries.
+4. **No numbered versions; superseded-by chain.** User: "No numbered versions. References are fixed items. Citations to a superseded reference are never updated; when one is pulled, the system follows the superseded-by chain to the newest one. A superseded reference gets a 'superseded by <id>' note so the agent knows there was a change and can still view the deprecated one." Types are therefore `Reference` (one fixed item: origin, SHA-256, metadata, superseded-by) and `Citation` (reference ID + line range); `TextVersion` and `Source` are gone.
+5. **User text is never approved.** User: "Wrong premise: user text is never approved. Captured user quotes are trusted because the hard code knows it's the user's text; that's the bedrock of this approach. The approval mechanism is only for unsupported harnesses (e.g. web agents) that can't store verbatim user quotes: the agent submits a proposal ('I suggest X, do you approve?'), the user approves or adds notes on the website, and that is recorded as a user response. The user approves agent proposals, never user text."
+6. **Temp cache is per agent.** User: "Temp cache entries are visible only to the agent that fetched them and to the admin (for troubleshooting). Worker agents never see each other's cache. Once cited, an entry becomes a permanent reference visible to anyone who can see that node." Replaces "shared server-wide".
+7. **Origins: `user`, `web`, `node`, `knowledge_base` now.** User: "The knowledge base already exists as a system."
+8. **One universal ReferenceLibrary.** User: "One universal ReferenceLibrary: you have an ID, you look it up. Keep it simple."
+
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 
 ### Findings behind round 4 (2026-11-23)
