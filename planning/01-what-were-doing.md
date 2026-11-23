@@ -21,4 +21,12 @@ User: "the top level 'what is our GOAL' which is to enable planning and scaffold
 
 User: "the initial goals list was good, BUT it lacked the top level 'what is our GOAL'"
 
+## Generally how
+
+> **README synopsis.** The user marked this text block for use as the synopsis in the GitHub README.
+
+The existing agent planning server (Postgres, served over HTTPS) grows into this system. The user plans with an agent through all the levels in one project tree: what we're doing, definition of done, high-level plan, walkthroughs, module specs, test scaffold and build. Every requirement rests on the user's own words, and every technical claim rests on a source the system itself captures. The user approves each addition. Before any build starts, the plan becomes module specs, interface definitions and types, and real integration tests run against mocked modules, all passing. The build is then split into task nodes, and work on a task is accepted only when it passes those tests. Escalations go to the user, and the user views the whole tree as the documentation, from whichever harness they use.
+
+User: "this is great and this is a great synopsis/text block for the github readme so go ahead and mark that"
+
 Sources: `Agent_Planning_System_Plan.md`, `Top-Down_Planning_Philosophy.md` (this folder).
