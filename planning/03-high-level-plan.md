@@ -50,6 +50,8 @@ Modules are chosen with the user involved, using good judgement to separate func
 
 Each module has clear documentation, an interface, types, a definition of done and tests (see Repo layout below).
 
+Module separations MUST be chosen for good software architecture and encapsulation, NOT necessarily by subject matter or by upstream lists of project needs (user, at level 5).
+
 **Accepted approaches** (guidance for judgement, not operating restrictions):
 - **Information hiding.** A module hides a design decision, especially one likely to change. ([Parnas 1972](https://www.cse.sc.edu/~mgv/csce590f20/ParnasCriteria.pdf))
 - **Deep modules.** A simple interface with substantial functionality behind it. ([Ousterhout lecture](https://web.stanford.edu/~ouster/cgi-bin/cs190-spring16/lecture.php?topic=modularDesign))

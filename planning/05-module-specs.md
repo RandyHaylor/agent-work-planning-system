@@ -80,19 +80,16 @@ Every module has documentation, an interface, types, a definition of done and te
 | `reader/line_slicing.py` | Getting lines by range | `get_lines(text, start, end)` |
 | `reader/json_reader.py` (quick-json-reader) | JSON search, exclude, prune, render | `read_json(value, options)` |
 
-**Review is not a code area.** A review is an ordinary task: a reviewer client claims the review node, gets standard review instructions (configuration text adapted from SoT, including title checks), and turns in its verdict as its response. `operations/review_operations.py` submits nodes for review and records verdicts.
+**Review is not a code area.** A review is an ordinary task: a reviewer client claims the review node, gets standard review instructions (configuration text adapted from SoT, including title checks), and turns in its verdict as its response. Submitting for review and recording a verdict are command classes.
 
-### System operations (use cases every interface calls)
+### Grouping: commands (command pattern, OOP)
 | Module | Responsibility |
 |---|---|
-| `operations/project_operations.py` | Starting projects, levels, knowledge-base exposure |
-| `operations/planning_operations.py` | Planners creating and updating nodes and content |
-| `operations/worker_operations.py` | A worker reading its task and context, turning in its response |
-| `operations/review_operations.py` | Submitting for review, a reviewer claiming and recording a verdict |
-| `operations/approval_operations.py` | Proposing, approving (with note), rejecting |
-| `operations/escalation_operations.py` | Raising, resolving with notes, resuming |
-| `operations/acceptance_operations.py` | Accepting work, recording branch and merge |
-| `operations/admin_operations.py` | Tokens, credentials, visibility, knowledge bases |
+| `commands/request_authorizer.py` | Turns a credential into a principal and asks the permission policy whether it may run a command |
+| `commands/unit_of_work.py` | Runs one command's changes in a single transaction |
+| `commands/<command_name>.py` | One small class per command (e.g. `ApproveWithNote`, `RaiseEscalation`, `TurnInTask`, `ClaimReviewNode`), composing the single-job classes it needs |
+
+Node state is a plain attribute on the node; who may change it to what is a rule in the permission policy. No subject-grouped operations modules.
 
 ### Storage (Postgres)
 | Module | Responsibility |
