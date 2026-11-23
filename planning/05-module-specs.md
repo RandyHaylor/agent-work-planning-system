@@ -8,52 +8,42 @@ Level 5. In progress. Work runs in rounds: questions, answers, research and init
 2. **Node content (researched, approved).** Nodes stay an adjacency list (`parent_id`). The node row holds title, level label, context summary and its last-verified date. Everything else (requirements, notes, research, worker responses) is content items attached to the node, each with descriptive tags (not fixed roles), its own version history and permissions. Quote pointers link a content item to a quote and a range. Sources: [tree models compared](https://dev.to/dowerdev/implementing-hierarchical-data-structures-in-postgresql-ltree-vs-adjacency-list-vs-closure-table-2jpb), [Neon ltree docs](https://neon.tech/docs/extensions/ltree). The content-item split is the agent's reasoning, not from a source.
 3. **The core (researched, approved).** Ports and adapters: a new core holding all operations, with no HTTP or database code; storage behind an interface with Postgres as the implementation; FastAPI and the CLI are thin layers over the same operations; Gradio calls HTTP. Written fresh against the new schema, reusing the existing pure parts where they fit (the `permissions.py` approach, admin sessions, backups, the isolated test runner). Sources: [ports and adapters in Python](https://dev.to/elpic/hexagonal-architecture-in-python-wiring-adapters-dependency-injection-and-the-application-layer-61l), [FastAPI and CLI over shared services](https://github.com/eefahd/python-clean-architecture).
 
-## Initial design: module list (DRAFT, not approved)
+## Initial design: module list (DRAFT v2, not approved)
 
-Names say what each module is or does. "Package" marks the ones that make sense as their own package; the rest are folders or files inside the app. Every module has documentation, an interface, types, a definition of done and tests.
+**Why v2.** The first draft grouped work by data and features ("content items", "approval queue", "escalations", "task acceptance"), which produces chunks of work, not modules. User: "they need to be modules separated logically not just 'groupings of stuff'." v2 keeps a module only if it hides one design decision that could change on its own, behind an interface that could be built and tested without the rest.
 
-**Core (no HTTP, no database code)**
+Every module has documentation, an interface, types, a definition of done and tests. "Package" marks the ones that make sense as their own package.
 
-| # | Module | Owns | Rough interface | Package? |
+| # | Module | Design decision it hides | Rough interface | Package? |
 |---|---|---|---|---|
-| 1 | Access rules | Pure permission decisions: admin, planner, worker, quote-submission credential; visibility; knowledge-base exposure | `can_<action>(principal, target) -> allowed` | yes |
-| 2 | Project tree operations | Create, update, move and delete nodes; level labels; levels 1-4 linear; summary and last-verified date required on every create or update | `create_node`, `update_node`, `move_node`, `get_subtree` | no |
-| 3 | Context assembly | Pure: ancestors' summaries and inherited requirements into a worker's pre-prompt | `assemble_context(ancestor_chain) -> text` | yes |
-| 4 | Content items | Items attached to nodes, descriptive tags, version history, per-item write rules | `add_item`, `edit_item`, `item_history` | no |
-| 5 | User quotes | Append-only quotes, pointers with ranges, validation, unapproved/approved lifecycle, supersession raising a discrepancy | `submit_quote` (quote credential only), `reference_quote`, `supersede` | no |
-| 6 | Document cache | Fetching through a swappable fetcher (plain HTTP plus HTML/PDF converters), storing text and metadata, document IDs | `fetch_source(url) -> doc_id`, `source_metadata` | no |
-| 7 | Document reader | Scanners adapted from fastReader, JSON reading from quick-json-reader; table of contents, get, search, get lines | `toc`, `get_section`, `search`, `get_lines(doc_id, start, end)` | yes |
-| 8 | Work queue | Generic Postgres queue: enqueue, claim, complete, list | `enqueue`, `claim(kind, client)`, `complete` | yes |
-| 9 | Node review | Review jobs on submission, verdicts applied, title checks (prompts adapted from SoT) | `submit_for_review`, `record_verdict` | no |
-| 10 | Approval queue | Proposals, approve or approve with note (note becomes a quote), approval void if text changes | `propose`, `approve`, `reject` | no |
-| 11 | Escalations | Raise (node pauses, user alerted), resolve with notes, resume with instruction | `raise_escalation`, `resolve`, `resume_task` | no |
-| 12 | Task acceptance | Worker response and its "built to pass the tests" confirmation, acceptance, verification jobs, branch record, merge record | `turn_in`, `accept`, `request_verification` | no |
-| 13 | Credentials | Tokens (mint, rotate, revoke with cascade), admin sessions, quote credentials | `mint`, `revoke`, `start_admin_session` | no |
-| 14 | Storage port and Postgres store | Storage interface for the core; Postgres implementation; fresh schema | repository interfaces | no |
+| 1 | Access rules | Who may do what: the permission policy for admin, planner, worker and the quote-submission credential; visibility; knowledge-base exposure. Pure, no I/O | `can_<action>(principal, target)` | yes |
+| 2 | Authentication | How identity is proven: token hashing, minting, rotation, revocation cascade, admin sessions, quote credentials | `authenticate(request_credential) -> principal`, `mint`, `revoke` | no |
+| 3 | Project tree | The tree's invariants: nodes and their content, levels 1-4 linear, summary and last-verified date on every create or update, moves, content version history | `create_node`, `update_node`, `move_node`, `add_content`, `get_subtree` | no |
+| 4 | Context assembly | How a worker's pre-prompt is composed from ancestor summaries and inherited requirements. Pure | `assemble_context(ancestor_chain) -> text` | yes |
+| 5 | User quotes | Quote integrity: append-only storage, pointers with ranges, resolving quote text, validation, supersession links, approval tied to the exact text shown | `submit_quote`, `resolve(pointer)`, `validate(pointers)`, `supersede` | no |
+| 6 | Source fetcher | How a URL becomes text: plain HTTP plus HTML/PDF converters, behind a swappable strategy | `fetch(url) -> text, metadata` | yes |
+| 7 | Document reader | How text's structure is found and read: scanners (from fastReader), JSON reading (from quick-json-reader), get lines. Pure over text | `toc`, `get_section`, `search`, `get_lines` | yes |
+| 8 | Work queue | How jobs are handed out and claimed safely: enqueue, claim, complete, list; used for review jobs, approvals, escalations and verification | `enqueue(kind, payload)`, `claim(kind, client)`, `complete` | yes |
+| 9 | Review criteria | How a node is judged against its quotes: building the review prompt, parsing the verdict, title checks (adapted from SoT). Pure | `build_review_prompt(node, quotes)`, `parse_verdict(text)` | yes |
+| 10 | Storage | That storage is Postgres: fresh schema, migrations, and the implementations of the storage interfaces the other modules declare | per-module repository interfaces | no |
+| 11 | System operations | The use cases that combine the modules, such as "worker turns in a task" (check access, record response, pause or accept, enqueue verification) or "user approves with a note" (record approval, create quote). The one API every interface calls | one function per operation | no |
+| 12 | HTTPS API | The protocol: FastAPI routes mapping requests to system operations; the OpenAPI spec | routes | no |
+| 13 | CLI | Command-line presentation, generated from the OpenAPI spec; an HTTPS client | commands | no |
+| 14 | Web UI | Gradio presentation; an HTTPS client; no logic | pages | yes |
+| 15 | Local client | Local-side behaviour: linking a session to a project, turning captured prompts into quote submissions, acting as a reviewer by claiming review jobs; holds the quote credential; defines the harness adapter interface | `capture`, `run_reviewer` | yes |
+| 16 | Claude Code adapter | Claude Code specifics: hooks, `claude -p` sessions | implements the adapter interface | inside 15 |
+| 17 | Codex adapter | Codex specifics: hooks, `codex exec` sessions | implements the adapter interface | inside 15 |
+| 18 | Backups and export | Carried over: encrypted full backups and the readable live export | existing commands | no |
 
-**Interfaces (thin, no business logic)**
+**Folded in, and why**
+- Content items into the project tree: a node and its content are one thing.
+- Approval queue into user quotes (approval valid only for the exact text) plus the work queue (waiting proposals) plus system operations (the approve use case).
+- Escalations into the work queue (the event), the project tree (the node pauses) and system operations (raise, resolve, resume).
+- Task acceptance into system operations: it's a use case, not a hidden decision.
+- The document cache split into the source fetcher (how text is obtained) and storage (where it's kept).
+- The isolated integration test runner is development tooling, not part of the system.
 
-| # | Module | Notes | Package? |
-|---|---|---|---|
-| 15 | HTTPS API | FastAPI routes calling the core | no |
-| 16 | CLI | An HTTPS client whose commands are generated from the server's OpenAPI spec | no |
-| 17 | Web UI | Gradio, an HTTP client only | yes |
-
-**Local side (Python)**
-
-| # | Module | Owns | Package? |
-|---|---|---|---|
-| 18 | Local client | Session-to-project link, prompt capture into quote submission, reviewer role pulling review jobs | yes |
-| 19 | Harness adapter interface | One strict interface: capture, tools, run a headless session | inside 18 |
-| 20 | Claude Code adapter | Hooks, `claude -p` review sessions (adapted from SoT) | inside 18 |
-| 21 | Codex adapter | Hooks, `codex exec` review sessions | inside 18 |
-
-**Operations (carried over)**
-
-| # | Module | Notes |
-|---|---|---|
-| 22 | Live export and encrypted backups | From the existing repo |
-| 23 | Isolated integration test runner | From the existing repo |
+**Lesson for the app's own prompting (proposal, not approved).** When an agent proposes modules at level 5, it states for each module the design decision it hides and why that decision could change independently. A module that is a grouping of data or features is rejected.
 
 ## Round 2 decisions (user, 2026-11-23)
 
