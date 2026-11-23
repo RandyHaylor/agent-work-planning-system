@@ -62,7 +62,8 @@ Round 3:
 
 ## Next steps, in order
 
-1. Get the user's approval of module tree v4 and the research recommendations (ask one at a time).
+0. (Session 2, 2026-11-23) Round 4 in `05-module-specs.md`: the document packages (`document_extraction`, `document_reader`, `server/domain/document_sources`) are approved and replace those parts of v4. Next: their public interfaces. Background research comparing extraction strategies and quality checks writes to the session scratchpad; bring its findings to the user.
+1. Get the user's approval of the rest of module tree v4 and the research recommendations (ask one at a time). The user is "not 100% convinced on all the modules".
 2. Next level 5 round: questions that arise for specs (one at a time).
 3. Full specs: public interfaces and types per module, starting with `server/domain`.
 4. Spike: specli vs openapi-cli-gen against the server's OpenAPI spec.

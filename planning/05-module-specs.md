@@ -48,29 +48,25 @@ server/
       supersession_linker.py
       approved_text_binder.py              approval valid only for the exact text shown
       quote_storage_port.py
-    document_sources/                      public: SourceLibrary (facade), SourceStoragePort
-      source_registry.py                   ID, origin, date cached, re-check flag
-      document_citation.py                 cite by ID + lines; server renders text
-      source_storage_port.py
-      fetching/                            public: SourceFetcher
-        source_fetcher.py                  strategy interface
-        http_source_fetcher.py (fastReader web.py)
-        converters/                        public: ConverterFactory
-          converter_factory.py             picks a converter by content type
-          html_to_text.py (fastReader)
-          pdf_to_text.py
-  document_reader/                         own package, pure over text; public: DocumentReader (facade)
-    structure_markers.py (fastReader)
-    scanners/                              strategies, one per structure kind (fastReader)
-      heading_scanner.py
-      indent_depth_scanner.py
-      bracket_depth_scanner.py
-      tag_depth_scanner.py
-    table_of_contents.py (fastReader)
-    section_extraction.py (fastReader)
-    text_search.py (fastReader)
-    line_slicing.py
-    json_reading/                          (quick-json-reader)
+    document_sources/                      APPROVED (round 4) public: SourceLibrary (facade), SourceStoragePort, SourceFetcherPort
+                                           ingestion: fetch (port) -> document_extraction -> store version
+                                           cache tiers: shared temp with TTL, promotion on first citation, immutable SHA-256 blobs
+                                           citation: document ID + line range; server renders text
+  adapters/http_source_fetcher.py          APPROVED (round 4) implements SourceFetcherPort; plain HTTP, keeps error bodies
+
+document_extraction/                       APPROVED (round 4) own package; bytes + metadata -> citable text; no network, no DB
+  public: ExtractionPipeline, ExtractionStrategy, QualityCheck, StrategyRegistry
+  strategies/                              one class per extractor (from background research; incl. ported fastReader HTML)
+  quality_checks/                          one class per check
+  content_type_detection.py                header + leading bytes + meta charset
+  text_normalization.py                    line endings, soft wrap, JSON pretty-print -> citable form
+
+document_reader/                           APPROVED (round 4) own package; pure over citable text; public: DocumentReader (facade)
+  structure/                               Marker, Manifest, LineIndex (fastReader)
+    scanners/                              strategy per kind: heading, indent depth, bracket depth, tag depth (fastReader)
+  navigation/                              table of contents, section -> line range, previews (fastReader)
+  search/                                  hits with containing sections (fastReader)
+  json_view/                               quick-json-reader Python port; reports line ranges of the stored text
   commands/                                public: CommandRunner
     command_runner.py                      authorize -> unit of work -> run command
     request_authorizer.py
