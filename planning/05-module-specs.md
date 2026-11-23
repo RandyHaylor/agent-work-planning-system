@@ -128,6 +128,21 @@ local_client/                              own package; public: LocalClient
 
 Node state is a plain attribute on the node; who may change it to what is a rule in the permission policy.
 
+## Existing-solutions research (round 3, 2026-11-23; recommendations, not approved)
+
+Per the no-reinventing-wheels rule, each module that may have an off-the-shelf answer was researched before specs.
+
+| Module | Finding | Recommendation |
+|---|---|---|
+| `converters/html_to_text.py` | Trafilatura and Readability are the strongest heuristic main-text extractors; trafilatura leaks less boilerplate, Readability keeps slightly more content; BeautifulSoup is a parser, not an extractor. Benchmarks are mostly self-reported or small vendor tests. ([trafilatura docs](https://trafilatura.readthedocs.io/en/latest/evaluation.html), [SIGIR 2025 paper](https://dias.users.greyc.fr/publications/sigir2025.pdf), [vendor comparison](https://thunderbit.com/blog/trafilatura)) | Use **trafilatura** behind the converter interface. Note: for citations we may want the whole page text, not only the main article; decide in the spec |
+| `converters/pdf_to_text.py` | PyMuPDF is AGPL or commercial. pypdf is pure Python and permissively licensed (sources disagree on BSD vs MIT). pdfplumber suits tables. ([PyMuPDF about](https://pymupdf.readthedocs.io/en/latest/about.html), [pypdf comparisons](https://pypdf.readthedocs.io/en/stable/meta/comparisons.html), [2026 comparison](https://www.nutrient.io/blog/best-python-pdf-libraries/)) | Use **pypdf**; avoid PyMuPDF for licensing. Check pypdf's license file before adopting |
+| `cli/openapi_command_generator.py` | Existing Python tools build a CLI from an OpenAPI spec: **specli** (Typer, auth, retries; runtime or generated) and **openapi-cli-gen** (runtime or pip package; flattens nested bodies into flags; reads auth from the spec). Maintenance status not verified. ([specli](https://pypi.org/project/specli/), [openapi-cli-gen](https://pypi.org/project/openapi-cli-gen/), [openapi2cli](https://pypi.org/project/openapi2cli/)) | **Don't write a generator.** Spike specli and openapi-cli-gen against our spec and pick one |
+| `project_tree/node_claimer.py` | The conventional Postgres pattern: one `UPDATE ... WHERE id = (SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING`, with a claimed-by and claimed-at stamp and a reset for stale claims. Separate SELECT then UPDATE races. ([Neon guide](https://neon.com/guides/queue-system), [Encore article](https://encore.dev/articles/postgres-job-queue-skip-locked), [PgQueuer reference](https://janbjorge.github.io/pgqueuer/reference/skip-locked/)) | Use that pattern; no queue library needed |
+| `storage/` migrations | Alembic is built around SQLAlchemy, which we don't use. yoyo-migrations runs plain SQL or Python migrations without an ORM; small plain-SQL runners also exist. ([yoyo notes](https://lyz-code.github.io/blue-book/coding/python/yoyo), [Alembic reference](https://realpython.com/ref/tools/alembic/), [sqlstep comparison](https://pypi.org/project/sqlstep/)) | Use **yoyo-migrations** with plain SQL files; not Alembic |
+| `authentication/password_hashing.py` | The repo today uses PBKDF2-HMAC-SHA256 from the standard library. OWASP's first choice is Argon2id (m=19456, t=2, p=1), e.g. via argon2-cffi. ([OWASP cheat sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)) | Question for the user: keep the carried PBKDF2 or switch to **Argon2id** |
+| `authentication/token_hashing.py` | The repo stores a SHA-256 digest of each token. The search found no source covering API tokens specifically; storing a digest of a high-entropy random token is common practice, but that is general knowledge, not verified here | Keep the carried approach; mark as unverified |
+| `document_reader/` | Our own fastReader and quick-json-reader | Adapt them, as planned |
+
 ## Round 2 decisions (user, 2026-11-23)
 
 1. **Agent acting as the user is admin.** The agent uses an admin session, obtained the same way (the user types the password in a login window), and can do everything admin can.
