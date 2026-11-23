@@ -18,27 +18,30 @@ Every module has documentation, an interface, types, a definition of done and te
 |---|---|---|---|---|
 | 1 | Access rules | Who may do what: the permission policy for admin, planner, worker and the quote-submission credential; visibility; knowledge-base exposure. Pure, no I/O | `can_<action>(principal, target)` | yes |
 | 2 | Authentication | How identity is proven: token hashing, minting, rotation, revocation cascade, admin sessions, quote credentials | `authenticate(request_credential) -> principal`, `mint`, `revoke` | no |
-| 3 | Project tree | The tree's invariants: nodes and their content, levels 1-4 linear, summary and last-verified date on every create or update, moves, content version history | `create_node`, `update_node`, `move_node`, `add_content`, `get_subtree` | no |
+| 3 | Project tree | The tree's invariants: one generic node type and its content, levels 1-4 linear, summary and last-verified date on every create or update, moves, content version history, node states, and safe claiming of a node by a client (so two reviewers never take the same one). Reviews, escalations and proposals are ordinary nodes or content; "queues" are read-only views of nodes by state | `create_node`, `update_node`, `move_node`, `add_content`, `get_subtree`, `claim_node`, `list_by_state` | no |
 | 4 | Context assembly | How a worker's pre-prompt is composed from ancestor summaries and inherited requirements. Pure | `assemble_context(ancestor_chain) -> text` | yes |
 | 5 | User quotes | Quote integrity: append-only storage, pointers with ranges, resolving quote text, validation, supersession links, approval tied to the exact text shown | `submit_quote`, `resolve(pointer)`, `validate(pointers)`, `supersede` | no |
 | 6 | Source fetcher | How a URL becomes text: plain HTTP plus HTML/PDF converters, behind a swappable strategy | `fetch(url) -> text, metadata` | yes |
 | 7 | Document reader | How text's structure is found and read: scanners (from fastReader), JSON reading (from quick-json-reader), get lines. Pure over text | `toc`, `get_section`, `search`, `get_lines` | yes |
-| 8 | Work queue | How jobs are handed out and claimed safely: enqueue, claim, complete, list; used for review jobs, approvals, escalations and verification | `enqueue(kind, payload)`, `claim(kind, client)`, `complete` | yes |
+| 8 | Document sources | Document quotes: the registry of cached sources (document ID, origin URL, date cached, whether to re-check), pointers citing a document by ID and line range, and rendering the quoted text server-side | `register_source`, `cite(doc_id, start, end)`, `resolve(pointer)` | no |
 | 9 | Review criteria | How a node is judged against its quotes: building the review prompt, parsing the verdict, title checks (adapted from SoT). Pure | `build_review_prompt(node, quotes)`, `parse_verdict(text)` | yes |
 | 10 | Storage | That storage is Postgres: fresh schema, migrations, and the implementations of the storage interfaces the other modules declare | per-module repository interfaces | no |
-| 11 | System operations | The use cases that combine the modules, such as "worker turns in a task" (check access, record response, pause or accept, enqueue verification) or "user approves with a note" (record approval, create quote). The one API every interface calls | one function per operation | no |
+| 11 | System operations | The use cases that combine the modules, such as "worker turns in a task" (check access, record response, pause or accept) or "user approves with a note" (record approval, create quote). The one API every interface calls | one function per operation | no |
 | 12 | HTTPS API | The protocol: FastAPI routes mapping requests to system operations; the OpenAPI spec | routes | no |
 | 13 | CLI | Command-line presentation, generated from the OpenAPI spec; an HTTPS client | commands | no |
 | 14 | Web UI | Gradio presentation; an HTTPS client; no logic | pages | yes |
-| 15 | Local client | Local-side behaviour: linking a session to a project, turning captured prompts into quote submissions, acting as a reviewer by claiming review jobs; holds the quote credential; defines the harness adapter interface | `capture`, `run_reviewer` | yes |
+| 15 | Local client | Local-side behaviour: linking a session to a project, turning captured prompts into quote submissions, acting as a reviewer by claiming review nodes; holds the quote credential; defines the harness adapter interface | `capture`, `run_reviewer` | yes |
 | 16 | Claude Code adapter | Claude Code specifics: hooks, `claude -p` sessions | implements the adapter interface | inside 15 |
 | 17 | Codex adapter | Codex specifics: hooks, `codex exec` sessions | implements the adapter interface | inside 15 |
 | 18 | Backups and export | Carried over: encrypted full backups and the readable live export | existing commands | no |
 
 **Folded in, and why**
 - Content items into the project tree: a node and its content are one thing.
-- Approval queue into user quotes (approval valid only for the exact text) plus the work queue (waiting proposals) plus system operations (the approve use case).
-- Escalations into the work queue (the event), the project tree (the node pauses) and system operations (raise, resolve, resume).
+- No separate queue. Reviews, escalations and proposals are ordinary nodes or content in the one tree; "queues" are views of nodes by state, and clients claim nodes. User, on a separate queue with job kinds: "this seems more like subject separation vs function separation. odd module separation. the nodes also need to be interchangeable across, right? why would we plan for nodes ot have different types" and "yes I kind of assumed it was like that all along."
+- Approval: user quotes (approval valid only for the exact text) plus system operations (the approve use case).
+- Escalations: content on the node that raised it, the node's paused state, and system operations (raise, resolve, resume).
+- Verification is assigned by the planner like any task.
+- Document quotes got their own module (Document sources), a gap found during review.
 - Task acceptance into system operations: it's a use case, not a hidden decision.
 - The document cache split into the source fetcher (how text is obtained) and storage (where it's kept).
 - The isolated integration test runner is development tooling, not part of the system.
