@@ -41,17 +41,14 @@ server/
       tree_storage_port.py
     context_assembly/                      public: ContextAssembler
       context_assembler.py                 ancestor summaries + inherited requirements -> pre-prompt
-    user_quotes/                           public: QuoteLedger (facade), quote types, QuoteStoragePort
-      quote.py                             quote, pointer, range types
-      pointer_validator.py (SoT)
-      quote_text_resolver.py (SoT)
-      supersession_linker.py
-      approved_text_binder.py              approval valid only for the exact text shown
-      quote_storage_port.py
-    document_sources/                      APPROVED (round 4) public: SourceLibrary (facade), SourceStoragePort, SourceFetcherPort
-                                           ingestion: fetch (port) -> document_extraction -> store version
-                                           cache tiers: shared temp with TTL, promotion on first citation, immutable SHA-256 blobs
-                                           citation: document ID + line range; server renders text
+    references/                            APPROVED (round 5) one reference system for user quotes AND documents
+                                           shared core: immutable text versions (SHA-256), citation = version ID + line range,
+                                           pointer validation, server-rendered text, supersession/version links (SoT-derived)
+                                           origin per source: user capture, web fetch, later knowledge-base code
+                                           origin policies: fetched = shared temp cache with TTL + promotion on first citation;
+                                           user = approval, approval valid only for the exact text shown
+                                           ingestion paths: quote capture (local client); fetch (port) -> document_extraction
+                                           storage through a port
   adapters/http_source_fetcher.py          APPROVED (round 4) implements SourceFetcherPort; plain HTTP, keeps error bodies
 
 document_extraction/                       APPROVED (round 4) own package; bytes + metadata -> citable text; no network, no DB
@@ -165,6 +162,12 @@ Per the no-reinventing-wheels rule, each module that may have an off-the-shelf a
 4. **Web extraction is a strategy pattern with selection and automatic fallback.** User: "We need a clean strategy pattern for web extraction so we can port in and choose from a list of different options - even automatically trying mlutiple approaches after failtures." Concrete strategies and failure checks come from background research and testing; the design proceeds without waiting. User: "saying 'we need a generic strategy adapter/wrapper and way to choose/fall back to strategies' solves the design issue at a higher level letting us continue here"
 
 5. **Retrieval catches its own failures.** No separate check step or second fetch. User: "the primary retrieve attempt can still catch errors and look for markers of failure. you have not convinced me a separate check fetch adds anythihg but complexity"
+
+## Round 5: module walkthrough at boundary level (user, 2026-11-23)
+
+Approved one at a time: `access`, `authentication`, `project_tree`, `context_assembly`.
+
+- **User quotes and document sources are one reference system** (`server/domain/references/`). User: "We need to actually evaluate whether or not we can make this code overlap with the code for storing references from sources. I feel like we're building two very similar systems for referencing and hty're gion to be built very differently. I'd rather they share the same strcture/types/logic/etc". The user then approved merging them into `references`, with origin-specific rules as small policies and separate ingestion paths.
 
 ### Findings behind round 4 (2026-11-23)
 
