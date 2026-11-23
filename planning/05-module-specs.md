@@ -36,7 +36,7 @@ Names say what each module is or does. "Package" marks the ones that make sense 
 | # | Module | Notes | Package? |
 |---|---|---|---|
 | 15 | HTTPS API | FastAPI routes calling the core | no |
-| 16 | CLI | Same operations as HTTPS | no |
+| 16 | CLI | An HTTPS client whose commands are generated from the server's OpenAPI spec | no |
 | 17 | Web UI | Gradio, an HTTP client only | yes |
 
 **Local side (Python)**
