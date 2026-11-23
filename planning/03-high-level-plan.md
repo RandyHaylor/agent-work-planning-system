@@ -17,15 +17,20 @@ Each piece is conceptual and will not be split into nodes. Modules come later, a
 
 | Piece | What it covers | Definition of done (piece level) |
 |---|---|---|
-| Project tree | One generic node type, level labels, requirements on the node they govern, requirement inheritance, context summaries assembled top-down | A project runs through all levels in one tree; any node can export its assembled context |
+| Project tree | One generic node type, level labels, requirements on the node they govern, requirement inheritance, context summaries assembled top-down; the planner who creates a node writes its summary, and the summary is updated whenever the node is created or updated, at least its last-verified date | A project runs through all levels in one tree; any node can export its assembled context; no node is created or updated without its summary being updated |
 | Access | Roles, tokens, admin session, visibility, knowledge bases, cascading revocation (carried over); admin login that also works from the CLI and MCP | Every rule enforced in the core, the same through every interface |
-| User quotes | Capture from the real conversation by the local client; agents can only point at quotes; quote lifecycle and supersession | No path lets an agent create or edit a quote |
+| User quotes | Capture from the real conversation by the local client; agents can only point at quotes; quote lifecycle and supersession; agents without prompt capture (web chats, unsupported CLIs or apps) are allowed only with the user's approval, forgo guaranteed user quotes, and can still use the web approval queue, where the user's approvals and notes become quotes | No path lets an agent create or edit a quote |
 | Document quotes | The service fetches, caches and logs sources; agents read through a reader and cite by document ID and line range; the server renders the text | No path lets an agent see the cache or supply quote text |
 | Queues | One generic queue mechanism for review jobs, the approval queue and escalations | Each queue's items can be listed, acted on and resolved through every interface |
-| Task work and acceptance | Workers turn in responses only; tests decide acceptance; outside verification for deep modules; escalation and resume | A worker's permissions can't touch its task, tests or definition of done |
+| Task work and acceptance | Workers turn in responses only; tests decide acceptance; outside verification for deep modules; escalation and resume; the planner merges each task's work on acceptance | A worker's permissions can't touch its task, tests or definition of done |
 | Interfaces | HTTP, CLI with the same interface, MCP-style interface, Gradio UI | Any action through one interface is possible through all |
 | Local client and harness adapters | Generic client, plus Claude Code and Codex adapters for capture, tools, review sessions | Both harnesses capture quotes and run reviews |
 | Operations | Backups, live export, running on the host, web exposure for testing (Cloudflare or similar) | Carried-over behaviour works; web agents can reach it in a test |
+
+**Carried up from level 4** (user, 2026-11-23):
+- Context summaries: "1 yes, and these summaries also must be updated when nodes change, even if only to update the last verified date on it. In fact that is required when a node is created or updated."
+- Merging: the planner merges on acceptance (user's answer).
+- Agents without prompt capture: "the user must approve the use of agents (web or unsupported cli/app) that cannot support the user prompt capturing transcript hooks, etc. These are the same situation." and "remember to include that thoes agents CAN still use the web gui based approval system for users"
 
 ## Adapting the other tools into the planning system
 
