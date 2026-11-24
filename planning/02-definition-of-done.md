@@ -7,9 +7,9 @@ Level 2. Approved by the user on 2026-11-23.
 1. **Projects run through all the levels in one tree.** One generic node type. Levels 1 to 4 are linear, and branching starts at module specs.
 2. **Requirements live on the node they govern.** What passes down to every node below is a generic context block, not requirements (corrected at level 5; see `05-module-specs.md`).
 3. **User quotes are real.** They're captured from the real conversation, and agents can never create or edit them.
-4. **Document quotes are real.** The system fetches and caches every source, and serves the quoted text itself. Agents never see the cache.
+4. **Document quotes are real.** The system fetches and caches every source, and serves the quoted text itself. Agents read only their own temp cache (through the reader) and the references visible to them; they never supply quote text (corrected at level 5).
 5. **Nothing enters a plan without the user's approval,** including approvals made through the wiki's queue, where a note counts as a quote.
-6. **Nodes are reviewed against their quotes** by reviewer clients, asynchronously, never by the agents doing the work.
+6. **Review is a task, not a node state.** Review tasks check work against its quotes; they are run by reviewer clients, asynchronously, never by the agents doing the work (corrected at level 5).
 7. **Every agent gets the story** of what's being built, assembled from the context summaries above its task.
 8. **Workers are locked to their task.** They can turn in a response but can't change the task, its tests or its definition of done, and this is enforced by permissions.
 9. **Tests decide acceptance.** Deep modules also get outside verification against the original tests.
