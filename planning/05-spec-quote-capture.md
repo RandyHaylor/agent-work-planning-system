@@ -1,6 +1,6 @@
 # Spec: quote_capture (local_client)
 
-DRAFT, not approved. Design approved by the user (terminal, 2026-11-23); see `05-module-specs.md` ("Gap 2: quote_capture").
+APPROVED by the user, 2026-11-23 (terminal): "this sounds great, gluing in sot to allow syncing/using references (in place of the source of truth system that builds a local node tree)". So only SoT's capture side comes in; SoT's local requirements tree (requirements_tree_*, change sets, local reviewers) is NOT brought in: the server's project tree and references replace it. See `05-module-specs.md` ("Gap 2: quote_capture").
 
 Recorded rule (Phase 2: references, answer 1): "The full session transcript stays local in the harness client; when something is referenced, the client sends only that reference to the server to be stored." So every prompt is captured to a **local client cache**; only exchanges that get referenced are synced to the server.
 
