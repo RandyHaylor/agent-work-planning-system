@@ -167,7 +167,7 @@ document_reader/                           APPROVED (round 4) own package; pure 
     command_runner.py                      authorize -> unit of work -> run command
     request_authorizer.py
     unit_of_work.py
-    <command_name>.py                      one small class per command (ApproveWithNote, RaiseEscalation, TurnInTask, AssignTask, ...)
+    <command_name>.py                      one small class per command (ApproveWithNote, RaiseRequirementRequest, RaiseTechSpike, TurnInTask, AssignTask, ...)
   storage/                                 Postgres; implements the ports (Adapter)
     schema.sql                             fresh schema, version triggers
     database_connection.py (carried)
@@ -319,6 +319,8 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 1. **States: assigned, in progress, done, abandoned.** User: "Nodes are not reviewed; review is a task, not a node state. No in_review / review_failed / passed states. States: assigned, in progress (past assigned), done, abandoned (see 4)."
 2. **No requirement inheritance.** User: "We don't pass requirements down to child nodes. What passes down is a generic context block; 'requirement' is a more specific thing."
 3. **Escalations and tech spikes are sibling tasks placed before the raising task** (same mechanism, same code; see `process-levels.md`).
+   - **Renamed: "requirement request", not "escalation".** User: "don't call them escalations; call them requirement requests, since that's closer to what's happening. A requirement request is a task. It can be raised by a worker (inserted before its task, same mechanism as a tech spike) and can be answered by the session and its parent, flowing up to the parent or even the user. It can also be placed preemptively as a normal task in a planned workflow, e.g. a research/tech spike task followed by a requirements-gathering task. That's a suggested approach, so a requirement request is just an ordinary task type." (Still one generic node type; "requirement request" is a label on an ordinary task.)
+   - Agent's notes (sent in Slack, not contradicted): no blocked/paused state is needed, since siblings run in order and an unfinished earlier sibling is the block; nodes need a sibling position; abandoned siblings are skipped. No reserved tags are needed; the passed-down context block is a field on the node row.
 4. **No deletion: an 'abandoned' state.** User: "Give nodes an 'abandoned' status instead of deleting them."
 
 - **Temp cache is a separate store from references.** User: "drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want."
