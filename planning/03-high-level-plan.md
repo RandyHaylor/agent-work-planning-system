@@ -21,11 +21,11 @@ Each piece is conceptual and will not be split into nodes. Modules come later, a
 | Access | Roles, tokens, admin session, visibility, knowledge bases, cascading revocation (carried over); admin login that also works from the CLI and MCP | Every rule enforced in the core, the same through every interface |
 | User quotes | Capture from the real conversation by the local client; agents can only point at quotes; quote lifecycle and supersession; agents without prompt capture (web chats, unsupported CLIs or apps) are allowed only with the user's approval, forgo guaranteed user quotes, and can still use the web approval queue, where the user's approvals and notes become quotes | No path lets an agent create or edit a quote |
 | Document quotes | The service fetches, caches and logs sources; agents read through a reader and cite by document ID and line range; the server renders the text | No path lets an agent see the cache or supply quote text |
-| Queues | Reviews, proposals awaiting approval and escalations are ordinary nodes or content in the one tree; "queues" are views of nodes by state. Task nodes are assigned by the planner or admin; reviews are sent by the server to an available reviewer client (corrected at level 5: no claiming) | Each view's items can be listed, acted on and resolved through every interface |
-| Task work and acceptance | Workers turn in responses only; tests decide acceptance; outside verification for deep modules; escalation and resume; the planner merges each task's work on acceptance | A worker's permissions can't touch its task, tests or definition of done |
+| Queues | Reviews, proposals awaiting approval and requirement requests (formerly "escalations") are ordinary task nodes in the one tree; "queues" are views of nodes by state. Task nodes are assigned by the planner or admin; reviews are sent by the server to an available reviewer client (corrected at level 5: no claiming) | Each view's items can be listed, acted on and resolved through every interface |
+| Task work and acceptance | Workers turn in responses only; tests decide acceptance; outside verification for deep modules; requirement requests and tech spikes as sibling tasks; the planner merges each task's work on acceptance | A worker's permissions can't touch its task, tests or definition of done |
 | Interfaces | HTTP, CLI with the same interface, Gradio UI; no separate MCP server, instead a permission level lets an agent act as the user over HTTPS (refined at level 5) | Any action through one interface is possible through all |
-| Local client and harness adapters | Generic client, plus Claude Code and Codex adapters for capture, tools, review sessions | Both harnesses capture quotes and run reviews |
-| Operations | Backups, live export, running on the host, web exposure for testing (Cloudflare or similar) | Carried-over behaviour works; web agents can reach it in a test |
+| Local client and harness adapters | Generic client, plus a Claude Code adapter for capture, tools, review sessions; Codex later through the same interface (corrected at level 5) | Claude Code captures quotes and runs reviews |
+| Operations | Backups (live export dropped at level 5), running on the host, web exposure for testing (Cloudflare or similar) | Carried-over behaviour works; web agents can reach it in a test |
 
 **Carried up from level 4** (user, 2026-11-23):
 - Context summaries: "1 yes, and these summaries also must be updated when nodes change, even if only to update the last verified date on it. In fact that is required when a node is created or updated."
@@ -40,7 +40,7 @@ The agent planning system is the base. SoT, fastReader and quick-json-reader are
 |---|---|---|
 | source-of-truth | Python, stdlib only, ~5,400 lines; JSON files; quotes captured by a `UserPromptSubmit` hook, append-only; nodes hold only pointers to quotes, checked by a validator; title review; `claude -p` reviewer adapter | User quotes and their lifecycle, quote pointers and validation, title review and node review, all stored in Postgres and governed by the planning system's tokens and roles. Its quote capture becomes the local client's job; its reviewer becomes a reviewer client fed by the queue |
 | fastReader | Python, stdlib only, ~2,000 lines; four structural scanners; content-hash cache | The document cache and reader: sources stored in Postgres, read through the scanners, cited by document ID and line range, served through the planning system's interfaces |
-| quick-json-reader | JavaScript, one source file (`src/quick_json_reader.js`) plus tests and a web UI ([repo](https://github.com/RandyHaylor/quick-json-reader)) | JSON reading for the document reader, built from its source. Whether that means a Python version or running the JavaScript is a level 5 decision |
+| quick-json-reader | JavaScript, one source file (`src/quick_json_reader.js`) plus tests and a web UI ([repo](https://github.com/RandyHaylor/quick-json-reader)) | JSON reading for the document reader, built from its source. Settled at level 5: our copy stays JavaScript, run with Node |
 
 **Special key.** The planning system already has a full authentication system (role-scoped tokens, enforced server-side). The special key is built on it: a credential, held only by the local client, that is the only thing allowed to submit user quotes.
 
@@ -64,4 +64,4 @@ One repo. A module is a unit of work with a clean interface, and it is not alway
 
 ## Deferred to level 5
 
-- quick-json-reader: a Python version or running the JavaScript. User: "yes that works in this case"
+- quick-json-reader: a Python version or running the JavaScript. User: "yes that works in this case" (Settled at level 5: JavaScript with Node.)

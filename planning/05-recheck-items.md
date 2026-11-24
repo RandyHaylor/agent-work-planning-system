@@ -1,5 +1,7 @@
 # Module recheck against the commandments (agent review, 2026-11-23)
 
+**RESOLVED (2026-11-23).** All items were answered; outcomes are in `05-module-specs.md` (Round 5, recheck answers) and module tree v5. Options below that mention yoyo, OpenAPI generation, quality checks or tree_export are void.
+
 NOT APPROVED. An agent rechecked module tree v4 and the round 4/5 decisions against "Module design" in `process-levels.md`. Each item is for the user to review one at a time after the walkthrough. It did not read the old server code, so items 4 and 13 need checking against it.
 
 1. **Tree text is stale.** `operations_tooling` still listed; `commands/`, `storage/`, `http_api/` mis-indented under `document_reader/`; `references` is prose, not modules. Option: redraw the tree.

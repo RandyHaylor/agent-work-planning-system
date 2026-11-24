@@ -2,7 +2,7 @@
 
 APPROVED by the user, 2026-11-23, in Slack: "approve access". Decisions and the user's words are in `05-module-specs.md` ("Phase 2: access").
 
-From recorded decisions only: rules carried from today's `permissions.py` (pure, no I/O); roles admin (browser session, human types the password), planner (token scoped to a whole project; acts as its admin; creates all tasks), worker (token scoped to its own task); the local client's quote key can only submit user quotes; no reviewer role (a reviewer is a worker); workers never edit their task node; the worker's one write tool is create supplementary task (always placed right before its own task); whoever a requirement request is assigned to answers it; temp cache entries visible to their fetcher + admin; cited references visible to anyone who can see the node.
+From recorded decisions only: rules carried from today's `permissions.py` (pure, no I/O); roles admin (browser session, human types the password), planner (token scoped to a whole project; acts as its admin; creates all tasks; kept as today, user decision after the audit), worker (token scoped to its own task); the local client's quote key can only submit user quotes; no reviewer role (a reviewer is a worker); workers never edit their task node; the worker's one write tool is create supplementary task (always placed right before its own task); whoever a requirement request is assigned to answers it; temp cache entries visible to their fetcher + admin; cited references visible to anyone who can see the node.
 
 ```python
 @dataclass(frozen=True)
@@ -18,6 +18,7 @@ class PermissionPolicy:              # pure rules; callers pass in the tree fact
         # admin: all; planner: its project; worker: its task + ancestors' context summaries only
     def can_read_reference(self, p, ref, nodes_citing_it) -> bool
     def can_read_temp_entry(self, p, entry) -> bool            # owner or admin
+    def can_read_knowledge_base(self, p, kb) -> bool           # admin; planner; worker only for KBs assigned to it (carried)
     # tree writes
     def can_create_node(self, p, parent) -> bool                # planner in its project, admin
     def can_edit_node(self, p, node) -> bool                    # planner/admin; never a worker on its own task

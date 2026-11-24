@@ -19,7 +19,7 @@ configuration/                            reads injected config files; hands eac
 server/
   domain/                                 no I/O, no HTTP, no database
     access/                               who may do what
-      principal                           who is acting: admin, worker, reviewer, quote client
+      principal                           who is acting: admin, planner, worker, quote client (no reviewer role; spec: 05-spec-access.md)
       permission_policy                   rules, incl. who may change a node's state (carried)
     authentication/                       credential -> principal
       password_hashing                    PBKDF2 (carried)
@@ -30,8 +30,8 @@ server/
       credential_storage_port
     project_tree/                         one generic node type
       node                                node, state, level label, context summary + last verified
-      level_placement_rules               levels 1-4 linear, branching from 5
-      node_editor                         create, update, move, delete; summary updated on every change
+      level_placement_rules               levels 1-4 linear, branching from 5; supplementary tasks exempt at any level
+      node_editor                         create, update, move, abandon (never delete); summary updated on every change
       node_content                        content on a node; text stored as fixed references (superseded-by chain on edit)
       tree_storage_port
     context_assembly/
@@ -39,10 +39,12 @@ server/
     references/                           one reference system for user quotes AND documents
       reference_types                     Reference (one fixed item: origin, SHA-256, metadata, superseded-by), Citation (reference ID + line range)
       citing_and_rendering                pointer validation, server-rendered quoted text, follows superseded-by chain
-      temp_cache_lifecycle                per-agent temp cache (fetching agent + admin only): promotion on first citation, purge
-      ingestion                           quote capture in; fetch -> document_extraction in
+      temp_cache_lifecycle                per-agent temp cache, a separate store (fetching agent + admin only); cite moves an item into references; TTL purge
+      ingestion                           synced user exchanges in; anything the reader loads (URL, uploaded file, web search) -> document_extraction -> temp cache
       reference_storage_port
-      source_fetcher_port
+      temp_cache_storage_port
+      source_fetcher_port                 any source the reader loads, not web-only
+      (knowledge_base origin: the existing knowledge-base system carries over; assigned KBs readable per access)
     agent_registry/                       every agent session referenced, keyed by agent ID; optional host, platform, model,
                                           path, system, URL, first/last seen; never deleted
     review_dispatch/                      sends a review node to an available reviewer client, never to two
@@ -55,11 +57,13 @@ server/
     engine_setup                          engine + transactions (with engine.begin() is the unit of work)
     postgres_tree_store                   implements tree_storage_port
     postgres_reference_store              implements reference_storage_port
+    postgres_temp_cache_store             implements temp_cache_storage_port (wiped freely)
     postgres_credential_store             implements credential_storage_port
     postgres_agent_registry_store         implements the agent registry's storage port
     migrations/                           Alembic
   adapters/
-    http_source_fetcher                   implements source_fetcher_port; plain HTTP; catches HTTP errors and failure markers
+    http_source_fetcher                   one implementation of source_fetcher_port (URLs); catches HTTP errors and failure markers
+    uploaded_file_source                  another: file bytes uploaded by the CLI / local client (Word, PDF, ...)
   http_api/                               protocol only
     application                           FastAPI wiring, TLS (carried)
     credential_dependency
@@ -79,12 +83,16 @@ document_extraction/                      own package; bytes + metadata -> citab
     whole_page_markdownify
     pypdf_text
     pdfminer_text
+    docx_text
     text_passthrough
     json_pretty_print
     jsonl_passthrough
 
 fastReader/                               our copy, kept mostly intact; adapted to the temp cache store + cite (spec: 05-spec-references-and-reader.md)
 quick_json_reader/                        our copy (JavaScript, Node), kept mostly intact; results as line ranges of stored text
+prompt_builder/                           our copy of ai-rule-builder (Python package, data, tests, website), kept mostly intact;
+                                          the container for each role's rules / pre-prompt guidance; served per role;
+                                          presets saved with the server's files; the planner launches its website for the user
 
 api_client/                               one client for the HTTPS API, used by cli, web_ui, local_client
 admin_login/                              the password popup that starts an admin session (cli, web_ui, agent)
@@ -97,13 +105,14 @@ web_ui/                                   Gradio; no logic; same API as an admin
     node_detail_page
     login_page
 local_client/                             Python, beside the agent harness
-  quote_capture/                          prompt capture, transcript context reader (SoT)
+  quote_capture/                          local client cache of every exchange (SoT raw log writer/reader) + reference_sync
+                                          (only referenced exchanges go to the server; spec: 05-spec-quote-capture.md)
   review_worker/                          receives review jobs from the server, runs them via a harness adapter
   harness_adapters/
-    claude_code/
-      capture_hook
-      session_runner                      claude -p
-    (codex/ later: not in v1; plugs in through the same HarnessAdapter interface)
+    ai_cli_adapter_interface              the harness interface (SoT)
+    claude_code/                          adapter, UserPromptSubmit hook, transcript reader, AskUserQuestion capture,
+                                          installer (SoT); headless sessions via claude -p
+    (codex/ later: not in v1; plugs in through the same interface)
   client_credentials                      the install's quote key
 ```
 
@@ -347,6 +356,12 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 
 5. **CORRECTED (user, terminal, 2026-11-23): pull in the whole tool, website included.** The agent misframed the study: the full prompt assembly is in Python (usable without the UI); the browser only has a duplicate. User: "can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?" So ai-rule-builder is copied in as our own module like fastReader (Python package, data, tests AND its website), adapted only as needed (role -> preset mapping, guidance served per role). The planner launches the website for the user to view and edit presets. `guidance-draft1.md` (fresh re-implementation) is withdrawn. Item 4 below is superseded. Where edited presets are saved: alongside the server's files; user: "if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter" (the tool's user-data folder is pointed at a folder the server reads; its `AI_PROMPT_BUILDER_HOME` setting already allows this).
 4. **Superseded by 5. Revised (user, Slack): build our own small module from its logic, not a copy of the tool.** User: "Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over." Check result: the tool IS usable without the UI (Python `compose_prompt_text`, `ai_prompt_builder/ruleset.py:87-112`; CLI `compose` command, `command_line.py:196,340`), and the browser ALSO has its own copy of the assembly (`js/rule-selection-state.js:92-129`, used so the page works standalone). So the UI is not carried over. Rules and dev/technical presets are copied to `planning/source-material/ai-rule-builder/`.
+
+### Audit answers (user, 2026-11-23)
+
+Audit in `05-audit-2026-11-23.md`. User: "we added the prompt builder so it can help be the container for the rules/pre-propmt guidance for the different agent roles. i dont see what calls you nee from me on those". Already-decided items were aligned in the tree and specs without new decisions. Two open questions:
+1. **Supplementary tasks are exempt from the levels 1-4 one-child rule** (user chose this): levels 1-4 keep one main child; tech spikes and requirement requests may sit beside it at any level.
+2. **Planner token kept as today** (user chose this): a token scoped to one project, acting as that project's admin; admin stays the human-approved session.
 
 ### Gap 2: quote_capture (user, terminal, 2026-11-23)
 

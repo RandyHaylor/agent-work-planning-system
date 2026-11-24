@@ -19,7 +19,8 @@ class Node:
     context_summary: str             # general "what this accomplishes"; passes down to every node below
     last_verified: datetime
     depends_on: tuple[NodeId, ...] | None   # None = the previous sibling
-    assignee: PrincipalId | None
+    assignee: AgentId | None         # key into agent_registry
+    branch: str | None               # which branch the task's work is on (round 2: "records which branch")
 
 @dataclass(frozen=True)
 class NodeContent:                   # content attached to a node
@@ -54,11 +55,11 @@ class ProjectTree:
         # new reference that supersedes the old one
 ```
 
-Level placement rule: levels 1-4 form a straight line (one child each); branching starts at level 5. Spikes and requirement requests can sit at any level.
+Level placement rule: levels 1-4 form a straight line (one main child each); branching starts at level 5. Supplementary tasks (tech spikes, requirement requests) are exempt and may sit beside the main child at any level (user decision after the audit).
 
 ## External integration tests (mocked storage and ReferenceLibrary)
 
-1. Levels 1-4 reject a second child; level 5 and below accept many.
+1. Levels 1-4 reject a second main child but accept supplementary tasks; level 5 and below accept many.
 2. children come back in position order; move renumbers positions.
 3. A node with no depends_on depends on the previous sibling; ready_siblings reflects that.
 4. Siblings 1-4 where 3 and 4 depend only on 1: after 1 is done, 2, 3 and 4 are all ready.

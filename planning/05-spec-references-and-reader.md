@@ -29,7 +29,9 @@ Everything else (scanner logic, TOC options, get, search options, slicing, help 
 The server exposes the reader's commands as read commands over HTTPS. The thin CLI passes them through, so agents keep fastReader's command shape and help menus:
 
 ```
-load <url | uploaded file | web-search terms> [--search ...] [--line START COUNT]   -> cache id(s) + TOC
+load <url | uploaded file | web-search terms> [--strategy NAME] [--search ...] [--line START COUNT]
+                                                   -> cache id(s) + TOC + the extraction strategy used
+                                                   (agent picks the strategy, or the fallback order picks; output says which)
 toc <cache id> [same options as today]
 get <cache id> --section N ...
 search <terms> --manifests <ids...> [--exact --all --case-sensitive]
@@ -58,7 +60,7 @@ store_node_text(text, node_id, replaces=None)
 render(citation)                         supersede(old_id, new_id)
 ```
 
-Reading the cache (load, toc, get, search, json) belongs to the vendored reader, not here. You can also load a stored reference into the reader to browse it with toc/search.
+Reading the cache (load, toc, get, search, json) belongs to the copied-in reader (fastReader), not here. You can also load a stored reference into the reader to browse it with toc/search.
 
 ## Answered (user)
 
