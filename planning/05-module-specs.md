@@ -328,6 +328,11 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
    - Agent's notes (sent in Slack, not contradicted): no blocked/paused state is needed, since siblings run in order and an unfinished earlier sibling is the block; nodes need a sibling position; abandoned siblings are skipped. No reserved tags are needed; the passed-down context block is a field on the node row.
 4. **No deletion: an 'abandoned' state.** User: "Give nodes an 'abandoned' status instead of deleting them."
 
+### Phase 2: context_assembly (user, Slack, 2026-11-23)
+
+1. **The node's own content plus a general summary of every node above.** User: "The node gets all of its own stuff. Then it gets a general summary for every node above it. The top node has a general summary of what the whole thing does, and each node has its own general 'this is what this accomplishes' that builds on the one above it, so stacking them all up paints a clear story. It doesn't include every requirement and detail of the tasks in the stack, because you're not asking it to do all that work, but you do want to give it the context."
+2. **Abandoned ancestors are left out.** User: "Abandoned means gone."
+
 - **Temp cache is a separate store from references.** User: "drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want."
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 
