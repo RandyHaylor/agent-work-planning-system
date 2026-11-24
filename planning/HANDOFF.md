@@ -62,6 +62,7 @@ Round 3:
 
 ## Next steps, in order
 
+000. (Session 2, latest) Phase 2 specs approved: references + reader, project_tree, context_assembly, access, authentication, agent_registry (`planning/05-spec-*.md`). User reordered (Slack): pause questions5.md (task_assignment, review_dispatch) and spec the planning-loop gaps first: (1) planner process guidance served by the system, (2) quote_capture, (3) scaffolding/test running.
 00. (Session 2, later) **Module tree v5 is APPROVED** (`05-module-specs.md`). Level 5 phase 1 (boundary walkthrough) is done. Next: phase 2, interfaces and types module by module, each module's external integration tests mocked up front (see "Module design" in `process-levels.md`). The CLI spike is dropped: the CLI is a very thin hand-written wrapper (user's decision); ignore the OpenAPI/spike items below. The user now talks to this session through Slack channel `#agent-work-planning-system-af-ed69a354` (skill `slack-subscribe`; questions as uploaded .md files).
 0. (Session 2, 2026-11-23) Round 4 in `05-module-specs.md`: the document packages (`document_extraction`, `document_reader`, `server/domain/document_sources`) are approved and replace those parts of v4. Next: their public interfaces. Background research comparing extraction strategies and quality checks writes to the session scratchpad; bring its findings to the user.
 1. Get the user's approval of the rest of module tree v4 and the research recommendations (ask one at a time). The user is "not 100% convinced on all the modules".
