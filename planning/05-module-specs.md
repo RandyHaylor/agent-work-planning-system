@@ -351,6 +351,7 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 ### Gap 2: quote_capture (user, terminal, 2026-11-23)
 
 User: "so source of truth solves this already for claude. that needs to be adapted for our client's adapter. lets take codex off the table but PLEASE build it with an interface so we can connect codex later." So: the local client's quote capture adapts source-of-truth's Claude Code capture into the Claude Code harness adapter; Codex is out of v1; the HarnessAdapter interface stays so Codex can be added later without changing anything else.
+- **Design (user approved: "yes"):** copy source-of-truth's capture side into `local_client/` as our own code (from `~/ai_skills_agents_resources/source-of-truth`, commit d22d770), kept mostly intact: `ai_cli_adapter_interface.py` (the harness interface; Codex later = a second implementation), `ai_cli_adapter_claude_code.py`, the `UserPromptSubmit` hook (verbatim prompt + preceding agent output as pre-text, read from the transcript by `claude_cli_get_recent_agent_messages.py`; no Stop hook), `post_tool_use_capture_askuserquestion_answers.py` (answers to the planner's question dialogs), and `install.py` (hook scripts + settings.json patching). Only change: where captured text goes. `raw_input_log_writer.py`'s local append is replaced by sending each exchange (user message + pre-text) to the server's `store_user_exchange` with the install's quote key.
 
 ### Phase 2: authentication (user, Slack, 2026-11-23)
 
