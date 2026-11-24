@@ -43,6 +43,8 @@ server/
       ingestion                           quote capture in; fetch -> document_extraction in
       reference_storage_port
       source_fetcher_port
+    agent_registry/                       every agent session referenced, keyed by agent ID; optional host, platform, model,
+                                          path, system, URL, first/last seen; never deleted
     review_dispatch/                      sends a review node to an available reviewer client, never to two
     task_assignment/                      planner/admin assigns a task node and mints the worker's scoped token
   commands/                               every action, reads and writes
@@ -54,6 +56,7 @@ server/
     postgres_tree_store                   implements tree_storage_port
     postgres_reference_store              implements reference_storage_port
     postgres_credential_store             implements credential_storage_port
+    postgres_agent_registry_store         implements the agent registry's storage port
     migrations/                           Alembic
   adapters/
     http_source_fetcher                   implements source_fetcher_port; plain HTTP; catches HTTP errors and failure markers
@@ -321,6 +324,7 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 3. **Escalations and tech spikes are sibling tasks placed before the raising task** (same mechanism, same code; see `process-levels.md`).
    - **Renamed: "requirement request", not "escalation".** User: "don't call them escalations; call them requirement requests, since that's closer to what's happening. A requirement request is a task. It can be raised by a worker (inserted before its task, same mechanism as a tech spike) and can be answered by the session and its parent, flowing up to the parent or even the user. It can also be placed preemptively as a normal task in a planned workflow, e.g. a research/tech spike task followed by a requirements-gathering task. That's a suggested approach, so a requirement request is just an ordinary task type." (Still one generic node type; "requirement request" is a label on an ordinary task.)
    - **Depends-on field; the orchestrator decides what runs.** User: "the planning/admin agent decides who runs, and it can choose to run things in parallel. Typically siblings run in order, but add a \"depends on\" field: a list of sibling nodes a task depends on. If it isn't specified, a task depends on the sibling before it by default. If it is specified, it can name one or more siblings. Example: siblings 1-4, where 3 and 4 both list only 1. Then once 1 is done, the orchestrating agent can see that 2, 3 and 4 could run in parallel, if that's allowed, possible or helpful." Confirmed by the user: "Order implies the dependency unless one is specified, but as a rule, when a task inserts a tech spike or requirement request as a sibling before itself, always add it to that task's depends-on."
+   - **Agent session registry** (from review of project-tree-interface-draft1.md). User: "keep it as just an ID, but we need more data to identify an agent. Add a running registry (a table/list) of all the agent sessions we reference, keyed by that ID, with typical optional metadata fields such as host, platform, model, path, system and URL." Then: "make it its own small module, simple and quick. Don't overthink it; add it to the plan. Never delete entries: all of a project's session metadata is kept forever, even if the agent session is never used again or is deleted on disk. It won't fill the disk." Added as `server/domain/agent_registry/` (authentication only maps a credential to an agent ID).
    - Agent's notes (sent in Slack, not contradicted): no blocked/paused state is needed, since siblings run in order and an unfinished earlier sibling is the block; nodes need a sibling position; abandoned siblings are skipped. No reserved tags are needed; the passed-down context block is a field on the node row.
 4. **No deletion: an 'abandoned' state.** User: "Give nodes an 'abandoned' status instead of deleting them."
 
