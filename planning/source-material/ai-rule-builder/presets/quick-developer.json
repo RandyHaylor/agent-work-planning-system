@@ -1,0 +1,89 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Quick developer",
+  "entries": [
+    {
+      "categoryId": "adding-details",
+      "optionId": "fill-gaps-and-list-them",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "confirm-what-is-unclear",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "decide-and-note",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "offering-options",
+      "optionId": "quick-options",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "naming",
+      "optionId": "modern-clean",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "testing",
+      "optionId": "simple-post-testing",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "troubleshooting",
+      "optionId": "quick-experiments",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "explicit-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "tldr",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "existing-solutions",
+      "optionId": "check-for-existing-libraries",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "documentation",
+      "optionId": "keep-docs-in-sync",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "repo",
+      "optionId": "local-repo-only",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Add a \"copy to clipboard\" button next to each code block on the docs page.",
+    "placement": "end",
+    "enabled": true
+  }
+}

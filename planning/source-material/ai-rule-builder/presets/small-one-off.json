@@ -1,0 +1,59 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Small one-off",
+  "entries": [
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "handle-only-within-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "testing",
+      "optionId": "simple-post-testing",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "explicit-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "tldr",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "naming",
+      "optionId": "verbose-oop",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "documentation",
+      "optionId": "keep-docs-in-sync",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Rename the `data` folder to `input_files` and update every reference to it.",
+    "placement": "end",
+    "enabled": true
+  }
+}

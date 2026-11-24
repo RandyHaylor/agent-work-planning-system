@@ -1,0 +1,113 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Careful developer",
+  "entries": [
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "must-ask-before-starting",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "existing-solutions",
+      "optionId": "follow-established-patterns",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "escalation-is-a-blocker",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "structure",
+      "optionId": "hollow-before-full",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "modularity",
+      "optionId": "generic-standalone-modules",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "naming",
+      "optionId": "verbose-oop",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "testing",
+      "optionId": "tdd-module-level",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "troubleshooting",
+      "optionId": "research-errors",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "documentation",
+      "optionId": "readme-for-what-you-build",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "research-then-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "full-report",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "offering-options",
+      "optionId": "research-before-options",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "repo",
+      "optionId": "local-and-remote-repo",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Build a command-line tool that takes a folder of CSV files and merges them into one, matching columns by header name. It must handle files with missing columns and report rows it could not merge.",
+    "placement": "end",
+    "enabled": true
+  }
+}

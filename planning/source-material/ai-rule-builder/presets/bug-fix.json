@@ -1,0 +1,53 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Bug fix",
+  "entries": [
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "handle-only-within-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "troubleshooting",
+      "optionId": "research-errors",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "research-then-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "full-report",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "documentation",
+      "optionId": "keep-docs-in-sync",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Fix this bug. Reproduce it first, find the cause with evidence, fix the cause (not the symptom), and add a test that fails without the fix. Change nothing else.\n\nThe bug: after sign-in, users are sent back to the home page instead of the page they came from. Reported on the mobile site only.",
+    "placement": "end",
+    "enabled": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "PR / diff review",
+  "entries": [
+    {
+      "categoryId": "review-depth",
+      "optionId": "real-issues-in-the-diff-only",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "condensed",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "only-what-you-are-given",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Review this pull request and change nothing. List each issue with file and line, most severe first.\n\nReview the pull request that adds CSV export to the reports page.",
+    "placement": "end",
+    "enabled": true
+  }
+}
