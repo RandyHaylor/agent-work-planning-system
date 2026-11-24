@@ -103,9 +103,7 @@ local_client/                             Python, beside the agent harness
     claude_code/
       capture_hook
       session_runner                      claude -p
-    codex/
-      capture_hook
-      session_runner                      codex exec
+    (codex/ later: not in v1; plugs in through the same HarnessAdapter interface)
   client_credentials                      the install's quote key
 ```
 
@@ -349,6 +347,10 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 
 5. **CORRECTED (user, terminal, 2026-11-23): pull in the whole tool, website included.** The agent misframed the study: the full prompt assembly is in Python (usable without the UI); the browser only has a duplicate. User: "can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?" So ai-rule-builder is copied in as our own module like fastReader (Python package, data, tests AND its website), adapted only as needed (role -> preset mapping, guidance served per role). The planner launches the website for the user to view and edit presets. `guidance-draft1.md` (fresh re-implementation) is withdrawn. Item 4 below is superseded. Where edited presets are saved: alongside the server's files; user: "if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter" (the tool's user-data folder is pointed at a folder the server reads; its `AI_PROMPT_BUILDER_HOME` setting already allows this).
 4. **Superseded by 5. Revised (user, Slack): build our own small module from its logic, not a copy of the tool.** User: "Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over." Check result: the tool IS usable without the UI (Python `compose_prompt_text`, `ai_prompt_builder/ruleset.py:87-112`; CLI `compose` command, `command_line.py:196,340`), and the browser ALSO has its own copy of the assembly (`js/rule-selection-state.js:92-129`, used so the page works standalone). So the UI is not carried over. Rules and dev/technical presets are copied to `planning/source-material/ai-rule-builder/`.
+
+### Gap 2: quote_capture (user, terminal, 2026-11-23)
+
+User: "so source of truth solves this already for claude. that needs to be adapted for our client's adapter. lets take codex off the table but PLEASE build it with an interface so we can connect codex later." So: the local client's quote capture adapts source-of-truth's Claude Code capture into the Claude Code harness adapter; Codex is out of v1; the HarnessAdapter interface stays so Codex can be added later without changing anything else.
 
 ### Phase 2: authentication (user, Slack, 2026-11-23)
 
