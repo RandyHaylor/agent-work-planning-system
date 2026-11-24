@@ -35,7 +35,7 @@ server/
       node_content                        content on a node; text stored as fixed references (superseded-by chain on edit)
       tree_storage_port
     context_assembly/
-      context_assembler                   ancestors' generic context blocks -> pre-prompt (no requirement inheritance)
+      context_assembler                   ancestors' context_summary + node's own content -> pre-prompt (spec: 05-spec-context-assembly.md)
     references/                           one reference system for user quotes AND documents
       reference_types                     Reference (one fixed item: origin, SHA-256, metadata, superseded-by), Citation (reference ID + line range)
       citing_and_rendering                pointer validation, server-rendered quoted text, follows superseded-by chain
