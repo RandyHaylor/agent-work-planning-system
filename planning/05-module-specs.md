@@ -80,13 +80,8 @@ document_extraction/                      own package; bytes + metadata -> citab
     json_pretty_print
     jsonl_passthrough
 
-document_reader/                          own package; pure over citable text (fastReader + quick-json-reader)
-  structure/
-    marker, manifest, line_index
-    scanners/                             heading, indent depth, bracket depth, tag depth
-  navigation/                             table of contents, section -> line range, previews
-  search/                                 hits with containing sections
-  json_view/                              quick-json-reader Python port; line ranges of the stored text
+fastReader/                               our copy, kept mostly intact; adapted to the temp cache store + cite (spec: 05-spec-references-and-reader.md)
+quick_json_reader/                        our copy (JavaScript, Node), kept mostly intact; results as line ranges of stored text
 
 api_client/                               one client for the HTTPS API, used by cli, web_ui, local_client
 admin_login/                              the password popup that starts an admin session (cli, web_ui, agent)
