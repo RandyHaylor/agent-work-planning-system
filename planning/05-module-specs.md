@@ -170,7 +170,7 @@ document_reader/                           APPROVED (round 4) own package; pure 
     command_runner.py                      authorize -> unit of work -> run command
     request_authorizer.py
     unit_of_work.py
-    <command_name>.py                      one small class per command (ApproveWithNote, RaiseRequirementRequest, RaiseTechSpike, TurnInTask, AssignTask, ...)
+    <command_name>.py                      one small class per command (ApproveWithNote, CreateSupplementaryTask, TurnInTask, AssignTask, ...)
   storage/                                 Postgres; implements the ports (Adapter)
     schema.sql                             fresh schema, version triggers
     database_connection.py (carried)
@@ -332,6 +332,13 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 
 1. **The node's own content plus a general summary of every node above.** User: "The node gets all of its own stuff. Then it gets a general summary for every node above it. The top node has a general summary of what the whole thing does, and each node has its own general 'this is what this accomplishes' that builds on the one above it, so stacking them all up paints a clear story. It doesn't include every requirement and detail of the tasks in the stack, because you're not asking it to do all that work, but you do want to give it the context."
 2. **Abandoned ancestors are left out.** User: "Abandoned means gone."
+
+### Phase 2: access (user, Slack questions4.md, 2026-11-23)
+
+1. **No reviewer role.** User: "Keep it simple, nothing special. A reviewer is just an agent you ask questions; it's meant to be a simple call."
+2. **One worker tool: create supplementary task.** User: "A literal tool the worker can call: create supplementary task. It creates a tech spike or requirement request type and provides the information on what it needs. The worker doesn't choose where it goes; it always goes right before its own task." (Replaces separate RaiseRequirementRequest / RaiseTechSpike commands with one `CreateSupplementaryTask`.)
+3. **Whoever a requirement request is assigned to answers it.** User: "Whoever a requirement request is assigned to can answer it."
+4. **Parent tasks and their sessions.** User: "nodes with children aren't work nodes in the usual sense. Agents are never assigned a node that already has children. Tasks aren't born with children; a task's own session breaks it into child nodes, so a node with children implicitly already has a session. That session is what requirement requests flow up to. There's a review or test task at the end of the children that checks whether the work is done. Once all children are done, the parent task's session resumes to confirm the child tasks are completed, write a summary and mark the node done, or report an error up if it isn't done."
 
 - **Temp cache is a separate store from references.** User: "drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want."
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
