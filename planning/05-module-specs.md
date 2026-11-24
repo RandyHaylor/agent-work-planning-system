@@ -35,7 +35,7 @@ server/
       node_content                        content on a node; text stored as fixed references (superseded-by chain on edit)
       tree_storage_port
     context_assembly/
-      context_assembler                   ancestor summaries + inherited requirements -> pre-prompt
+      context_assembler                   ancestors' generic context blocks -> pre-prompt (no requirement inheritance)
     references/                           one reference system for user quotes AND documents
       reference_types                     Reference (one fixed item: origin, SHA-256, metadata, superseded-by), Citation (reference ID + line range)
       citing_and_rendering                pointer validation, server-rendered quoted text, follows superseded-by chain
@@ -312,6 +312,15 @@ These override earlier wording where they conflict (the TextVersion type, "appro
   - **Keep the DuckDuckGo scraper; reader is the only way to register a reference.** User: "Leave the DuckDuckGo scraper as is, and encourage agents to use it; I think it gives better results than other systems right now. Agents can use their own web search tools and find the sites they want to quote anywhere, but to register a reference they have to pull the URL up through the reader. Make that clear in prompting and tooling."
   - **Copied in as our own tools, not "vendored".** User: "I already said this: just pull a copy down and modify it directly. No updates from upstream are expected; I'm not updating or thinking about those apps. Don't call it vendoring, since that implied a bunch of stuff. We're copying them in as our own tools, to evolve as we want. Keep them as independent modules: no hard coding, no rigid coupling. Improve them as independent modules as the app needs." The word "vendor" above is superseded by this.
   - User: "I keep getting asked the same questions over and over. Before asking, check the recorded decisions and don't re-ask anything that's already been decided."
+### Phase 2: project_tree (user, Slack questions3.md, 2026-11-23)
+
+The user corrected premises in the agent's "already decided" list; fixed in `02-definition-of-done.md`, `03-high-level-plan.md`, `process-levels.md`.
+
+1. **States: assigned, in progress, done, abandoned.** User: "Nodes are not reviewed; review is a task, not a node state. No in_review / review_failed / passed states. States: assigned, in progress (past assigned), done, abandoned (see 4)."
+2. **No requirement inheritance.** User: "We don't pass requirements down to child nodes. What passes down is a generic context block; 'requirement' is a more specific thing."
+3. **Escalations and tech spikes are sibling tasks placed before the raising task** (same mechanism, same code; see `process-levels.md`).
+4. **No deletion: an 'abandoned' state.** User: "Give nodes an 'abandoned' status instead of deleting them."
+
 - **Temp cache is a separate store from references.** User: "drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want."
 - Walkthrough complete. Next: the recheck items in `05-recheck-items.md`, one at a time; then a redrawn tree.
 

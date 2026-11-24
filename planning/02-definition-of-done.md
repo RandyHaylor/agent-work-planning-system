@@ -5,7 +5,7 @@ Level 2. Approved by the user on 2026-11-23.
 ## Done when
 
 1. **Projects run through all the levels in one tree.** One generic node type. Levels 1 to 4 are linear, and branching starts at module specs.
-2. **Requirements live on the node they govern** and pass down to every node below.
+2. **Requirements live on the node they govern.** What passes down to every node below is a generic context block, not requirements (corrected at level 5; see `05-module-specs.md`).
 3. **User quotes are real.** They're captured from the real conversation, and agents can never create or edit them.
 4. **Document quotes are real.** The system fetches and caches every source, and serves the quoted text itself. Agents never see the cache.
 5. **Nothing enters a plan without the user's approval,** including approvals made through the wiki's queue, where a note counts as a quote.
@@ -13,7 +13,7 @@ Level 2. Approved by the user on 2026-11-23.
 7. **Every agent gets the story** of what's being built, assembled from the context summaries above its task.
 8. **Workers are locked to their task.** They can turn in a response but can't change the task, its tests or its definition of done, and this is enforced by permissions.
 9. **Tests decide acceptance.** Deep modules also get outside verification against the original tests.
-10. **Escalations are queue events** that belong to the node that raised them, handled as recorded in `process-levels.md`.
+10. **Escalations are tasks:** a work task that needs to escalate creates a sibling task placed before itself, so flow moves there first and returns when it's done; tech spikes use the same mechanism (corrected at level 5; see `process-levels.md`).
 11. **Spikes can run at any layer.**
 12. **The user can view the whole tree** on the wiki and add addendums.
 13. **The same interface over HTTPS and the CLI,** with a local client and harness adapters.
