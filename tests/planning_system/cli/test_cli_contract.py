@@ -203,3 +203,16 @@ def test_guidance_editor_launches_locally(harness):
     assert harness.run("guidance-editor", env={}) == 0
     assert harness.editor_launches == 1
     assert harness.api.calls == []
+
+
+def test_quote_key_mint_is_stored_by_client_credentials():
+    """Spec: `credentials quote-key` -> POST /credentials/quote-key (stored by client_credentials)."""
+    stored = []
+    api = RecordingPlanningApiClient(responses={"mint_quote_key": {"token": "qk-1"}})
+    command_line = PlanningCommandLine(CliDependencies(
+        api_factory=lambda settings: api, local_client_factory=lambda settings: RecordingLocalClient(),
+        admin_login_factory=lambda api: _FakeLogin(),
+        settings_from_environment=lambda env: ClientSettings("https://127.0.0.1:8443", None, env.get("PLANNING_TOKEN")),
+        launch_guidance_editor=lambda: None, store_quote_key=stored.append))
+    assert command_line.run(["credentials", "quote-key", "--label", "laptop"], ENV, io.StringIO(), io.StringIO()) == 0
+    assert stored == ["qk-1"]

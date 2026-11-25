@@ -1,5 +1,5 @@
 """LocalClient facade: delegates each call to one child (task_runner, review_worker, quote_capture ports,
-hook installer). Level 6 scaffold: hollow."""
+hook installer)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,27 +25,52 @@ class LocalClient(LocalClientInterface):
         self._hook_installer = hook_installer
 
     def install_hooks(self) -> None:
-        raise NotImplementedError("level 7")
+        self._hook_installer.install()
 
     def list_exchanges(self, last: int) -> list[dict]:
-        raise NotImplementedError("level 7")
+        return self._exchange_reader.recent_exchanges(last)
 
     def cite_exchange(self, local_exchange_id: str) -> ReferenceId:
-        raise NotImplementedError("level 7")
+        return self._reference_sync.sync(local_exchange_id)
 
     def start_task(self, request: TaskStartRequest) -> str:
-        raise NotImplementedError("level 7")
+        return self._task_runner.start_task(request)
 
     def stop_task(self, agent_id: str) -> None:
-        raise NotImplementedError("level 7")
+        self._task_runner.stop_task(agent_id)
 
     def running_tasks(self) -> list[RunningSession]:
-        raise NotImplementedError("level 7")
+        return self._task_runner.running_tasks()
 
     def ask_reviewer(self, question: str, context_paths: Sequence[Path] = ()) -> str:
-        raise NotImplementedError("level 7")
+        return self._review_worker.ask(question, [Path(p) for p in context_paths])
 
 
 def build_local_client(settings: ClientSettings) -> LocalClientInterface:
     """Wires the real children (Claude Code adapter, file registry, quote_capture) for this install."""
-    raise NotImplementedError("level 7")
+    from planning_system.api_client import PlanningApiClient
+
+    from .client_credentials import FileClientCredentials
+    from .client_paths import ClientPaths
+    from .harness_adapters import AdapterConfig, adapter_for
+    from .harness_adapters.claude_code.install import ClaudeCodeHookInstaller
+    from .quote_capture.jsonl_exchange_cache import JsonlExchangeCache
+    from .quote_capture.production_ports import ApiServerReferences, StoredQuoteKey
+    from .quote_capture.reference_sync import ReferenceSyncService
+    from .quote_capture_bridge import CachedExchangeReader, ReferenceSyncAdapter
+    from .review_worker import ReviewWorker
+    from .task_runner import RunningSessionsRegistry, TaskRunner, TaskSessionLauncher
+
+    paths = ClientPaths.from_environment()
+    api = PlanningApiClient(settings)
+    adapter = adapter_for(AdapterConfig(), session_logs_directory=paths.session_logs_directory)
+    cache = JsonlExchangeCache(paths.exchange_cache_file)
+    return LocalClient(
+        task_runner=TaskRunner(TaskSessionLauncher(api, adapter, settings),
+                               RunningSessionsRegistry(paths.running_sessions_file)),
+        review_worker=ReviewWorker(adapter, thinking_log_path=paths.reviewer_thinking_log_file),
+        reference_sync=ReferenceSyncAdapter(ReferenceSyncService(
+            cache, ApiServerReferences(api), StoredQuoteKey(FileClientCredentials(paths.home)))),
+        exchange_reader=CachedExchangeReader(cache),
+        hook_installer=ClaudeCodeHookInstaller(),
+    )

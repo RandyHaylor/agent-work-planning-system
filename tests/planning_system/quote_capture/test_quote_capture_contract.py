@@ -10,7 +10,6 @@ from planning_system.local_client.quote_capture.fakes import (FakeExchangeCaptur
 from planning_system.local_client.quote_capture.ports import HarnessAdapterPort
 from planning_system.local_client.quote_capture.reference_sync import ReferenceSyncService
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 
 
 class Env:
@@ -26,7 +25,7 @@ class Env:
         self.sync = sync_cls(self.cache, self.server, self.credentials)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", pytest.param("real")])
 def kind(request):
     return request.param
 

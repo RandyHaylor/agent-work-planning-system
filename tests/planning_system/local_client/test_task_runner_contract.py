@@ -12,7 +12,6 @@ from planning_system.local_client.task_runner import (RunningSessionsRegistry, T
                                                       TaskStartRequest)
 from planning_system.local_client.task_runner.fakes import FakeTaskRunner
 
-XFAIL_REAL = pytest.mark.xfail(strict=False, reason="level 7")
 
 WORKER_TOKEN = "tok-worker-secret"
 
@@ -25,7 +24,7 @@ def _real(api, adapter, settings, tmp_path):
     return TaskRunner(TaskSessionLauncher(api, adapter, settings), RunningSessionsRegistry(tmp_path / "sessions.json"))
 
 
-@pytest.fixture(params=[pytest.param(_fake, id="fake"), pytest.param(_real, id="real", marks=XFAIL_REAL)])
+@pytest.fixture(params=[pytest.param(_fake, id="fake"), pytest.param(_real, id="real")])
 def build_runner(request, api, settings, tmp_path):
     return lambda adapter: request.param(api, adapter, settings, tmp_path)
 

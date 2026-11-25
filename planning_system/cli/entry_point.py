@@ -58,7 +58,14 @@ class PlanningCommandLine(CommandLineInterface):
             TARGET_HELP: lambda: self._parser.format_help(),
             TARGET_GUIDANCE_EDITOR: lambda: self._dependencies.launch_guidance_editor(),
         }
-        return targets[spec.target]()
+        result = targets[spec.target]()
+        if spec.after:
+            self._after_steps()[spec.after](result)
+        return result
+
+    def _after_steps(self) -> dict:
+        return {"store_quote_key": lambda result: self._dependencies.store_quote_key(result["token"])
+                if isinstance(result, dict) and "token" in result else None}
 
 
 def _launch_guidance_editor() -> None:
@@ -85,8 +92,14 @@ def default_dependencies() -> CliDependencies:
     from planning_system.api_client import PlanningApiClient
     from planning_system.api_client.client_settings import settings_from_environment
     from planning_system.local_client import build_local_client
+    from planning_system.local_client.client_credentials import FileClientCredentials
+    from planning_system.local_client.client_paths import ClientPaths
+
+    def store_quote_key(token: str) -> None:
+        FileClientCredentials(ClientPaths.from_environment().home).write_quote_key(token)
 
     return CliDependencies(
+        store_quote_key=store_quote_key,
         api_factory=PlanningApiClient,
         local_client_factory=build_local_client,
         admin_login_factory=lambda api: AdminLoginFlow(api, TkPasswordPromptWindow()),
