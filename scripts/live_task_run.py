@@ -85,8 +85,8 @@ def main() -> int:
         task = cli(env, "nodes", "create", "--parent", str(project["id"]), "--title", "Turn-in check",
                    "--level", "definition of done", "--summary", "Checks that a worker can turn in a response.")
         node_id = str(task["id"])
-        cli(env, "content", "add", node_id, "--tags", "instructions", "--text",
-            f"Your task: run exactly `uv run planning content add {node_id} --tags response --text "
+        cli(env, "content", "add", node_id, "--tags", "note", "--text",
+            f"Your task: run exactly `uv run planning content add {node_id} --tags note --text "
             "\"worker online\"` (PLANNING_URL, PLANNING_TOKEN and PLANNING_CA_CERT are already set in your "
             "environment). Then reply DONE. Do nothing else.")
         assigned = cli(env, "task", "assign", node_id, "--agent", agent_id, "--branch", "none")
