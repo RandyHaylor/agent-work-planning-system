@@ -18,6 +18,7 @@ from .list_ancestors import ListAncestors
 from .list_children import ListChildren
 from .list_nodes_by_state import ListNodesByState
 from .list_ready_children import ListReadyChildren
+from .get_review import GetReview
 from .list_reviews import ListReviews
 from .release_review import ReleaseReview
 from .submit_review_verdict import SubmitReviewVerdict
@@ -65,6 +66,7 @@ CORE_ROUTES = {
     # content review (05-spec-citation-enforcement-and-review.md "Routes")
     ("GET", "/reviews"): ListReviews,
     ("POST", "/reviews/take"): TakeReview,
+    ("GET", "/reviews/{review_id}"): GetReview,
     ("POST", "/reviews/{review_id}/verdict"): SubmitReviewVerdict,
     ("POST", "/reviews/{review_id}/release"): ReleaseReview,
 }

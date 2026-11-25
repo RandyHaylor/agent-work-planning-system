@@ -103,6 +103,7 @@ CASES = [
     ("POST", "/reviews/rev-1/verdict", {"passed": False, "reason": "r", "suggested_title": "t"}, None,
      C.SubmitReviewVerdict("rev-1", False, "r", "t")),
     ("POST", "/reviews/rev-1/release", None, None, C.ReleaseReview("rev-1")),
+    ("GET", "/reviews/rev-1", None, None, C.GetReview("rev-1")),
     ("GET", "/nodes/5/context", None, None, C.AssembleNodeContext(5)),
     ("POST", "/reader/load", {"url": "https://x"}, None, C.LoadIntoReader(url="https://x")),
     ("GET", "/reader/tmp-1/toc", None, None, C.ReaderToc("tmp-1")),

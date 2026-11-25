@@ -260,6 +260,11 @@ def take_review(body: TakeReviewBody, principal: Principal = Who, runner=Runner)
     return to_json(packet)
 
 
+@router.get("/reviews/{review_id}")
+def get_review(review_id: str, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.GetReview(review_id), principal)
+
+
 @router.post("/reviews/{review_id}/verdict")
 def submit_review_verdict(review_id: str, body: VerdictBody, principal: Principal = Who, runner=Runner):
     return _run(runner, C.SubmitReviewVerdict(review_id, body.passed, body.reason, body.suggested_title),
