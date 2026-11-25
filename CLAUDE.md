@@ -4,6 +4,8 @@ This repo is the base for the **agent planning system**: one harness-agnostic sy
 
 **Start here:** `planning/HANDOFF.md` (current state and next steps), then `planning/process-levels.md`.
 
+**Build (from 2026-11-25):** the new system is being built in `planning_system/` per `planning/BUILD-PLAN.md`. Every call the agent made without asking is in `planning/BUILD-DECISIONS-LOG.md`.
+
 ## Where things are
 
 - `planning/process-levels.md`: the agreed process levels and all process decisions, with the user's words.

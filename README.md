@@ -1,5 +1,7 @@
 # Agent Planning Server
 
+> **New system in progress (2026-11-25):** the planned agent planning system is being built in `planning_system/`. Plan: `planning/BUILD-PLAN.md`. Every decision the agent made during the build: `planning/BUILD-DECISIONS-LOG.md`. The text below describes the older `ai_project_planning_server/`.
+
 Postgres-backed tree of workorders, task nodes, and attached docs, served over HTTPS, with role-scoped bearer tokens enforced server-side. Any agent with server access creates a workorder and becomes its planner: plans with the user, scaffolds the work, and delegates nodes to worker agents that can only see and write their own subtree. An admin session, approved by the user per session, maintains the knowledge bases and workorder visibility. Every write is mirrored to disk per workorder.
 
 **What a workorder is.** A workorder is a feature, a sprint's worth of work, a larger tech spike, a broad research phase, or a fix. It is never used to fully encapsulate a large project, app, product, or long-term task. Those are defined in the product or company knowledge base by the admin agent, and updated through documents that planning or dev agents submit to an admin agent, who updates the central knowledge bases. Process and rules: `agent-planning-system.md`. Rules added at the start of every agent's session, before its custom instructions, by agent type: `agent_instruction_injections.json`. Design decisions: `PLAN.md`, `DEV_PLAN.md`. Agent usage: `skill/SKILL.md`.
