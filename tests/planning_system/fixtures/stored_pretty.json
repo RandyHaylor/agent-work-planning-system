@@ -1,0 +1,10 @@
+{
+  "name": "x",
+  "items": [
+    1,
+    {
+      "k": true
+    }
+  ],
+  "last": null
+}
