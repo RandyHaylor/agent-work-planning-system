@@ -11,11 +11,10 @@ from planning_system.local_client.review_worker.fakes import FakeReviewWorker
 from planning_system.local_client.task_runner import TaskStartRequest
 from planning_system.local_client.task_runner.fakes import FakeTaskRunner
 
-XFAIL_REAL = pytest.mark.xfail(strict=False, reason="level 7")
 
 
 @pytest.fixture(params=[pytest.param(FakeReviewWorker, id="fake"),
-                        pytest.param(ReviewWorker, id="real", marks=XFAIL_REAL)])
+                        pytest.param(ReviewWorker, id="real")])
 def worker_class(request):
     return request.param
 

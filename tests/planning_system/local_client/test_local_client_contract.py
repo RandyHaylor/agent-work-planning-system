@@ -18,12 +18,11 @@ from planning_system.local_client.review_worker.fakes import FakeReviewWorker
 from planning_system.local_client.task_runner import TaskStartRequest
 from planning_system.local_client.task_runner.fakes import FakeTaskRunner
 
-XFAIL_REAL = pytest.mark.xfail(strict=False, reason="level 7")
 QUOTE_KEY_PLACEHOLDER = "quote-key-placeholder"
 
 
 @pytest.fixture(params=[pytest.param(FakeLocalClient, id="fake"),
-                        pytest.param(LocalClient, id="real", marks=XFAIL_REAL)])
+                        pytest.param(LocalClient, id="real")])
 def facade_class(request):
     return request.param
 
@@ -122,7 +121,6 @@ def test_6_second_adapter_swaps_in_unchanged(facade_class, api, settings, parts,
 
 @pytest.mark.skipif(not (os.environ.get("PLANNING_RUN_CLAUDE") and shutil.which("claude")),
                     reason="slow, optional: set PLANNING_RUN_CLAUDE=1 with claude on PATH")
-@XFAIL_REAL
 def test_7_real_claude_code_headless_session_resumes(tmp_path):
     from planning_system.local_client.harness_adapters.claude_code import ClaudeCodeAdapter
     handle = ClaudeCodeAdapter().spawn_headless_session(

@@ -19,13 +19,20 @@ Verified payload shape (PostToolUse, tool_name == "AskUserQuestion"):
                                   "Other"       -> raw free-text verbatim
   (tool_response echoes the same questions + answers.)
 
-Self-gating: emits {} for any session not registered to a SoT project, for a non-
-AskUserQuestion tool, or when there are no answers (dismissed/rejected prompt).
+Self-gating: emits {} for a non-AskUserQuestion tool, a payload without a session id,
+or when there are no answers (dismissed/rejected prompt). Planning system: entries go to
+the local client cache (quote_capture), never to the server.
 """
 from __future__ import annotations
 
 import json
 import sys
+
+from planning_system.local_client.client_paths import ClientPaths
+from planning_system.local_client.quote_capture.exchange_capture import ExchangeCaptureService
+from planning_system.local_client.quote_capture.jsonl_exchange_cache import JsonlExchangeCache
+from planning_system.local_client.quote_capture.ports import LocalExchangeCachePort
+from planning_system.local_client.quote_capture.production_ports import SystemClock
 
 ASKUSERQUESTION_TOOL_NAME = "AskUserQuestion"
 
@@ -63,71 +70,52 @@ def _ordered_question_texts(answers: dict, questions: list) -> list:
     return ordered
 
 
-def _main() -> int:
-    try:
-        raw_stdin_text = sys.stdin.read()
-    except Exception:
-        print(json.dumps({}))
-        return 0
-    try:
-        hook_input = json.loads(raw_stdin_text) if raw_stdin_text else {}
-    except json.JSONDecodeError:
-        hook_input = {}
-
+def handle_post_tool_use(hook_input: dict, cache: LocalExchangeCachePort) -> dict:
+    """Planning system port: each answered question becomes one exchange in the LOCAL cache (question as
+    pre-text, answer as the user message). SoT's project gating is dropped; nothing is sent to the server."""
     if hook_input.get("tool_name") != ASKUSERQUESTION_TOOL_NAME:
-        print(json.dumps({}))
-        return 0
+        return {}
     session_id = hook_input.get("session_id") or hook_input.get("sessionId")
     if not session_id:
-        print(json.dumps({}))
-        return 0
-
-    try:
-        from .project_identifier_resolver import resolve_project_id_for_session
-        from .raw_input_log_writer import append_submission_to_raw_input_log
-    except Exception:
-        print(json.dumps({}))
-        return 0
-
-    project_id = resolve_project_id_for_session(session_id)
-    if project_id is None:
-        print(json.dumps({}))
-        return 0
-
+        return {}
     answers, questions = _extract_answers_and_questions(hook_input)
     if not answers:
         # Dismissed / rejected / no selection -> nothing to capture.
-        print(json.dumps({}))
-        return 0
+        return {}
 
+    capture = ExchangeCaptureService(None, cache, SystemClock())
     logged_entries = []
     for question_text in _ordered_question_texts(answers, questions):
         answer_text = answers.get(question_text, "")
-        result = append_submission_to_raw_input_log(
-            project_id=project_id,
-            session_id=session_id,
-            submission_text=answer_text,
-            prior_assistant_output_text=f"[AskUserQuestion] {question_text}",
-        )
-        logged_entries.append((result["raw_input_id"], question_text, answer_text))
+        local_id = capture.capture_question_answer(session_id, question_text, answer_text)
+        logged_entries.append((local_id, question_text, answer_text))
 
     context_lines = [
-        f"source-of-truth: captured {len(logged_entries)} AskUserQuestion answer(s) "
-        f"as raw_input_id(s). Each is an explicit user decision -- file it under "
-        f"pending-instructions (or the fitting group) via "
-        f"submit-change-set --add <raw_input_id> --parent <parent> --title \"<topic>\":"
+        f"planning: saved {len(logged_entries)} AskUserQuestion answer(s) locally. Each is an explicit user "
+        f"decision; to quote one, run `planning cite-exchange <id>` and cite the returned reference:"
     ]
-    for raw_input_id, question_text, answer_text in logged_entries:
-        context_lines.append(
-            f"  raw_input_id {raw_input_id}: Q={question_text!r} A={answer_text!r}"
-        )
-
-    print(json.dumps({"hookSpecificOutput": {
+    for local_id, question_text, answer_text in logged_entries:
+        context_lines.append(f"  exchange {local_id}: Q={question_text!r} A={answer_text!r}")
+    return {"hookSpecificOutput": {
         "hookEventName": "PostToolUse",
         "additionalContext": "\n".join(context_lines),
-    }}))
+    }}
+
+
+def _main(stdin=None, stdout=None, cache: "LocalExchangeCachePort | None" = None) -> int:
+    stdin, stdout = stdin or sys.stdin, stdout or sys.stdout
+    try:
+        raw_stdin_text = stdin.read()
+        hook_input = json.loads(raw_stdin_text) if raw_stdin_text else {}
+        output = handle_post_tool_use(
+            hook_input, cache or JsonlExchangeCache(ClientPaths.from_environment().exchange_cache_file))
+    except Exception:
+        output = {}
+    print(json.dumps(output), file=stdout)
     return 0
 
+
+main = _main
 
 if __name__ == "__main__":
     sys.exit(_main())

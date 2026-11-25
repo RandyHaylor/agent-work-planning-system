@@ -16,7 +16,7 @@ BASE_URL = "https://127.0.0.1:8443"
 
 IMPLEMENTATIONS = [
     pytest.param(FakePlanningApiClient, id="fake"),
-    pytest.param(PlanningApiClient, id="real", marks=pytest.mark.xfail(strict=False, reason="level 7")),
+    pytest.param(PlanningApiClient, id="real"),
 ]
 
 

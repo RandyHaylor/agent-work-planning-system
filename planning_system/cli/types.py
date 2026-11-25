@@ -42,6 +42,7 @@ class CommandSpec:
     arguments: tuple[Arg, ...] = ()
     fixed: Mapping[str, Any] = field(default_factory=dict)
     mapper: Optional[str] = None
+    after: Optional[str] = None           # names a local step run on the result (e.g. store the quote key)
     authenticated: bool = True
     help: str = ""
 
@@ -54,3 +55,4 @@ class CliDependencies:
     admin_login_factory: Callable[[PlanningApiClientInterface], AdminLoginInterface]
     settings_from_environment: Callable[[Mapping[str, str]], ClientSettings]
     launch_guidance_editor: Callable[[], None]
+    store_quote_key: Callable[[str], None] = lambda token: None   # client_credentials (spec: "stored by client_credentials")

@@ -17,7 +17,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
         Arg("--role", "role", required=True), Arg("--project", "project_id", "int", required=True),
         Arg("--scope", "scope_node_id", "int"), Arg("--agent", "agent_id", required=True))),
     CommandSpec(("credentials", "quote-key"), TARGET_API, "mint_quote_key",
-                (Arg("--label", "install_label", required=True),)),
+                (Arg("--label", "install_label", required=True),), after="store_quote_key"),
     CommandSpec(("credentials", "revoke"), TARGET_API, "revoke_credential", (Arg("id", "credential_id", "int"),)),
     CommandSpec(("credentials", "rotate"), TARGET_API, "rotate_credential", (Arg("id", "credential_id", "int"),)),
     CommandSpec(("agents", "register"), TARGET_API, "register_agent", (

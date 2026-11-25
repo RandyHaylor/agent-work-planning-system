@@ -18,9 +18,11 @@ import json
 import os
 import queue
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 from ..ai_cli_adapter_interface import (
@@ -119,10 +121,11 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
             return final_text
         return None
 
-    def send_prompt_and_await_response(self, prompt_text: str) -> str:
-        command = [
-            "claude", "-p",
-            "--model", self._reviewer_model_name,
+    def _build_command(self) -> list[str]:
+        command = ["claude", "-p"]
+        if self._reviewer_model_name:
+            command += ["--model", self._reviewer_model_name]
+        command += [
             "--output-format", "stream-json",
             "--include-partial-messages",
             "--verbose",  # required by stream-json per claude CLI
@@ -138,6 +141,10 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
         # We therefore pass the prompt via stdin instead of as a positional arg.
         for read_path in self._allowed_read_paths:
             command += ["--add-dir", read_path]
+        return command
+
+    def send_prompt_and_await_response(self, prompt_text: str) -> str:
+        command = self._build_command()
 
         self._emit_streamed_event(
             "SUBPROCESS_LAUNCH",
@@ -268,10 +275,12 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
 
 
 class ClaudeCodeAdapter(AiCliAdapterInterface):
-    def __init__(self, current_session_id: str | None = None) -> None:
+    def __init__(self, current_session_id: str | None = None,
+                 session_logs_directory: "Path | None" = None) -> None:
         self._current_session_id = current_session_id or os.environ.get(
             "CLAUDE_SESSION_ID", "unknown-session"
         )
+        self._session_logs_directory = Path(session_logs_directory or tempfile.gettempdir())
 
     def get_current_session_id(self) -> str:
         return self._current_session_id
@@ -306,16 +315,11 @@ class ClaudeCodeAdapter(AiCliAdapterInterface):
             reviewer_model_name=reviewer_model_name,
             streaming_event_appender=streaming_event_appender,
         )
-        priming_payload = (
-            "You are the source-of-truth REVIEWER agent.\n"
-            f"Allowed read paths: {allowed_read_paths}\n"
-            "On every change-set prompt, reply with EXACTLY one JSON object: "
-            '{"ops": [{"index": <int>, "approved": <bool>, "reason": "<=15 words"}, ...], '
-            '"message": "<=20 words overall"}. '
-            "There must be one entry in `ops` per operation in the change-set. "
-            "Nothing before/after the JSON; no markdown fences.\n\n"
-            f"Priming context:\n{priming_prompt_text}"
-        )
+        # Planning system: the reviewer answers free-form questions (05-spec-review-dispatch.md), so the
+        # caller's priming text is sent as-is (SoT's JSON change-set verdict format is dropped).
+        priming_payload = priming_prompt_text
+        if allowed_read_paths:
+            priming_payload += f"\nAllowed read paths: {allowed_read_paths}"
         handle.send_prompt_and_await_response(priming_payload)
         return handle
 
@@ -323,5 +327,8 @@ class ClaudeCodeAdapter(AiCliAdapterInterface):
         self, spec: HeadlessSessionSpec
     ) -> PersistentReviewerSessionHandle:
         """Planning system addition: a `claude -p` session handle (stream-json, --session-id then --resume,
-        prompt on stdin) running in spec.working_directory with spec.environment. Level 7."""
-        raise NotImplementedError("level 7")
+        prompt on stdin) running in spec.working_directory with spec.environment. The claude process is
+        detached and writes to a log file, so it outlives the `planning` command that started it."""
+        from .headless_session_handle import ClaudeCodeHeadlessSessionHandle
+
+        return ClaudeCodeHeadlessSessionHandle(spec, self._session_logs_directory)
