@@ -16,10 +16,12 @@ from .types import CONTEXT_EXHAUSTION_RESPONSE_MARKERS, REVIEWER_ALLOWED_TOOL_NA
 class ReviewWorker(ReviewWorkerInterface):
 
     def __init__(self, adapter: AiCliAdapterInterface, reviewer_model_name: str = "sonnet",
-                 thinking_log_path: Optional[Path] = None):
+                 thinking_log_path: Optional[Path] = None,
+                 allowed_tool_names: Sequence[str] = tuple(REVIEWER_ALLOWED_TOOL_NAMES)):
         self._adapter = adapter
         self._reviewer_model_name = reviewer_model_name
         self._thinking_log_path = thinking_log_path
+        self._allowed_tool_names = list(allowed_tool_names)
         self._current_handle: Optional[PersistentReviewerSessionHandle] = None
 
     def ask(self, question: str, context_paths: Sequence[Path] = ()) -> str:
@@ -44,7 +46,7 @@ class ReviewWorker(ReviewWorkerInterface):
         self._current_handle = self._adapter.spawn_persistent_reviewer_session(
             priming_prompt_text=REVIEWER_PRIMING_PROMPT,
             allowed_read_paths=[],
-            allowed_tool_names=REVIEWER_ALLOWED_TOOL_NAMES,
+            allowed_tool_names=self._allowed_tool_names,
             reviewer_model_name=self._reviewer_model_name,
             streaming_event_appender=streaming_event_appender,
         )
