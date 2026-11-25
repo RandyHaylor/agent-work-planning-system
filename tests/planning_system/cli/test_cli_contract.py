@@ -17,7 +17,6 @@ from planning_system.contract import Forbidden, Invalid, NotFound
 from planning_system.local_client.fakes import RecordingLocalClient
 from planning_system.local_client.task_runner import TaskStartRequest
 
-XFAIL_REAL = pytest.mark.xfail(strict=False, reason="level 7")
 ENV = {"PLANNING_TOKEN": "tok", "PLANNING_URL": "https://127.0.0.1:8443"}
 
 
@@ -48,7 +47,7 @@ class Harness:
 
 
 @pytest.fixture(params=[pytest.param(FakeCommandLine, id="fake"),
-                        pytest.param(PlanningCommandLine, id="real", marks=XFAIL_REAL)])
+                        pytest.param(PlanningCommandLine, id="real")])
 def command_line_class(request):
     return request.param
 

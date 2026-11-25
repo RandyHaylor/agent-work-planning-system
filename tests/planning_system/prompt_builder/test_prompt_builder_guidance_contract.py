@@ -18,7 +18,6 @@ from planning_system.prompt_builder.guidance_editor import GuidanceEditor
 from planning_system.prompt_builder.role_guidance import GuidanceComposer, RolePresetMap, SessionInjections
 from planning_system.server.http_api.dependencies import current_principal
 
-LEVEL_7 = pytest.mark.xfail(strict=False, reason="level 7")
 ROLE_PRESETS = json.loads((SHIPPED_DATA_FOLDER / "role-presets.json").read_text())["rolePresets"]
 INJECTIONS = json.loads((SHIPPED_DATA_FOLDER / "session-injections.json").read_text())["injections"]
 
@@ -32,9 +31,9 @@ def make_real_service(folder):
 
 
 SERVICES = [pytest.param(make_fake_service, id="fake"),
-            pytest.param(make_real_service, id="real", marks=LEVEL_7)]
+            pytest.param(make_real_service, id="real")]
 EDITORS = [pytest.param(FakeGuidanceEditor, id="fake"),
-           pytest.param(GuidanceEditor, id="real", marks=LEVEL_7)]
+           pytest.param(GuidanceEditor, id="real")]
 
 
 @pytest.fixture
@@ -101,7 +100,6 @@ def test_5_user_preset_mapped_to_role_is_served_without_restart(preset_folder):
     assert service.guidance_for("worker").text == "my own rules"
 
 
-@pytest.mark.xfail(strict=False, reason="level 7")
 def test_5_real_user_preset_mapped_to_role_is_served_without_restart(preset_folder, tmp_path):
     role_map_file = tmp_path / "role-presets.json"
     role_map_file.write_text(json.dumps({"rolePresets": {"worker": "Mine"}}))
