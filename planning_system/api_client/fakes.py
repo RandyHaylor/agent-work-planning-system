@@ -52,6 +52,8 @@ class FakePlanningServer:
         self.references: dict[int, dict] = {}
         self.agents: dict[str, dict] = {}
         self.credentials: dict[int, dict] = {}
+        self.reviews: dict[str, dict] = {}
+        self.review_packets: dict[str, dict] = {}
         self._fail_next: Optional[tuple[int, Any]] = None
         self._routes = self._build_routes()
 
@@ -71,6 +73,25 @@ class FakePlanningServer:
 
     def seed_project(self, title: str = "Project") -> dict:
         return self._new_node(None, title, "what we're doing", "summary", [], None)
+
+    def seed_review(self, project_id: int, node_id: int, claim_text: str = "The user wants X [ref-1:1-1].",
+                    claim_tag: str = "requirement", citations: Optional[list] = None,
+                    node_title: str = "Node", node_context_summary: str = "summary") -> dict:
+        """Opens a pending review record (what the server does on an accepted content write)."""
+        review_id = f"rev-{next(self._ids)}"
+        content_reference_id = f"ref-{next(self._ids)}"
+        self.reviews[review_id] = {
+            "id": review_id, "project_id": project_id, "node_id": node_id,
+            "content_reference_id": content_reference_id, "claim_tag": claim_tag, "status": "pending",
+            "reviewer": None, "taken_at": None, "reason": "", "suggested_title": None,
+            "created_at": f"2026-11-25T00:00:{len(self.reviews):02d}+00:00", "decided_at": None}
+        self.review_packets[review_id] = {
+            "review_id": review_id, "node_title": node_title, "node_context_summary": node_context_summary,
+            "claim_tag": claim_tag, "claim_text": claim_text,
+            "citations": citations if citations is not None else [{
+                "citation": "[ref-1:1-1]", "origin": "user_exchange", "quoted_text": "I want X.",
+                "pre_text": "Agent: what do you want?", "full_text": "I want X."}]}
+        return self.reviews[review_id]
 
     # ---- request handling
     def handle(self, request: httpx.Request) -> httpx.Response:
@@ -93,6 +114,8 @@ class FakePlanningServer:
                     return httpx.Response(404, json={"detail": "not found"})
                 except _Status as status:
                     return httpx.Response(status.code, json={"detail": status.detail})
+                if result is NO_CONTENT:
+                    return httpx.Response(204)
                 return httpx.Response(200, json=result)
         return httpx.Response(404, json={"detail": "no such route"})
 
@@ -157,6 +180,11 @@ class FakePlanningServer:
             ("GET", f"/references/{n}/lines", True, lambda p, b, q, i: {"id": int(i), "lines": []}),
             ("POST", "/references/render", True, lambda p, b, q: {"citation": b["citation"], "text": ""}),
             ("POST", "/references/user-exchange", True, self._user_exchange),
+            ("GET", "/reviews", True, self._list_reviews),
+            ("POST", "/reviews/take", True, self._take_review),
+            ("GET", f"/reviews/{rid}", True, lambda p, b, q, i: self.reviews[i]),
+            ("POST", f"/reviews/{rid}/verdict", True, self._submit_verdict),
+            ("POST", f"/reviews/{rid}/release", True, self._release_review),
             ("GET", "/guidance/templates", True, lambda p, b, q: ["Planner", "Worker"]),
             ("GET", "/guidance/rules", True, lambda p, b, q: []),
             ("GET", f"/guidance/{rid}", True, lambda p, b, q, role: {
@@ -238,6 +266,44 @@ class FakePlanningServer:
         reference_id = next(self._ids)
         self.references[reference_id] = {"id": reference_id, "hash": digest, **body}
         return {"reference_id": reference_id}
+
+
+    # ---- content reviews (05-spec-citation-enforcement-and-review.md; no permission checks in the fake)
+    def _list_reviews(self, principal, body, query):
+        return [r for r in self.reviews.values()
+                if r["project_id"] == int(query["project_id"])
+                and query.get("status") in (None, r["status"])
+                and (query.get("node_id") is None or r["node_id"] == int(query["node_id"]))]
+
+    def _take_review(self, principal, body, query):
+        pending = sorted((r for r in self.reviews.values()
+                          if r["project_id"] == int(body["project_id"]) and r["status"] == "pending"),
+                         key=lambda r: r["created_at"])
+        if not pending:
+            return NO_CONTENT
+        record = pending[0]
+        record.update(status="taken", reviewer=principal.get("agent_id"), taken_at="2026-11-25T01:00:00+00:00")
+        return self.review_packets[record["id"]]
+
+    def _held(self, principal, review_id) -> dict:
+        record = self.reviews[review_id]
+        if record["status"] != "taken" or record["reviewer"] != principal.get("agent_id"):
+            raise _Status(409, "not the holder of a taken review")
+        return record
+
+    def _submit_verdict(self, principal, body, query, review_id):
+        record = self._held(principal, review_id)
+        record.update(status="passed" if body["passed"] else "failed", reason=body["reason"],
+                      suggested_title=body.get("suggested_title"), decided_at="2026-11-25T02:00:00+00:00")
+        return record
+
+    def _release_review(self, principal, body, query, review_id):
+        record = self._held(principal, review_id)
+        record.update(status="pending", reviewer=None, taken_at=None)
+        return record
+
+
+NO_CONTENT = object()
 
 
 class _Status(Exception):
@@ -397,6 +463,22 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def store_user_exchange(self, session_id, user_message, pre_text):
         return self._call("POST", "/references/user-exchange",
                           {"session_id": session_id, "user_message": user_message, "pre_text": pre_text})
+
+    def list_reviews(self, project_id, status=None, node_id=None):
+        return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})
+
+    def get_review(self, review_id):
+        return self._call("GET", f"/reviews/{review_id}")
+
+    def take_review(self, project_id):
+        return self._call("POST", "/reviews/take", {"project_id": project_id}) or None
+
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None):
+        return self._call("POST", f"/reviews/{review_id}/verdict",
+                          {"passed": passed, "reason": reason, "suggested_title": suggested_title})
+
+    def release_review(self, review_id):
+        return self._call("POST", f"/reviews/{review_id}/release")
 
     def guidance(self, role):
         return self._call("GET", f"/guidance/{role}")

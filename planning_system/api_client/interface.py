@@ -137,6 +137,25 @@ class PlanningApiClientInterface(ABC):
     def store_user_exchange(self, session_id: str, user_message: str, pre_text: str) -> dict:
         """POST /references/user-exchange (quote key only)."""
 
+    # content reviews (05-spec-citation-enforcement-and-review.md "Routes")
+    @abstractmethod
+    def list_reviews(self, project_id: int, status: Optional[str] = None,
+                     node_id: Optional[int] = None) -> list: ...       # GET /reviews?project_id=&status=&node_id=
+
+    @abstractmethod
+    def get_review(self, review_id: str) -> dict: ...                  # GET /reviews/{id}
+
+    @abstractmethod
+    def take_review(self, project_id: int) -> Optional[dict]:
+        """POST /reviews/take: the review packet, or None when nothing is pending (204)."""
+
+    @abstractmethod
+    def submit_review_verdict(self, review_id: str, passed: bool, reason: str,
+                              suggested_title: Optional[str] = None) -> dict: ...  # POST /reviews/{id}/verdict
+
+    @abstractmethod
+    def release_review(self, review_id: str) -> dict: ...              # POST /reviews/{id}/release
+
     # guidance
     @abstractmethod
     def guidance(self, role: str) -> dict: ...                         # GET /guidance/{role}
