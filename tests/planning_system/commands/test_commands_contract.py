@@ -21,7 +21,6 @@ from planning_system.server.commands.fakes import (FakeRequestAuthorizer, FixedS
 from planning_system.server.commands.request_authorizer import RequestAuthorizer
 from planning_system.server.storage.fakes import InMemoryStorage
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 REPO = Path(__file__).resolve().parents[3]
 ADMIN = Principal(None, "admin")
 
@@ -133,7 +132,7 @@ def test_command_validation_happens_at_construction():
 
 # ---- authorizer (6-9)
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def authorizer(request):
     return FakeRequestAuthorizer() if request.param == "fake" else RequestAuthorizer()
 
@@ -204,9 +203,8 @@ def test_planner_bounded_to_its_project(authorizer, world):
         check(authorizer, world, world["worker"], C.AssignTask(world["task"].id, "a", "b"))
 
 
-# ---- command bodies (hollow until level 7)
+# ---- command bodies
 
-@LEVEL7
 def test_5_assign_task_assigns_and_mints_in_the_same_transaction(world):
     s = world["s"]
     r, storage = runner(FakeRequestAuthorizer(), s)
@@ -216,7 +214,6 @@ def test_5_assign_task_assigns_and_mints_in_the_same_transaction(world):
     assert [t.mode for t in storage.transactions.records] == ["read_write"]
 
 
-@LEVEL7
 def test_6b_supplementary_inserts_before_the_workers_task(world):
     s = world["s"]
     r, _ = runner(FakeRequestAuthorizer(), s)
@@ -224,7 +221,6 @@ def test_6b_supplementary_inserts_before_the_workers_task(world):
     assert new.id in s.tree.get(world["task"].id).depends_on
 
 
-@LEVEL7
 @pytest.mark.parametrize("command,principal", [
     (C.GetCurrentPrincipal(), ADMIN),
     (C.StartAdminSession("admin-pw"), None),

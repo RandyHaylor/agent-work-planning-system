@@ -2,15 +2,15 @@
 builds a command, runs it through the CommandRunner and returns JSON. No domain call, no SQL."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from planning_system.contract import Principal
 from planning_system.server import commands as C
-from planning_system.server.http_api.credential_dependency import bearer_token
 from planning_system.server.http_api.dependencies import command_runner, current_principal
+from planning_system.server.http_api import response_shapes as shapes
 from planning_system.server.http_api.json_encoding import to_json
 
 router = APIRouter(tags=["core"])
@@ -99,8 +99,8 @@ class ReplaceContentBody(BaseModel):
     text: str
 
 
-def _run(runner, command, principal: Optional[Principal]) -> Any:
-    return to_json(runner.run(command, principal))
+def _run(runner, command, principal: Optional[Principal], shape: Callable[[Any], Any] = to_json) -> Any:
+    return to_json(shape(runner.run(command, principal)))
 
 
 # ---- auth / identity
@@ -111,8 +111,8 @@ def start_admin_session(body: PasswordBody, runner=Runner):
 
 
 @router.delete("/admin/sessions")
-def end_admin_session(principal: Principal = Who, token: str = Depends(bearer_token), runner=Runner):
-    return _run(runner, C.EndAdminSession(token), principal)
+def end_admin_session(principal: Principal = Who, runner=Runner):
+    return _run(runner, C.EndAdminSession(), principal, shapes.ended)
 
 
 @router.get("/me")
@@ -133,12 +133,12 @@ def mint_quote_key(body: QuoteKeyBody, principal: Principal = Who, runner=Runner
 
 @router.post("/credentials/{credential_id}/revoke")
 def revoke_credential(credential_id: str, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.RevokeCredential(credential_id), principal)
+    return _run(runner, C.RevokeCredential(credential_id), principal, shapes.revoked(credential_id))
 
 
 @router.post("/credentials/{credential_id}/rotate")
 def rotate_credential(credential_id: str, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.RotateCredential(credential_id), principal)
+    return _run(runner, C.RotateCredential(credential_id), principal, shapes.rotated)
 
 
 @router.post("/agents")
@@ -216,15 +216,17 @@ def create_supplementary_task(node_id: int, body: SupplementaryBody, principal: 
 
 @router.post("/nodes/{node_id}/content")
 def add_node_content(node_id: int, body: ContentBody, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.AddNodeContent(node_id, body.text, tuple(body.tags)), principal)
+    return _run(runner, C.AddNodeContent(node_id, body.text, tuple(body.tags)), principal,
+                shapes.node_content(node_id, body.text))
 
 
 @router.put("/nodes/{node_id}/content/{reference_id}")
 def replace_node_content(node_id: int, reference_id: str, body: ReplaceContentBody,
                          principal: Principal = Who, runner=Runner):
-    return _run(runner, C.ReplaceNodeContent(node_id, reference_id, body.text), principal)
+    return _run(runner, C.ReplaceNodeContent(node_id, reference_id, body.text), principal,
+                shapes.node_content(node_id, body.text))
 
 
 @router.get("/nodes/{node_id}/context")
 def assemble_node_context(node_id: int, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.AssembleNodeContext(node_id), principal)
+    return _run(runner, C.AssembleNodeContext(node_id), principal, shapes.assembled_context)

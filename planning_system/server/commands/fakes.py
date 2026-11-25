@@ -23,7 +23,11 @@ from planning_system.server.domain.project_tree.fakes import FakeProjectTree, Ti
 from planning_system.server.domain.references.fakes import FakeClock as ReferenceClock
 from planning_system.server.domain.references.fakes import FakeReferenceLibrary, FakeTempCache
 from planning_system.server.domain.task_assignment.fakes import FakeTaskAssigner
+from planning_system.server.domain.references.ingestion import Ingestion
+from planning_system.server.domain.references.reader_service import ReaderService
 from planning_system.server.storage.fakes import in_memory_stores
+from planning_system.fastreader.cli import DEFAULT_CONFIG_PATH as SCANNER_CONFIG_PATH
+from planning_system.fastreader.scanner import load_config
 
 from . import permissions as P
 from .command_runner import CommandRunnerInterface
@@ -38,11 +42,13 @@ def fake_services(stores=None) -> Services:
     tree = FakeProjectTree(stores.tree, references, TickingClock())
     auth = FakeAuthentication(stores.credentials, policy, AuthClock())
     agents = FakeAgentRegistry(stores.agent_registry, RegistryClock())
-    return Services(tree=tree, references=references,
-                    temp_cache=FakeTempCache(stores.temp_cache, stores.references, ReferenceClock()),
+    temp_cache = FakeTempCache(stores.temp_cache, stores.references, ReferenceClock())
+    reader = ReaderService(temp_cache, references, Ingestion(stores.references, temp_cache=temp_cache),
+                           load_config(SCANNER_CONFIG_PATH))
+    return Services(tree=tree, references=references, temp_cache=temp_cache,
                     context=FakeContextAssembler(tree, references), agents=agents, issuer=auth,
                     admin_sessions=auth, policy=policy,
-                    task_assigner=FakeTaskAssigner(tree, auth, agents))
+                    task_assigner=FakeTaskAssigner(tree, auth, agents), reader=reader)
 
 
 class FixedServicesFactory(ServicesFactory):

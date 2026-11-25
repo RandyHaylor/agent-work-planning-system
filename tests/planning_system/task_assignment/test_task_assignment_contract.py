@@ -7,7 +7,6 @@ from planning_system.server.commands.fakes import fake_services
 from planning_system.server.domain.task_assignment.fakes import FakeTaskAssigner
 from planning_system.server.domain.task_assignment.task_assigner import TaskAssignerService
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 
 
 class FailingIssuer:
@@ -18,7 +17,7 @@ class FailingIssuer:
         raise Forbidden("mint failed")
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def world(request):
     services = fake_services()
     cls = FakeTaskAssigner if request.param == "fake" else TaskAssignerService

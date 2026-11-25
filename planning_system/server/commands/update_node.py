@@ -6,7 +6,7 @@ from typing import Any, Mapping, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanEditNode, Permission
 
 
@@ -19,4 +19,4 @@ class UpdateNode(WriteCommand):
         return CanEditNode(self.node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.update(self.node_id, **self.fields)

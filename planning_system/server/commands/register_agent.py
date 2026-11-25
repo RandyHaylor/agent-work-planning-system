@@ -6,7 +6,7 @@ from typing import Any, Mapping, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import Authenticated, Permission
 
 
@@ -19,4 +19,4 @@ class RegisterAgent(WriteCommand):
         return Authenticated()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.agents.register(self.agent_id, **self.metadata)

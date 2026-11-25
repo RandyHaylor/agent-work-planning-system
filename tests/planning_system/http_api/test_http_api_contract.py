@@ -22,6 +22,9 @@ from planning_system.server.commands.fakes import RecordingCommandRunner
 from planning_system.server.domain.access.fakes import TablePermissionPolicy
 from planning_system.server.domain.authentication.fakes import (FakeAuthentication, FakeClock,
                                                                 InMemoryCredentialStorage)
+from planning_system.server.domain.authentication.types import IssuedCredential
+from planning_system.server.domain.context_assembly.types import AssembledContext
+from planning_system.server.domain.references.types import Citation, Reference
 from planning_system.server.http_api import create_app, serve
 from planning_system.server.http_api.tls import ensure_self_signed_cert
 
@@ -43,10 +46,19 @@ class StubGuidance(GuidanceService):
         return []
 
 
+SAMPLE_RESULTS = {
+    C.RotateCredential: IssuedCredential("tok", "cred-1", Principal("a", "worker")),
+    C.AssembleNodeContext: AssembledContext(5, "text", (1, 5)),
+    C.CiteCacheItem: Citation("tmp-1", 1, 2),
+    C.RenderCitation: "line",
+    C.StoreUserExchange: Reference("ref-1", "user_exchange", "m", "sha"),
+}
+
+
 @pytest.fixture
 def server():
     auth = FakeAuthentication(InMemoryCredentialStorage(), TablePermissionPolicy(), FakeClock())
-    runner = RecordingCommandRunner(result={"ok": True})
+    runner = RecordingCommandRunner(respond=lambda command, _: SAMPLE_RESULTS.get(type(command), {"ok": True}))
     app = create_app(ConfigSection("http_api", {"routers": ROUTERS}), runner, auth,
                      {guidance_routes.guidance_service: StubGuidance})
     admin = auth.start("admin-pw")
@@ -57,7 +69,7 @@ def server():
 
 # (method, concrete path, json body, query params, expected command)
 CASES = [
-    ("DELETE", "/admin/sessions", None, None, C.EndAdminSession("TOKEN")),
+    ("DELETE", "/admin/sessions", None, None, C.EndAdminSession()),
     ("GET", "/me", None, None, C.GetCurrentPrincipal()),
     ("POST", "/credentials", {"role": "worker", "project_id": 1, "scope_node_id": 2, "agent_id": "a"}, None,
      C.MintCredential("worker", 1, 2, "a")),
@@ -107,10 +119,9 @@ def test_1_every_route_hands_its_command_and_principal_to_the_runner(server):
         response = client.request(method, path, json=body, params=params)
         assert response.status_code == 200, (path, response.text)
         command, principal = runner.last
-        if isinstance(expected, C.EndAdminSession):
-            expected = C.EndAdminSession(admin.token)
         assert command == expected, path
         assert principal == admin.principal
+        assert principal.credential_id == admin.credential_id
         covered.add(type(command))
     response = client.post("/admin/sessions", json={"password": "pw"}, headers={"Authorization": ""})
     assert response.status_code == 200 and runner.last == (C.StartAdminSession("pw"), None)

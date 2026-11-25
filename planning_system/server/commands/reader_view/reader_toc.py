@@ -1,5 +1,5 @@
 """GET /reader/{id}/toc: fastReader toc of the item.
-Resolves the id through ReadableTextResolver (temp cache id or reference id), then one view."""
+The id (temp cache id or reference id) is resolved by the Reader's cache adapter."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from..command import ReadCommand, hollow
+from ..command import ReadCommand
 from ..permissions import CanReadReaderItems, Permission
 
 
@@ -19,4 +19,4 @@ class ReaderToc(ReadCommand):
         return CanReadReaderItems((self.reader_id,))
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.reader.toc(principal, self.reader_id)

@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanSubmitUserQuote, Permission
 
 
@@ -20,4 +20,4 @@ class StoreUserExchange(WriteCommand):
         return CanSubmitUserQuote()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.references.store_user_exchange(self.session_id, self.user_message, self.pre_text)

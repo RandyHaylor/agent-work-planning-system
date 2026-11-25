@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from planning_system.contract import Principal
+from planning_system.server.domain.access.types import CredentialScope
 
 from .types import CredentialId, IssuedCredential
 
@@ -28,6 +29,11 @@ class CredentialIssuer(ABC):
     @abstractmethod
     def revoke(self, issuer: Principal, credential_id: CredentialId) -> None:
         """Cascades to credentials minted beneath."""
+
+    @abstractmethod
+    def credential_scope(self, credential_id: CredentialId) -> CredentialScope:
+        """The scope (role, project, node) of a stored credential; NotFound if unknown. Lets the
+        request authorizer check revoke/rotate before running (build log #40)."""
 
 
 class AdminSessions(ABC):

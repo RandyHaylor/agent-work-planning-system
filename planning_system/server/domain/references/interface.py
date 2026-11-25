@@ -36,6 +36,36 @@ class ReferenceLibrary(ABC):
     def supersede(self, old_id: ReferenceId, new_id: ReferenceId) -> None: ...
 
 
+class Reader(ABC):
+    """The reader's commands (fastReader + quick-json-reader) for one acting principal, over its temp
+    cache and the references it may read (build log #40: the Reader service in Services). Ids are
+    temp cache ids or reference ids. Results are the reader views as JSON-able dicts."""
+
+    @abstractmethod
+    def load(self, principal, source, strategy: Optional[str] = None, line_start: Optional[int] = None,
+             line_count: Optional[int] = None) -> list:
+        """Fetch live -> extract -> the principal's temp cache. [{cache_id, toc, strategy_used, metadata, ...}]"""
+
+    @abstractmethod
+    def toc(self, principal, item_id: str) -> dict: ...
+
+    @abstractmethod
+    def get(self, principal, item_id: str, params: Mapping[str, object]) -> dict: ...
+
+    @abstractmethod
+    def search(self, principal, terms: str, item_ids, options: Mapping[str, object]) -> dict: ...
+
+    @abstractmethod
+    def json(self, principal, item_id: str, flags) -> dict: ...
+
+    @abstractmethod
+    def lines(self, principal, item_id: str, start: Optional[int], end: Optional[int]) -> dict: ...
+
+    @abstractmethod
+    def cite(self, principal, item_id: str, start_line: int, end_line: int) -> Citation:
+        """Moves a temp item into references keeping its id; a reference id is just cited."""
+
+
 class TempCache(ABC):
     """temp_cache_lifecycle: per-agent temp cache; cite moves an item into references; TTL purge."""
 

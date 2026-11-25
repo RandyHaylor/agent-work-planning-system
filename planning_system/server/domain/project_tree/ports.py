@@ -38,6 +38,11 @@ class TreeStoragePort(ABC):
     @abstractmethod
     def content(self, node_id: NodeId) -> list[NodeContent]: ...
 
+    def all_nodes(self) -> list[Node]:
+        """Every node (build log #40, for the citing-nodes lookup). Default walks each project's
+        subtree; a store may override it with one query."""
+        return [node for project in self.children(None) for node in self.subtree(project.id)]
+
 
 class Clock(ABC):
     @abstractmethod

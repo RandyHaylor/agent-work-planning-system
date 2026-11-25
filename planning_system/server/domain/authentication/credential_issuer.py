@@ -46,6 +46,9 @@ class CredentialIssuerService(CredentialIssuer):
             raise Forbidden("may not revoke this credential")
         self._revoke_with_descendants(stored)
 
+    def credential_scope(self, credential_id):
+        return _scope_of(self._require(credential_id))
+
     def _require(self, credential_id):
         stored = self._storage.get(credential_id)
         if stored is None:

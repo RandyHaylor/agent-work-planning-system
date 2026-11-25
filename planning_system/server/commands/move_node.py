@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanMoveNode, Permission
 
 
@@ -20,4 +20,4 @@ class MoveNode(WriteCommand):
         return CanMoveNode(self.node_id, self.new_parent_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.move(self.node_id, self.new_parent_id, self.position)

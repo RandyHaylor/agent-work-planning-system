@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import RoleIs, Permission
 
 
@@ -18,4 +18,4 @@ class MintQuoteKey(WriteCommand):
         return RoleIs(("admin",))
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.issuer.mint_quote_key(principal, self.install_label)

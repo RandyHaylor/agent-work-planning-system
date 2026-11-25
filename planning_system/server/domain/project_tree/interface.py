@@ -26,6 +26,10 @@ class ProjectTree(ABC):
         """Not done/abandoned, and everything in depends_on is done (abandoned ones skipped)."""
 
     @abstractmethod
+    def citing_nodes(self, reference_id: ReferenceId) -> list[Node]:
+        """Nodes whose content is that reference or whose content text cites it (build log #40)."""
+
+    @abstractmethod
     def list_nodes(self, project_id: NodeId, state: Optional[str] = None) -> list[Node]:
         """Nodes in a project (the project node included), optionally by state (decision #17)."""
 

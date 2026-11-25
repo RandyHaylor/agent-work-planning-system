@@ -1,4 +1,6 @@
 """credential_authenticator: presented token -> Principal."""
+from dataclasses import replace
+
 from planning_system.contract import Forbidden
 
 from .interface import CredentialAuthenticator
@@ -17,4 +19,4 @@ class CredentialAuthenticatorService(CredentialAuthenticator):
             raise Forbidden("unknown or revoked credential")
         if stored.expires_at is not None and self._clock.now() >= stored.expires_at:
             raise Forbidden("expired credential")
-        return stored.principal
+        return replace(stored.principal, credential_id=stored.credential_id)

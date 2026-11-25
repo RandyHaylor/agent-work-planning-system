@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import NoPrincipalNeeded, Permission
 
 
@@ -18,4 +18,4 @@ class StartAdminSession(WriteCommand):
         return NoPrincipalNeeded()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.admin_sessions.start(self.password)

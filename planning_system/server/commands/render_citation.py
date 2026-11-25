@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Principal
+from planning_system.server.domain.references.citation_format import parse_citation
 
-from.command import ReadCommand, hollow
+from .command import ReadCommand
 from .permissions import CanRenderCitation, Permission
 
 
@@ -18,4 +19,4 @@ class RenderCitation(ReadCommand):
         return CanRenderCitation(self.citation)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.references.render(parse_citation(self.citation))

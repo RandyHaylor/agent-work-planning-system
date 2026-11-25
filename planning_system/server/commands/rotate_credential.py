@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanManageCredential, Permission
 
 
@@ -18,4 +18,4 @@ class RotateCredential(WriteCommand):
         return CanManageCredential(self.credential_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.issuer.rotate(principal, self.credential_id)

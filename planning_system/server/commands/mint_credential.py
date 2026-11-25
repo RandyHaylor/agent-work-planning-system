@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanMint, Permission
 
 
@@ -21,4 +21,5 @@ class MintCredential(WriteCommand):
         return CanMint(self.role, self.project_id, self.scope_node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.issuer.mint(principal, self.role, self.project_id, self.scope_node_id,
+                                    self.agent_id)

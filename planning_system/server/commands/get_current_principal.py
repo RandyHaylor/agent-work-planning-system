@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import ReadCommand, hollow
+from .command import ReadCommand
 from .permissions import Authenticated, Permission
 
 
@@ -18,4 +18,4 @@ class GetCurrentPrincipal(ReadCommand):
         return Authenticated()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return principal

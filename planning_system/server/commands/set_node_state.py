@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanSetState, Permission
 
 
@@ -19,4 +19,4 @@ class SetNodeState(WriteCommand):
         return CanSetState(self.node_id, self.state)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.set_state(self.node_id, self.state)

@@ -2,12 +2,16 @@
 Exactly one source: url, file_name + file_base64, or search_terms."""
 from __future__ import annotations
 
+import base64
+import binascii
 from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
+from planning_system.server.domain.references.source_fetcher_port import (SourceRequest, UploadRequest,
+                                                                          UrlRequest, WebSearchRequest)
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import Authenticated, Permission
 
 
@@ -29,8 +33,20 @@ class LoadIntoReader(WriteCommand):
         if (self.file_name is None) != (self.file_base64 is None):
             raise Invalid("file_name and file_base64 go together")
 
+    def source_request(self) -> SourceRequest:
+        if self.url is not None:
+            return UrlRequest(self.url)
+        if self.search_terms is not None:
+            return WebSearchRequest(self.search_terms)
+        try:
+            data = base64.b64decode(self.file_base64, validate=True)
+        except (binascii.Error, ValueError):
+            raise Invalid("file_base64 is not valid base64") from None
+        return UploadRequest(self.file_name, data)
+
     def required_permission(self) -> Permission:
         return Authenticated()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.reader.load(principal, self.source_request(), self.strategy, self.line_start,
+                                    self.line_count)

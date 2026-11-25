@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanCreateNode, Permission
 
 
@@ -24,4 +24,5 @@ class CreateNode(WriteCommand):
         return CanCreateNode(self.parent_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.create(self.parent_id, self.title, self.level_label, self.context_summary,
+                                    self.labels, self.depends_on, self.position)

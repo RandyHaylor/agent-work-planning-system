@@ -2,7 +2,7 @@
 read the request, build a command, run it through the CommandRunner, return JSON."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from planning_system.contract import Principal
 from planning_system.server import commands as C
 from planning_system.server.http_api.dependencies import command_runner, current_principal
+from planning_system.server.http_api import response_shapes as shapes
 from planning_system.server.http_api.json_encoding import to_json
 
 router = APIRouter(tags=["reader", "references"])
@@ -54,8 +55,8 @@ class UserExchangeBody(BaseModel):
     pre_text: str
 
 
-def _run(runner, command, principal) -> Any:
-    return to_json(runner.run(command, principal))
+def _run(runner, command, principal, shape: Callable[[Any], Any] = to_json) -> Any:
+    return to_json(shape(runner.run(command, principal)))
 
 
 # ---- reader
@@ -72,7 +73,7 @@ def reader_search(body: SearchBody, principal: Principal = Who, runner=Runner):
 
 @router.post("/reader/cite")
 def cite_cache_item(body: CiteBody, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.CiteCacheItem(body.id, body.start_line, body.end_line), principal)
+    return _run(runner, C.CiteCacheItem(body.id, body.start_line, body.end_line), principal, shapes.citation)
 
 
 @router.get("/reader/{reader_id}/toc")
@@ -100,12 +101,13 @@ def reader_lines(reader_id: str, start: Optional[int] = None, end: Optional[int]
 
 @router.post("/references/render")
 def render_citation(body: RenderBody, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.RenderCitation(body.citation), principal)
+    return _run(runner, C.RenderCitation(body.citation), principal, shapes.rendered(body.citation))
 
 
 @router.post("/references/user-exchange")
 def store_user_exchange(body: UserExchangeBody, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.StoreUserExchange(body.session_id, body.user_message, body.pre_text), principal)
+    return _run(runner, C.StoreUserExchange(body.session_id, body.user_message, body.pre_text), principal,
+                shapes.reference_id)
 
 
 @router.get("/references/{reference_id}")

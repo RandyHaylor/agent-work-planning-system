@@ -1,4 +1,5 @@
 """The ProjectTree facade: delegates reads to TreeReader, writes to NodeEditor, content to NodeContentStore."""
+from .citing_nodes import CitingNodesFinder
 from .interface import ProjectTree
 from .node_content import NodeContentStore
 from .node_editor import NodeEditor
@@ -10,6 +11,10 @@ class ProjectTreeService(ProjectTree):
         self._reader = TreeReader(storage)
         self._editor = NodeEditor(storage, clock)
         self._content = NodeContentStore(storage, references)
+        self._citing = CitingNodesFinder(storage, references)
+
+    def citing_nodes(self, reference_id):
+        return self._citing.find(reference_id)
 
     def get(self, node_id):
         return self._reader.get(node_id)

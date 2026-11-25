@@ -82,7 +82,10 @@ class FakeAuthentication(CredentialAuthenticator, CredentialIssuer, AdminSession
             raise Forbidden("unknown or revoked credential")
         if row.expires_at is not None and self._clock.now() >= row.expires_at:
             raise Forbidden("expired credential")
-        return row.principal
+        return dataclasses.replace(row.principal, credential_id=row.credential_id)
+
+    def credential_scope(self, credential_id):
+        return self._scope(self._require(credential_id))
 
     # CredentialIssuer
     def mint(self, issuer, role, project_id, scope_node_id, agent_id):

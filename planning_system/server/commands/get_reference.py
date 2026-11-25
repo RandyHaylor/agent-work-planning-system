@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import ReadCommand, hollow
+from .command import ReadCommand
 from .permissions import CanReadReference, Permission
 
 
@@ -19,4 +19,4 @@ class GetReference(ReadCommand):
         return CanReadReference(self.reference_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.references.get(self.reference_id, self.follow_superseded)

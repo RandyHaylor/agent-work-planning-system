@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
+from planning_system.server.domain.project_tree.types import REQUIREMENT_REQUEST, TECH_SPIKE
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanCreateSupplementaryTask, Permission
 
-SUPPLEMENTARY_KINDS = frozenset({"tech_spike", "requirement_request"})
+KIND_LABELS = {"tech_spike": TECH_SPIKE, "requirement_request": REQUIREMENT_REQUEST}
+SUPPLEMENTARY_KINDS = frozenset(KIND_LABELS)
 
 
 @dataclass(frozen=True)
@@ -28,4 +30,5 @@ class CreateSupplementaryTask(WriteCommand):
         return CanCreateSupplementaryTask(self.node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.insert_before(self.node_id, self.title, (KIND_LABELS[self.kind],),
+                                           self.context_summary)

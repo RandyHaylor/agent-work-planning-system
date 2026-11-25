@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanAddContent, Permission
 
 
@@ -20,4 +20,4 @@ class AddNodeContent(WriteCommand):
         return CanAddContent(self.node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.add_content(self.node_id, self.text, self.tags)

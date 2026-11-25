@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import CanReadReaderItems, Permission
 
 
@@ -20,4 +20,4 @@ class CiteCacheItem(WriteCommand):
         return CanReadReaderItems((self.reader_id,))
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.reader.cite(principal, self.reader_id, self.start_line, self.end_line)

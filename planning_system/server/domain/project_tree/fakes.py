@@ -85,6 +85,10 @@ class FakeProjectTree(ProjectTree):
             chain.append(node)
         return list(reversed(chain))
 
+    def citing_nodes(self, reference_id):
+        from .citing_nodes import CitingNodesFinder
+        return CitingNodesFinder(self._s, self._refs).find(reference_id)
+
     def content(self, node_id):
         self.get(node_id)
         return self._s.content(node_id)

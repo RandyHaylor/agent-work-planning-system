@@ -7,8 +7,10 @@ from typing import Any, Optional
 
 from planning_system.contract import Principal
 
-from.command import WriteCommand, hollow
+from .command import WriteCommand
 from .permissions import RoleIs, Permission
+
+PROJECT_LEVEL = "what we're doing"
 
 
 @dataclass(frozen=True)
@@ -20,4 +22,4 @@ class CreateProject(WriteCommand):
         return RoleIs(("admin",))
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return hollow()
+        return services.tree.create(None, self.title, PROJECT_LEVEL, self.context_summary)
