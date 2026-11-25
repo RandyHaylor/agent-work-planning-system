@@ -10,6 +10,19 @@ The planner starts and stops tasks; for a very large task it spawns a dev manage
 
 Specs: `planning/05-spec-*.md`, module tree v5 in `05-module-specs.md`, decisions there and in `process-levels.md`. Design rules: "Module design" in `process-levels.md` (commandments; never mix levels of detail). Calls made during the build: `BUILD-DECISIONS-LOG.md`.
 
+## Level 7 work packages (parallel; disjoint paths; each turns its xfail "real" tests green)
+
+| Package | Paths | Notes |
+|---|---|---|
+| W1 domain core | server/domain/{access,authentication,agent_registry,project_tree,context_assembly,task_assignment} | Pure code over ports; carry PBKDF2/token hashing from the old server |
+| W2 references + reader | server/domain/references (incl. fastreader adapter, keep one source-fetcher port, log #30), fastreader/ adaptation | Cite moves temp item into references keeping its id |
+| W3 persistence + startup | server/storage (all Postgres stores, Alembic migration), configuration/, server/bootstrap, main.py | Real Postgres tests on a throwaway database |
+| W4 protocol | server/commands, server/http_api, server/composition.py, references/http_routes.py | Every route -> command; error mapping |
+| W5 extraction | document_extraction/, server/adapters/, quick_json_reader/ Python wrapper (+ json-source-map dep) | No network in tests |
+| W6 clients | api_client/, admin_login/, cli/, local_client/ (incl. quote_capture, Claude Code hooks), prompt_builder/ real classes | Hooks write the local cache; only cited exchanges sync |
+
+After merge: lead runs the end-to-end smoke test (BUILD-PLAN "Definition of done") against a live local server and writes `planning/RUNNING.md` (how to start and use it).
+
 ## Package layout (all under `planning_system/`)
 
 ```
