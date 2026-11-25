@@ -6,5 +6,5 @@ Collected during the build instead of stopping (user: "noting any issues to addr
 2. Knowledge bases are deferred out of the first build (log #16).
 3. web_ui, database_backup, Codex adapter: out of the first build (log #7).
 5. Round 4.3 said raw bytes are kept for reference; the first build stores only their hash (log #24).
-6. quick-json-reader line mapping depends on the `json-source-map` package; its license and maintenance must be checked before level 7 uses it.
+6. ~~json-source-map license~~ Resolved (log #31): PyPI classifier Apache Software License; last release 1.0.5 on 2022-12-20 (not actively maintained, small pure-Python library). Used anyway; FYI only.
 4. `process-levels.md` says questions go to a backlog "asked in batches" and also "one at a time"; the guidance uses the existing batch-questions rule that combines both.
