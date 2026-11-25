@@ -1,20 +1,19 @@
 """Contract tests for bootstrap (spec: planning/05-spec-bootstrap.md). Mocked storage, database setup,
-authentication setup and prompt; [fake, real(xfail)] Bootstrapper. The password prompt is carried
+authentication setup and prompt; [fake, real] Bootstrapper; test 6 runs on real Postgres. The password prompt is carried
 code and runs now."""
 import io
 
 import pytest
 
 from planning_system.contract import Invalid
-from planning_system.server.bootstrap import Bootstrapper, TerminalPasswordPrompt
+from planning_system.server.bootstrap import (Bootstrapper, PasswordHashSetup, PostgresDatabaseSetup,
+                                              TerminalPasswordPrompt)
 from planning_system.server.bootstrap.fakes import (FakeBootstrapper, InMemoryAuthenticationSetup,
                                                     RecordingDatabaseSetup, ScriptedPasswordPrompt)
 from planning_system.server.storage.fakes import InMemoryStorage
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 
-
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def make(request):
     cls = FakeBootstrapper if request.param == "fake" else Bootstrapper
 
@@ -89,6 +88,37 @@ def test_4c_interactive_asks_twice_rejects_short_and_mismatch_and_warns():
     assert "SAVE THIS PASSWORD" in text and "at least" in text and "do not match" in text
 
 
-@LEVEL7
 def test_6_real_postgres_bootstrap_then_admin_session():
-    raise AssertionError("level 7: fresh planning_system db, bootstrap, POST /admin/sessions returns a token")
+    """Fresh database on the real container: bootstrap creates and migrates it, stores the hash; the
+    admin session service then accepts the password. (POST /admin/sessions itself is http_api's.)"""
+    from datetime import datetime, timezone
+
+    from planning_system.configuration import ConfigSection
+    from planning_system.server.domain.authentication.admin_session import AdminSessionService
+    from planning_system.server.storage import create_storage
+    from tests.planning_system.postgres_test_database import drop_database, dsn, new_database_url
+
+    class Clock:
+        def now(self):
+            return datetime.now(timezone.utc)
+
+    url = new_database_url()
+    section = ConfigSection("storage", {"dsn": dsn(url)})
+    try:
+        storage = create_storage(section)
+        prompt = ScriptedPasswordPrompt()
+        bootstrapper = Bootstrapper(storage, PostgresDatabaseSetup(section), PasswordHashSetup(), prompt)
+        first = bootstrapper.bootstrap()
+        assert not first.already_bootstrapped and "created database" in first.messages
+        assert bootstrapper.bootstrap().already_bootstrapped and prompt.asked == 1
+        with storage.transactions.read_write() as conn:
+            stores = storage.stores_for(conn)
+            assert stores.tree.children(None) == []          # no root nodes (log #15)
+            issued = AdminSessionService(stores.credentials, Clock()).start(prompt.password)
+            assert issued.token and stores.credentials.get(issued.credential_id) is not None
+        with pytest.raises(Exception):
+            with storage.transactions.read_write() as conn:
+                AdminSessionService(storage.stores_for(conn).credentials, Clock()).start("wrong password!")
+        storage.transactions._engine.dispose()
+    finally:
+        drop_database(url)

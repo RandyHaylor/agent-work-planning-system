@@ -6,6 +6,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from planning_system.contract import Invalid
+
 from .ports import AuthenticationSetup, DatabaseSetup, PasswordPrompt
 
 
@@ -31,7 +33,26 @@ class Bootstrapper(BootstrapperInterface):
         self._authentication, self._prompt = authentication, prompt
 
     def bootstrap(self):
-        raise NotImplementedError("level 7")
+        messages = []
+        if self._database.ensure_database():
+            messages.append("created database")
+        self._database.migrate()
+        messages.append("migrations applied")
+        if self._bootstrapped():
+            return BootstrapResult(True, (*messages, "already bootstrapped; nothing changed"))
+        self._store(self._prompt.ask())
+        return BootstrapResult(False, (*messages, "admin password set"))
 
     def set_admin_password(self):
-        raise NotImplementedError("level 7")
+        if not self._bootstrapped():
+            raise Invalid("not bootstrapped yet: run `planning-server bootstrap` first")
+        self._store(self._prompt.ask("New admin password"))
+        return BootstrapResult(True, ("admin password replaced",))
+
+    def _bootstrapped(self) -> bool:
+        with self._storage.transactions.read_only() as conn:
+            return self._authentication.admin_password_set(self._storage.stores_for(conn))
+
+    def _store(self, password: str) -> None:
+        with self._storage.transactions.read_write() as conn:
+            self._authentication.set_admin_password(self._storage.stores_for(conn), password)

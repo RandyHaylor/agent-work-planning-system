@@ -12,7 +12,7 @@ class PasswordHashSetup(AuthenticationSetup):
         self._hasher = hasher or PasswordHasher()
 
     def admin_password_set(self, stores):
-        raise NotImplementedError("level 7")
+        return stores.credentials.has_admin_password()
 
     def set_admin_password(self, stores, password):
-        raise NotImplementedError("level 7")
+        stores.credentials.set_admin_password_hash(self._hasher.hash(password))

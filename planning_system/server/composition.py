@@ -23,10 +23,12 @@ class ServerComponent:
 
     def bootstrap(self, args: list[str]) -> int:
         """Bootstrapper(storage, PostgresDatabaseSetup, PasswordHashSetup, TerminalPasswordPrompt)."""
-        raise NotImplementedError("level 7")
+        from planning_system.server.bootstrap.commands import bootstrap_command
+        return bootstrap_command(self._section.child("storage"))
 
     def set_admin_password(self, args: list[str]) -> int:
-        raise NotImplementedError("level 7")
+        from planning_system.server.bootstrap.commands import set_admin_password_command
+        return set_admin_password_command(self._section.child("storage"))
 
 
 def create_server(section: ConfigSection) -> ServerComponent:
