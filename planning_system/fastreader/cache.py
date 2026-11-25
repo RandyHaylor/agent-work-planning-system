@@ -3,7 +3,7 @@ import os
 import json
 from dataclasses import asdict
 from typing import Dict, List
-from fastReader.models import Manifest, Marker
+from planning_system.fastreader.models import Manifest, Marker
 
 def generate_hash(content: str) -> str:
     """Generate an 8-char mini-hash (SHA-256 prefix) of the content."""

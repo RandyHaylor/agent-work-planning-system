@@ -3,7 +3,7 @@
 The wrapper's job is to:
   1. Compute PYTHONPATH as the PARENT of its own directory.
   2. Dispatch argv[1] as the subcommand (`load|toc|get|search`).
-  3. Forward the rest of argv verbatim to `python -m fastReader.<subcmd>`.
+  3. Forward the rest of argv verbatim to `python -m planning_system.fastreader.<subcmd>`.
 
 On Windows the parallel `fastReader.bat` is tested manually; skipped here.
 """
@@ -51,13 +51,13 @@ def test_wrapper_rejects_unknown_subcommand_with_exit_code_2():
 def test_wrapper_forwards_toc_help_examples_without_requiring_manifest_arg():
     stdout, _stderr, returncode = run_wrapper_with_args_and_capture_output("toc", "--help-examples")
     assert returncode == 0
-    assert "Copy-paste examples for: fastReader.toc" in stdout
+    assert "Copy-paste examples for: planning_system.fastreader.toc" in stdout
 
 
 def test_wrapper_forwards_search_help_use_cases():
     stdout, _stderr, returncode = run_wrapper_with_args_and_capture_output("search", "--help-use-cases")
     assert returncode == 0
-    assert "Trigger -> command mapping for: fastReader.search" in stdout
+    assert "Trigger -> command mapping for: planning_system.fastreader.search" in stdout
 
 
 def test_wrapper_load_on_tiny_tempfile_returns_count_summary_and_hash():

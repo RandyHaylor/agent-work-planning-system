@@ -2,8 +2,8 @@ import pytest
 import json
 import tempfile
 import os
-from fastReader.scanner import load_config, scan_document
-from fastReader.models import Document, Manifest, Marker
+from planning_system.fastreader.scanner import load_config, scan_document
+from planning_system.fastreader.models import Document, Manifest, Marker
 
 
 class TestLoadConfig:

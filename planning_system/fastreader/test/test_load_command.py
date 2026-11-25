@@ -3,9 +3,9 @@ import shutil
 import tempfile
 import json
 import pytest
-from fastReader.commands.load import run_load
-from fastReader.cache import generate_hash
-from fastReader.models import Document
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.cache import generate_hash
+from planning_system.fastreader.models import Document
 
 def test_run_load_basic():
     """T21-T26: Verify run_load with file path returns manifest_id and count summary."""

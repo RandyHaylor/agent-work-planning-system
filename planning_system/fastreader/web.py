@@ -1,9 +1,9 @@
 """
-fastReader.web — fetch a URL or search DuckDuckGo and save raw text to a file for fastReader.
+planning_system.fastreader.web — fetch a URL or search DuckDuckGo and save raw text to a file for planning_system.fastreader.
 
 Usage:
-    python3 -m fastReader.web url <url> [--out /tmp/out.md]
-    python3 -m fastReader.web search <keywords> [--out /tmp/results.md] [--limit N]
+    python3 -m planning_system.fastreader.web url <url> [--out /tmp/out.md]
+    python3 -m planning_system.fastreader.web search <keywords> [--out /tmp/results.md] [--limit N]
 """
 
 import argparse
@@ -13,10 +13,10 @@ import urllib.request
 import urllib.parse
 import re
 from html import unescape as html_unescape
-from fastReader.html_parser import HTMLParser
+from planning_system.fastreader.html_parser import HTMLParser
 
-from fastReader.commands.load import run_load
-from fastReader.scanner import load_config
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.scanner import load_config
 
 DEFAULT_CACHE_DIR = os.path.expanduser("~/.fastReader/cache")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
@@ -104,7 +104,7 @@ def page_to_text(url: str) -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="fastReader.web", description="Fetch URL or search DDG to a text file")
+    parser = argparse.ArgumentParser(prog="planning_system.fastreader.web", description="Fetch URL or search DDG to a text file")
     sub = parser.add_subparsers(dest="cmd")
 
     url_p = sub.add_parser("url", help="Fetch a URL as plain text")
@@ -131,8 +131,8 @@ if __name__ == "__main__":
         summary = result['summary']
         counts = "  ".join(f"{k.split('_')[0]}:{v}" for k, v in summary.items() if v > 0 and k in ('chapters', 'sections', 'subsections', 'blocks'))
         print(f"  {os.path.basename(args.out):<40} hash:{manifest_id}  {counts}")
-        print(f"\n  Browse: python3 -m fastReader.toc {manifest_id} --sections")
-        print(f"  Search: python3 -m fastReader.search <keywords> --manifests {manifest_id}")
+        print(f"\n  Browse: python3 -m planning_system.fastreader.toc {manifest_id} --sections")
+        print(f"  Search: python3 -m planning_system.fastreader.search <keywords> --manifests {manifest_id}")
 
     elif args.cmd == "search":
         query = " ".join(args.keywords)
@@ -145,8 +145,8 @@ if __name__ == "__main__":
         summary = result['summary']
         counts = "  ".join(f"{k.split('_')[0]}:{v}" for k, v in summary.items() if v > 0 and k in ('chapters', 'sections', 'subsections', 'blocks'))
         print(f"  {os.path.basename(args.out):<40} hash:{manifest_id}  {counts}")
-        print(f"\n  Browse: python3 -m fastReader.toc {manifest_id} --sections")
-        print(f"  Search: python3 -m fastReader.search <keywords> --manifests {manifest_id}")
+        print(f"\n  Browse: python3 -m planning_system.fastreader.toc {manifest_id} --sections")
+        print(f"  Search: python3 -m planning_system.fastreader.search <keywords> --manifests {manifest_id}")
 
     else:
         parser.print_help()

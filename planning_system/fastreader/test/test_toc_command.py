@@ -3,9 +3,9 @@ import shutil
 import tempfile
 import json
 import pytest
-from fastReader.commands.toc import run_toc
-from fastReader.commands.load import run_load
-from fastReader.cache import generate_hash
+from planning_system.fastreader.commands.toc import run_toc
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.cache import generate_hash
 
 def test_run_toc_basic():
     """T34: toc --sections --manifest <hash> returns JSON."""

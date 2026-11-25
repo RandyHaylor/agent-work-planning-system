@@ -1,7 +1,7 @@
 import pytest
 import os
-from fastReader.models import Document, Manifest, Marker
-from fastReader.scanner import scan_document
+from planning_system.fastreader.models import Document, Manifest, Marker
+from planning_system.fastreader.scanner import scan_document
 
 
 class TestMarkdownFixture:

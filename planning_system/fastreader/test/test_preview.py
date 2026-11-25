@@ -1,5 +1,5 @@
 import pytest
-from fastReader.preview import extract_preview
+from planning_system.fastreader.preview import extract_preview
 
 def test_extract_preview_basic():
     """T10: extract_preview(lines, line_number, char_index, length=30) returns N chars from correct position."""

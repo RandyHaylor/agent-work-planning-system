@@ -1,7 +1,7 @@
 import pytest
 import tempfile
 import os
-from fastReader.models import Marker, Manifest, Document
+from planning_system.fastreader.models import Marker, Manifest, Document
 
 
 class TestMarker:

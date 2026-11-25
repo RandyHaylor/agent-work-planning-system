@@ -1,8 +1,8 @@
 import os
 import pytest
-from fastReader.commands.search import run_search
-from fastReader.commands.load import run_load
-from fastReader.cache import generate_hash
+from planning_system.fastreader.commands.search import run_search
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.cache import generate_hash
 
 CONTENT = """# Chapter One
 ## Section A

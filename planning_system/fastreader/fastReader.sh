@@ -42,7 +42,8 @@ shift
 
 case "$FAST_READER_SUBCOMMAND_NAME" in
   load|toc|get|search)
-    PYTHONPATH="$FAST_READER_SKILL_PARENT_DIR" exec python3 -m "fastReader.$FAST_READER_SUBCOMMAND_NAME" "$@"
+    # Our copy lives at planning_system/fastreader: the repo root is two levels up.
+    PYTHONPATH="$(dirname "$FAST_READER_SKILL_PARENT_DIR")" exec python3 -m "planning_system.fastreader.$FAST_READER_SUBCOMMAND_NAME" "$@"
     ;;
   json)
     if is_quick_json_reader_binary_available; then

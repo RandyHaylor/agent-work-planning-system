@@ -1,6 +1,6 @@
 import pytest
-from fastReader.toc_cli import build_toc
-from fastReader.models import Manifest, Marker
+from planning_system.fastreader.toc_cli import build_toc
+from planning_system.fastreader.models import Manifest, Marker
 
 def test_build_toc_basic():
     """T27, T29: build_toc(manifest, content_lines, marker_types=['sections']) returns list of dicts."""

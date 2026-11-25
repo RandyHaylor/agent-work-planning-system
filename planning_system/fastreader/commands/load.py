@@ -1,9 +1,9 @@
 import os
 from typing import Dict, Any, List
-from fastReader.models import Document, Manifest
-from fastReader.scanner import scan_document
-from fastReader.cache import generate_hash, save_text_to_cache, save_manifest
-from fastReader.toc_cli import build_toc
+from planning_system.fastreader.models import Document, Manifest
+from planning_system.fastreader.scanner import scan_document
+from planning_system.fastreader.cache import generate_hash, save_text_to_cache, save_manifest
+from planning_system.fastreader.toc_cli import build_toc
 
 def run_load(file_path: str, cache_dir: str, config: Dict[str, Any], slice_starting_line: int = None, slice_line_count: int = None) -> Dict[str, Any]:
     """Execute the load command logic.

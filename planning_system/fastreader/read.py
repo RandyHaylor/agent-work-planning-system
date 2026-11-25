@@ -17,7 +17,7 @@ def run_read(file_path: str, offset: int = 0, limit: int = 2000) -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='fastReader.read', description='Read a file with line numbers')
+    parser = argparse.ArgumentParser(prog='planning_system.fastreader.read', description='Read a file with line numbers')
     parser.add_argument('file', help='Path to file')
     parser.add_argument('--offset', type=int, default=0, help='Line to start from (0-indexed, default: 0)')
     parser.add_argument('--limit', type=int, default=2000, help='Number of lines to read (default: 2000)')

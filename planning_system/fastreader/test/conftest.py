@@ -1,6 +1,6 @@
 import pytest
 import os
-from fastReader.scanner import load_config
+from planning_system.fastreader.scanner import load_config
 
 
 @pytest.fixture

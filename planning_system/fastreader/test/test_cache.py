@@ -3,13 +3,13 @@ import shutil
 import tempfile
 import json
 import pytest
-from fastReader.cache import (
+from planning_system.fastreader.cache import (
     generate_hash, 
     save_text_to_cache, 
     save_manifest, 
     load_manifest
 )
-from fastReader.models import Manifest, Marker
+from planning_system.fastreader.models import Manifest, Marker
 
 def test_generate_hash_consistency():
     """T15: generate_hash(content) returns consistent 8-char mini-hash for same content."""

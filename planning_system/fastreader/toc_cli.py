@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
-from fastReader.models import Manifest, Marker
-from fastReader.preview import extract_preview
+from planning_system.fastreader.models import Manifest, Marker
+from planning_system.fastreader.preview import extract_preview
 
 def build_toc(
     manifest: Manifest,

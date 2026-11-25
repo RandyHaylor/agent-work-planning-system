@@ -1,7 +1,7 @@
 import os
 from typing import Optional
-from fastReader.cache import load_manifest
-from fastReader.models import Document, Marker
+from planning_system.fastreader.cache import load_manifest
+from planning_system.fastreader.models import Document, Marker
 
 def run_get(
     manifest_hash: str,

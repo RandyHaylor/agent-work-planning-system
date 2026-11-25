@@ -1,5 +1,5 @@
 import pytest
-from fastReader.cli import parse_args
+from planning_system.fastreader.cli import parse_args
 
 def test_load_subcommand():
     """Test parsing 'load <file>' correctly (file path as positional arg)."""

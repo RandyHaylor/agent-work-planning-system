@@ -3,11 +3,11 @@ import sys
 import json
 import os
 from typing import List, Optional
-from fastReader.commands.load import run_load
-from fastReader.commands.toc import run_toc
-from fastReader.commands.get import run_get
-from fastReader.commands.search import run_search
-from fastReader.scanner import load_config
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.commands.toc import run_toc
+from planning_system.fastreader.commands.get import run_get
+from planning_system.fastreader.commands.search import run_search
+from planning_system.fastreader.scanner import load_config
 
 DEFAULT_CACHE_DIR = os.path.expanduser("~/.fastReader/cache")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
@@ -24,7 +24,7 @@ with open(HELP_CONTENT_JSON_PATH) as _help_content_file_handle:
 def print_help_examples_for_subcommand(subcommand_name: str) -> None:
     subcommand_help_entry = _help_content_by_subcommand.get(subcommand_name, {})
     example_lines = subcommand_help_entry.get("examples", [])
-    print(f"# Copy-paste examples for: fastReader.{subcommand_name}")
+    print(f"# Copy-paste examples for: planning_system.fastreader.{subcommand_name}")
     print(f"# (replace <hash>, <h1>, <h2>, <file> with real values)")
     print()
     for one_line in example_lines:
@@ -34,7 +34,7 @@ def print_help_examples_for_subcommand(subcommand_name: str) -> None:
 def print_help_use_cases_for_subcommand(subcommand_name: str) -> None:
     subcommand_help_entry = _help_content_by_subcommand.get(subcommand_name, {})
     use_case_lines = subcommand_help_entry.get("use_cases", [])
-    print(f"# Trigger -> command mapping for: fastReader.{subcommand_name}")
+    print(f"# Trigger -> command mapping for: planning_system.fastreader.{subcommand_name}")
     print()
     for one_line in use_case_lines:
         print(one_line)

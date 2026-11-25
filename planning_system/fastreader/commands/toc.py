@@ -1,8 +1,8 @@
 import os
 from typing import List, Dict, Any, Optional
-from fastReader.cache import load_manifest
-from fastReader.models import Document
-from fastReader.toc_cli import build_toc
+from planning_system.fastreader.cache import load_manifest
+from planning_system.fastreader.models import Document
+from planning_system.fastreader.toc_cli import build_toc
 
 def run_toc(
     manifest_hash: str,

@@ -1,8 +1,8 @@
 import os
 import re
 from typing import List, Dict, Any
-from fastReader.cache import load_manifest
-from fastReader.models import Document
+from planning_system.fastreader.cache import load_manifest
+from planning_system.fastreader.models import Document
 
 CONTAINER_TYPES = ["chapter", "section", "subsection"]
 

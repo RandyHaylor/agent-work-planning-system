@@ -2,9 +2,9 @@ import os
 import shutil
 import tempfile
 import pytest
-from fastReader.commands.get import run_get
-from fastReader.commands.load import run_load
-from fastReader.cache import generate_hash
+from planning_system.fastreader.commands.get import run_get
+from planning_system.fastreader.commands.load import run_load
+from planning_system.fastreader.cache import generate_hash
 
 def test_run_get_section():
     """Test retrieving a specific section's content."""
