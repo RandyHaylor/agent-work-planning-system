@@ -41,7 +41,7 @@ tests/planning_system/          tests per module
 ## Shared contract (fixed before parallel work; in `planning_system/contract.py` and `server/http_api/dependencies.py`)
 
 - `Principal(agent_id, role, project_id, scope_node_id)`; roles `admin`, `planner`, `worker`, `quote_client`.
-- FastAPI dependencies: `current_principal() -> Principal` (Bearer token), `db_connection() -> sqlalchemy Connection` (one transaction per request; read-only for GET).
+- FastAPI dependencies: `current_principal() -> Principal` (Bearer token), `command_runner()` (CommandRunner owns the transaction; log #13).
 - Each module that serves HTTP exposes `router: APIRouter` from `<module>/http_routes.py`. http_api mounts: `/` core, `/reader` + `/references` (references), `/guidance` (prompt_builder).
 - Tables: every module declares tables on `planning_system.server.storage.metadata.METADATA`.
 - Errors: raise `planning_system.contract.NotFound`, `Forbidden`, `Invalid`; http_api maps them to 404/403/422.
@@ -55,6 +55,7 @@ Core server (worktree A):
 - `POST /agents` {agent_id, host, platform, model, path, system, url} (register / update)
 - `POST /projects` {title, context_summary} -> node (level "what we're doing")
 - `POST /nodes` {parent_id, title, level_label, context_summary, labels, depends_on, position} -> node
+- `GET /nodes?project_id=&state=` (nodes by state), `POST /credentials/{id}/rotate`, `DELETE /admin/sessions` (log #17)
 - `GET /nodes/{id}`, `GET /nodes/{id}/children`, `GET /nodes/{id}/ancestors`, `GET /nodes/{id}/ready-children`
 - `PATCH /nodes/{id}`, `POST /nodes/{id}/move`, `POST /nodes/{id}/state` {state}, `POST /nodes/{id}/assign` {agent_id, branch} -> {node, worker_token}
 - `POST /nodes/{id}/supplementary` {kind: tech_spike|requirement_request, title, context_summary} (worker on its own task)

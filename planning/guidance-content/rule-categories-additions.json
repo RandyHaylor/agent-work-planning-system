@@ -1,0 +1,83 @@
+{
+  "format": "ai-prompt-builder/rule-categories@1",
+  "_draft": "DRAFT (agent-approved under the user's build handover; see BUILD-DECISIONS-LOG.md). New categories to append to prompt_builder/data/rule-categories.json. Text built from planning/process-levels.md, planning/05-module-specs.md and CLAUDE.md; quoted words are the user's.",
+  "categories": [
+    {
+      "categoryId": "planning-process-levels",
+      "categoryName": "Planning levels",
+      "options": [
+        {
+          "optionId": "seven-levels",
+          "shortName": "Seven levels, top down",
+          "fullText": "- Plan top down, through seven levels\n  1. What we're doing\n     - \"who needs what to work and generally, how\"\n     - The \"who\" is the user and anyone using the thing produced\n       - Not the agents assigned the work\n  2. Definition of done\n     - \"real hard requirements/constraints/etc for the top level goal\"\n  3. High-level plan\n     - One node; names the pieces inside it\n     - Pieces also get their DoD and requirements\n  4. Walkthroughs\n     - One node\n     - \"walkthorughs are whole system, not per module/part\"\n  5. Module specs\n     - First branching: one node per module\n  6. Test scaffold (per module)\n  7. Build (task nodes per module)\n- Levels 1-4 are a straight line; branching starts at 5\n- All levels, every time\n  - \"honestly all levels aren't really bad even for a small request\"\n- Spikes are tasks\n  - Allowed at any layer\n  - Visible at that layer as information for it\n  - Findings don't pass down by default\n    - \"if it's just there it doesn't gurantee it's relevant\"\n- Requirements live on the node they govern\n  - Not passed down to children\n  - What passes down is a generic context block\n- Problems found lower down?\n  - Go up to the highest layer that needs adjusting\n  - Work back down from there\n- Knowledge bases are not a level\n- Plan and scaffold everything before work churns\n  - \"the planner and user totally map out/scaffold/write integration tests/types/hollow modules/etc for the whole project THEN the work can churn along\"\n  - Then work does \"as much as it can without intervention, noting any issues to address for the end\""
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-level-5",
+      "categoryName": "Level 5: module specs",
+      "options": [
+        {
+          "optionId": "rounds-and-two-phases",
+          "shortName": "Question rounds, then two phases",
+          "fullText": "- Level 5 needs many technical choices not made yet\n  - They must involve the user\n- Work in rounds\n  - \"come up with questions, have them answered, do research and initial design, come up with next round of requestions, repeat\"\n- Two phases\n  1. Boundary level first\n     - Walk the entire module plan\n       - Each module's responsibility\n       - Nesting\n       - Dependencies\n     - Until every module is approved\n  2. Only then types and public interfaces\n     - Module by module\n  - \"It seems like we slipped from planning to writing interfaces too soon\"\n- Modules may not line up with level 3's pieces\n  - \"there may be many more modules than big pieces\""
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-module-design",
+      "categoryName": "Module design commandments",
+      "options": [
+        {
+          "optionId": "commandments",
+          "shortName": "Commandments (adhere strongly)",
+          "fullText": "- Applies to level 5 and all code\n1. Separate modules well for whatever paradigm fits the approach\n2. Cohesion decides what goes together\n   - Things that belong together mechanically\n   - Never a shared subject, audience or label\n3. Don't shy away from small modules\n   - \"if a small module makes sense, then it's a small module\"\n4. Nest modules where appropriate\n   - Especially to break up larger modules\n   - \"do NOT fight nestingmodules where it makes sense\"\n5. List every module, small and big\n6. Every module, nested or not, gets its interface and external integration tests designed and mocked up front\n7. Lean on proven design; don't reinvent wheels\n   - Proven patterns (strategy, adapter, facade, factory, etc.)\n     - \"but not just FOR THE SAKE OF IT - where it ADDS EFFICIENCY AND VALUE AND REDUCES OR ENCAPSULATES COMPLEXITY\"\n   - \"LEAN ON TRIED AND TRUE SOFTWARE DESIGN - SOLID/MAINTAINABLE/SENSIBLE/READABLE\"\n   - \"always research for common patterns meeting our needs and use out of the box code or build conventional patterns where that makes sense\"\n8. Encapsulate and organize complexity\n   - Each module hides its complexity behind a simple interface\n   - Callers never handle its internals\n9. Never mix levels of detail\n   - Every function and every module's public surface works at one scope\n   - A high-level function calls only things of similar scope\n     - Reads as a list of steps\n   - String handling, raw conditionals and I/O live lower down\n   - \"don't fill up the box of clipboards with loose sheets of paper\"\n- Separations chosen for good architecture and encapsulation\n  - \"NOT necessarily by subject matter or upstream project need lists\"\n- Reference approaches (to help, not to apply mechanically)\n  - Cohesion types, strongest to weakest\n    - Functional, sequential, communicational, procedural, temporal\n    - Logical (shared category only): avoid\n    - Coincidental (\"utils\" grab-bag): avoid\n  - Information hiding (Parnas): each module hides one design decision likely to change\n  - SRP / Common Closure: \"Gather together the things that change for the same reasons\"\n  - Deep modules (Ousterhout): judge interfaces, not an argument against small modules\n  - Composed Method / SLAP: one level of abstraction per method\n  - Low coupling"
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-asking-the-user",
+      "categoryName": "Asking the user (planning)",
+      "options": [
+        {
+          "optionId": "one-at-a-time-with-options",
+          "shortName": "One at a time, with options",
+          "fullText": "- Questions are asked one at a time\n- In the order that makes the most sense\n- With an ask-user-question tool\n  - Multiple-choice options where possible and sensible\n- \"instructions need to say that the questions are asked one at a time, in the order that makes the most sense, using an ask user question tool with multiple choice options where it is possible and mkes snese\"\n- Don't re-ask what's decided\n  - \"Before asking, check the recorded decisions and don't re-ask anything that's already been decided.\""
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-approval",
+      "categoryName": "Approval before writing",
+      "options": [
+        {
+          "optionId": "propose-yes-write",
+          "shortName": "Propose, get a yes, then write",
+          "fullText": "- Nothing enters a plan without the user's explicit approval\n  - Propose\n  - Get a yes\n  - Then write\n- Drafts are clearly marked DRAFT / not approved\n- Honor system\n  - Do the research yourself\n  - Include links\n  - \"the honor system means you trust the agent to do the research. yes include links\""
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-running-tasks",
+      "categoryName": "Running tasks",
+      "options": [
+        {
+          "optionId": "planner-starts-and-stops",
+          "shortName": "Planner starts and stops tasks",
+          "fullText": "- The planner creates all tasks\n  - Tasks don't split themselves\n- The planner starts and stops tasks\n  - \"for where we're at, the planner is the one that starts/stops tasks\"\n- Very large task?\n  - \"the planner can spawn a dev manager (also a planner) so it can remain higher level and not run out of context\"\n- Who runs next\n  - The planning/admin agent decides; may run things in parallel\n  - Siblings run in order by default\n  - A task's depends-on names the siblings it waits for\n    - Not specified: it depends on the sibling before it\n- Supplementary tasks\n  - A worker may create a tech spike or requirement request\n  - It always goes right before the worker's own task\n  - It is added to that task's depends-on\n- Review is a task, not a node state\n- Nodes are never deleted; abandon them instead\n- Acceptance tests\n  - \"planner can run them OR can assign tasks to have workers run them. Depending on project size the choice may differ\"\n- Workers don't learn the system\n  - Their task carries their context"
+        }
+      ]
+    },
+    {
+      "categoryId": "planning-references",
+      "categoryName": "Registering references",
+      "options": [
+        {
+          "optionId": "through-the-reader",
+          "shortName": "Only through the reader",
+          "fullText": "- Find sources anywhere, with any search tool\n- To register a reference, pull the URL or file up through the reader\n  - \"to register a reference they have to pull the URL up through the reader\"\n- The reader's DuckDuckGo search is encouraged\n  - \"I think it gives better results than other systems right now\"\n- Bad extraction?\n  - The reader says which strategy was used\n  - Try another and move on\n- A reference already on another node\n  - Cite it by its reference ID, not its URL"
+        }
+      ]
+    }
+  ]
+}

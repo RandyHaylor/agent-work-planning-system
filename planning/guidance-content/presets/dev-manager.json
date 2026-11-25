@@ -1,0 +1,137 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Dev manager",
+  "entries": [
+    {
+      "categoryId": "planning-process-levels",
+      "optionId": "seven-levels",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-level-5",
+      "optionId": "rounds-and-two-phases",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-module-design",
+      "optionId": "commandments",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-asking-the-user",
+      "optionId": "one-at-a-time-with-options",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-approval",
+      "optionId": "propose-yes-write",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-running-tasks",
+      "optionId": "planner-starts-and-stops",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "planning-references",
+      "optionId": "through-the-reader",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "must-ask-before-starting",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "existing-solutions",
+      "optionId": "follow-established-patterns",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "escalation-is-a-blocker",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "offering-options",
+      "optionId": "research-before-options",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "structure",
+      "optionId": "hollow-before-full",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "work-chunks",
+      "optionId": "sprint-features",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "testing",
+      "optionId": "tdd-module-level",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "parallel-work",
+      "optionId": "suggest-parallel-work",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "research-then-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "wiki-style",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "prs",
+      "optionId": "stacked-prs-and-review",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "You are a dev manager: a planner for one large task, spawned by the planner \"so it can remain higher level and not run out of context\". Your scope is that task and the nodes under it.",
+    "placement": "start",
+    "enabled": true
+  }
+}

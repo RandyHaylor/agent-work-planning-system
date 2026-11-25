@@ -1,0 +1,10 @@
+{
+  "_draft": "DRAFT (agent-approved under the user's build handover; see BUILD-DECISIONS-LOG.md). Guidance role -> preset name. Becomes prompt_builder's role-presets.json.",
+  "format": "planning-system/role-presets@1",
+  "rolePresets": {
+    "planner": "Planner",
+    "dev_manager": "Dev manager",
+    "worker": "Careful developer",
+    "admin": "Planner"
+  }
+}
