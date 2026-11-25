@@ -1,8 +1,7 @@
 """Ports references needs."""
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Mapping, Optional
+from typing import Optional
 
 from .types import CacheId, Reference, ReferenceId, TempCacheEntry
 
@@ -33,17 +32,7 @@ class TempCacheStoragePort(ABC):
     def created_before(self, cutoff: datetime) -> list[TempCacheEntry]: ...
 
 
-@dataclass(frozen=True)
-class FetchedSource:
-    data: bytes
-    metadata: Mapping[str, str] = field(default_factory=dict)   # e.g. url, content-type header
-
-
-class SourceFetcherPort(ABC):
-    """Any source the reader loads (URL, uploaded file, web search), not web-only."""
-
-    @abstractmethod
-    def fetch(self, source: str) -> FetchedSource: ...
+# The source fetcher port (any source the reader loads) is source_fetcher_port.SourceFetcher (build log #30).
 
 
 class Clock(ABC):

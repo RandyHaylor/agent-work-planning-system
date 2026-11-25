@@ -2,11 +2,12 @@
 from .citing_and_rendering import CitingAndRendering
 from .ingestion import Ingestion
 from .interface import ReferenceLibrary
+from .ports import ReferenceStoragePort
 
 
 class ReferenceLibraryService(ReferenceLibrary):
-    def __init__(self, storage):
-        self._ingestion = Ingestion(storage)
+    def __init__(self, storage: ReferenceStoragePort, ingestion: Ingestion | None = None):
+        self._ingestion = ingestion or Ingestion(storage)
         self._citing = CitingAndRendering(storage)
 
     def get(self, ref_id, follow_superseded=True):
