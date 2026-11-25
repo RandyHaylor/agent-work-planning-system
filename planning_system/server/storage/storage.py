@@ -7,6 +7,7 @@ from pathlib import Path
 from planning_system.configuration import ConfigSection
 from planning_system.server.domain.agent_registry.ports import AgentRegistryStoragePort
 from planning_system.server.domain.authentication.ports import CredentialStoragePort
+from planning_system.server.domain.content_review.ports import ReviewStoragePort
 from planning_system.server.domain.project_tree.ports import TreeStoragePort
 from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
 
@@ -17,6 +18,7 @@ from .engine_setup import Transactions, TransactionsInterface, create_engine_fro
 from .postgres_agent_registry_store import PostgresAgentRegistryStore
 from .postgres_credential_store import PostgresCredentialStore
 from .postgres_reference_store import PostgresReferenceStore
+from .postgres_review_store import PostgresReviewStore
 from .postgres_temp_cache_store import PostgresTempCacheStore
 from .postgres_tree_store import PostgresTreeStore
 
@@ -30,6 +32,7 @@ class Stores:
     temp_cache: TempCacheStoragePort
     credentials: CredentialStoragePort
     agent_registry: AgentRegistryStoragePort
+    reviews: ReviewStoragePort
 
 
 @dataclass(frozen=True)
@@ -39,7 +42,7 @@ class Storage:
     def stores_for(self, conn) -> Stores:
         return Stores(tree=PostgresTreeStore(conn), references=PostgresReferenceStore(conn),
                       temp_cache=PostgresTempCacheStore(conn), credentials=PostgresCredentialStore(conn),
-                      agent_registry=PostgresAgentRegistryStore(conn))
+                      agent_registry=PostgresAgentRegistryStore(conn), reviews=PostgresReviewStore(conn))
 
 
 def create_storage(section: ConfigSection) -> Storage:

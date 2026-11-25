@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 
 from planning_system.server.domain.agent_registry.fakes import InMemoryAgentRegistryStorage
 from planning_system.server.domain.authentication.fakes import InMemoryCredentialStorage
+from planning_system.server.domain.content_review.fakes import InMemoryReviewStorage
 from planning_system.server.domain.project_tree.fakes import InMemoryTreeStorage
 from planning_system.server.domain.references.fakes import (InMemoryReferenceStorage,
                                                             InMemoryTempCacheStorage)
@@ -50,7 +51,7 @@ class RecordingTransactions(TransactionsInterface):
 def in_memory_stores() -> Stores:
     return Stores(tree=InMemoryTreeStorage(), references=InMemoryReferenceStorage(),
                   temp_cache=InMemoryTempCacheStorage(), credentials=InMemoryCredentialStorage(),
-                  agent_registry=InMemoryAgentRegistryStorage())
+                  agent_registry=InMemoryAgentRegistryStorage(), reviews=InMemoryReviewStorage())
 
 
 @dataclass(frozen=True)

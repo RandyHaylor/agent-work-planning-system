@@ -35,3 +35,7 @@ class Forbidden(DomainError):
 
 class Invalid(DomainError):
     """-> 422"""
+
+
+class Conflict(DomainError):
+    """-> 409 (e.g. a review verdict from someone not holding the review)"""

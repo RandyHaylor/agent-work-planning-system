@@ -25,7 +25,7 @@ from planning_system.server.domain.references.fakes import (InMemoryReferenceSto
 from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
 from planning_system.server.domain.references.types import Reference, TempCacheEntry
 from planning_system.server.storage import (PostgresAgentRegistryStore, PostgresCredentialStore,
-                                            PostgresReferenceStore, PostgresTempCacheStore,
+                                            PostgresReferenceStore, PostgresReviewStore, PostgresTempCacheStore,
                                             PostgresTreeStore, Storage, Stores, Transactions)
 from planning_system.server.storage.fakes import InMemoryStorage, RecordingTransactions
 from planning_system.server.storage.metadata import METADATA
@@ -79,14 +79,14 @@ def test_credentials_table_stores_only_digests():
     assert "token_digest" in columns and "token" not in columns
 
 
-def test_stores_for_binds_all_five_stores_to_one_connection():
+def test_stores_for_binds_all_six_stores_to_one_connection():
     marker = object()
     stores = Storage(Transactions(None)).stores_for(marker)
     assert isinstance(stores, Stores)
     bound = [getattr(stores, f.name) for f in dataclasses.fields(stores)]
     assert {type(s) for s in bound} == {
         PostgresTreeStore, PostgresReferenceStore, PostgresTempCacheStore, PostgresCredentialStore,
-        PostgresAgentRegistryStore}
+        PostgresAgentRegistryStore, PostgresReviewStore}
     assert all(s._conn is marker for s in bound)
 
 
