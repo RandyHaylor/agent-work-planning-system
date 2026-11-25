@@ -17,7 +17,6 @@ from planning_system.server.domain.references.fakes import (FakeClock, FakeRefer
 from planning_system.server.domain.references.reader_cache_adapter import ReaderCacheAdapter
 from planning_system.server.domain.references.reader_cache_adapter_fakes import FakeReaderCacheAdapter
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 CONFIG = load_config(DEFAULT_CONFIG_PATH)
 DOC = "# Title\n\n## Part one\nalpha\nbeta\n\n## Part two\ngamma\n"
 
@@ -34,7 +33,7 @@ class Env:
         return cls(self.temp_cache, self.library, agent_id, is_admin, CONFIG)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def env(request):
     return Env(request.param)
 

@@ -15,7 +15,6 @@ from planning_system.server.domain.references.reference_library import Reference
 from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
 from planning_system.server.domain.references.types import Citation
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 TTL = timedelta(days=1)
 DOC = "line one\nline two\nline three\nline four"
 
@@ -33,7 +32,7 @@ class Env:
             self.cache = TempCacheLifecycle(self.temp_storage, self.ref_storage, self.clock, TTL)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def env(request):
     return Env(request.param)
 
