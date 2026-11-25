@@ -25,7 +25,6 @@ from planning_system.quick_json_reader.json_reader_types import NodeRunTimeout
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
 PACKAGE = Path(__file__).parents[3] / "planning_system" / "quick_json_reader"
-LEVEL_7 = pytest.mark.xfail(strict=False, reason="level 7")
 STORED = (FIXTURES / "stored_pretty.json").read_text()
 STORED_JSONL = (FIXTURES / "stored_records.jsonl").read_text()
 # Recorded from `stdin_runner.js` on STORED with --show-full-addresses.
@@ -42,7 +41,7 @@ def make_real_reader(runner):
     return JsonReader(runner, StoredTextLocatorFactory())
 
 
-READERS = [pytest.param(make_fake_reader, id="fake"), pytest.param(make_real_reader, id="real", marks=LEVEL_7)]
+READERS = [pytest.param(make_fake_reader, id="fake"), pytest.param(make_real_reader, id="real")]
 
 
 # --- 1: NodeRunner with a fake subprocess function (real class only: the fake has no subprocess) ----
@@ -58,7 +57,6 @@ class FakeProcess:
         return subprocess.CompletedProcess(args, 0, stdout="out\n", stderr="")
 
 
-@LEVEL_7
 def test_1_node_runner_sends_text_and_argv_on_stdin_without_shell():
     process = FakeProcess()
     result = NodeRunner("node", Path("stdin_runner.js"), 5.0, run_process=process).run('{"a":1}', ["--depth", "1"])
@@ -69,7 +67,6 @@ def test_1_node_runner_sends_text_and_argv_on_stdin_without_shell():
     assert process.kwargs["timeout"] == 5.0
 
 
-@LEVEL_7
 def test_1_node_runner_timeout():
     with pytest.raises(NodeRunTimeout):
         NodeRunner("node", Path("x.js"), 0.1, run_process=FakeProcess(timeout=True)).run("{}", [])
@@ -124,8 +121,8 @@ def test_unlocatable_lines_are_returned_without_ranges(make):
 # --- 5, 6: locators ---------------------------------------------------------------------------------
 
 PRETTY = [pytest.param(FakePrettyJsonLocator, id="fake"),
-          pytest.param(lambda text: PrettyJsonLocator(text, JsonSourceMapLibrary()), id="real", marks=LEVEL_7)]
-JSONL = [pytest.param(FakeJsonlLocator, id="fake"), pytest.param(JsonlLocator, id="real", marks=LEVEL_7)]
+          pytest.param(lambda text: PrettyJsonLocator(text, JsonSourceMapLibrary()), id="real")]
+JSONL = [pytest.param(FakeJsonlLocator, id="fake"), pytest.param(JsonlLocator, id="real")]
 
 
 @pytest.mark.parametrize("make", PRETTY)
@@ -155,7 +152,6 @@ def test_8_js_tests_pass_under_node():
     assert result.returncode == 0, result.stdout[-2000:]
 
 
-@LEVEL_7
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
 def test_9_real_node_end_to_end_ranges_cut_back_to_values():
     output = build_json_reader({}).run(STORED, "json", [])
