@@ -52,6 +52,11 @@ class Document:
         lines = content.split('\n')
         return cls(path=path, content=content, lines=lines)
 
+    @classmethod
+    def from_text(cls, source_label: str, text: str) -> "Document":
+        """Build a document from text already in memory (e.g. extracted by the server)."""
+        return cls(path=source_label, content=text, lines=text.split('\n'))
+
     @property
     def total_chars(self) -> int:
         """Return the total number of characters in the document."""

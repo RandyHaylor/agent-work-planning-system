@@ -1,11 +1,10 @@
-import os
-from typing import Optional
-from planning_system.fastreader.cache import load_manifest
-from planning_system.fastreader.models import Document, Marker
+from typing import Optional, Union
+from planning_system.fastreader.cache import as_reader_cache
+from planning_system.fastreader.reader_cache_port import ReaderCachePort
 
 def run_get(
     manifest_hash: str,
-    cache_dir: str,
+    cache: Union[ReaderCachePort, str],
     chapter: Optional[int] = None,
     section: Optional[int] = None,
     subsection: Optional[int] = None,
@@ -16,14 +15,9 @@ def run_get(
     
     Returns the content requested by a specific marker.
     """
-    manifest_path = os.path.join(cache_dir, f"{manifest_hash}.json")
-    content_path = os.path.join(cache_dir, f"{manifest_hash}.txt")
-    
-    if not os.path.exists(manifest_path):
-        raise FileNotFoundError(f"Manifest not found for hash: {manifest_hash}")
-    
-    manifest = load_manifest(manifest_path)
-    document = Document.from_file(content_path)
+    item = as_reader_cache(cache).get(manifest_hash)
+    manifest = item.manifest
+    document_lines = item.lines
     
     # 1. Find the target marker
     target_marker = None
@@ -68,6 +62,6 @@ def run_get(
     if next_marker:
         end_line_idx = next_marker.line - 1
     else:
-        end_line_idx = len(document.lines)
+        end_line_idx = len(document_lines)
         
-    return "\n".join(document.lines[start_line_idx:end_line_idx])
+    return "\n".join(document_lines[start_line_idx:end_line_idx])

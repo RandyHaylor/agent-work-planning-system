@@ -1,12 +1,11 @@
-import os
-from typing import List, Dict, Any, Optional
-from planning_system.fastreader.cache import load_manifest
-from planning_system.fastreader.models import Document
+from typing import List, Dict, Any, Optional, Union
+from planning_system.fastreader.cache import as_reader_cache
+from planning_system.fastreader.reader_cache_port import ReaderCachePort
 from planning_system.fastreader.toc_cli import build_toc
 
 def run_toc(
     manifest_hash: str,
-    cache_dir: str,
+    cache: Union[ReaderCachePort, str],
     marker_types: Optional[List[str]] = None,
     preview_length: int = 30,
     limit: Optional[int] = 15,
@@ -18,21 +17,11 @@ def run_toc(
     2. Load content lines from <hash>.txt
     3. Build and return TOC
     """
-    manifest_path = os.path.join(cache_dir, f"{manifest_hash}.json")
-    content_path = os.path.join(cache_dir, f"{manifest_hash}.txt")
-    
-    if not os.path.exists(manifest_path):
-        raise FileNotFoundError(f"Manifest not found for hash: {manifest_hash}")
-    
-    if not os.path.exists(content_path):
-        raise FileNotFoundError(f"Content not found for hash: {manifest_hash}")
-        
-    manifest = load_manifest(manifest_path)
-    document = Document.from_file(content_path)
+    item = as_reader_cache(cache).get(manifest_hash)
     
     return build_toc(
-        manifest,
-        document.lines,
+        item.manifest,
+        item.lines,
         marker_types=marker_types,
         preview_length=preview_length,
         limit=limit,
