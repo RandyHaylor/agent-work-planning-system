@@ -1,5 +1,13 @@
 # Build plan: first usable version (local host + Claude Code CLI)
 
+## Order (the system's own process; user, 2026-11-25)
+
+1. **Level 5 finish:** a spec for every remaining module (`planning/05-spec-<module>.md`), built only on recorded decisions.
+2. **Level 6 scaffold:** hollow modules with real interfaces and types for every module, plus external integration tests against mocks, all passing on mocks. Checked against the specs.
+3. **Level 7 build:** workers fill the hollow modules in parallel until the integration tests pass on real implementations. No stopping for questions; issues go to `planning/BUILD-ISSUES.md` for the end.
+
+The planner starts and stops tasks; for a very large task it spawns a dev manager (also a planner) to stay high level. Build modularly; no monoliths.
+
 Specs: `planning/05-spec-*.md`, module tree v5 in `05-module-specs.md`, decisions there and in `process-levels.md`. Design rules: "Module design" in `process-levels.md` (commandments; never mix levels of detail). Calls made during the build: `BUILD-DECISIONS-LOG.md`.
 
 ## Package layout (all under `planning_system/`)
