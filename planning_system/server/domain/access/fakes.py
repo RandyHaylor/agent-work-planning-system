@@ -47,6 +47,12 @@ class TablePermissionPolicy(PermissionPolicy):
     def can_add_content(self, p, node):
         return p.role == ADMIN or _in_project(p, node.project_id) or _own_task(p, node)
 
+    def can_review(self, p, project_id, own_task):
+        if p.role == ADMIN or _in_project(p, project_id):
+            return True
+        return (own_task is not None and _own_task(p, own_task) and own_task.project_id == project_id
+                and "review" in own_task.labels and own_task.state == "in_progress")
+
     def can_submit_user_quote(self, p):
         return p.role == QUOTE_CLIENT
 

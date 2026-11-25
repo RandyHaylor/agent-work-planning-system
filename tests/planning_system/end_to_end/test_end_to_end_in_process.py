@@ -41,12 +41,34 @@ class PbkdfCredentialStorage(InMemoryCredentialStorage):
 
 
 @pytest.fixture
-def api():
+def http():
     storage = InMemoryStorage(stores=replace(in_memory_stores(), credentials=PbkdfCredentialStorage()))
     section = ConfigSection("server", {"http_api": {"routers": ROUTERS}})
     settings = domain_settings(section, SourceFetcherByRequest({UploadRequest: FakeUploadedFileSource()}))
-    client = TestClient(build_app(section, storage, settings), raise_server_exceptions=False)
-    return PlanningApiClient(ClientSettings("http://testserver"), client._transport)
+    return TestClient(build_app(section, storage, settings), raise_server_exceptions=False)
+
+
+@pytest.fixture
+def api(http):
+    return PlanningApiClient(ClientSettings("http://testserver"), http._transport)
+
+
+class Reviews:
+    """The /reviews routes over raw HTTP (the api_client's review methods are built by the client side)."""
+
+    def __init__(self, http, token):
+        self._http, self._headers = http, {"Authorization": f"Bearer {token}"}
+
+    def list(self, project_id, status=None):
+        params = {"project_id": project_id, **({"status": status} if status else {})}
+        return self._http.get("/reviews", params=params, headers=self._headers)
+
+    def take(self, project_id):
+        return self._http.post("/reviews/take", json={"project_id": project_id}, headers=self._headers)
+
+    def verdict(self, review_id, passed, reason, suggested_title=None):
+        return self._http.post(f"/reviews/{review_id}/verdict", headers=self._headers,
+                               json={"passed": passed, "reason": reason, "suggested_title": suggested_title})
 
 
 def test_walkthrough(api):
@@ -105,7 +127,10 @@ def test_walkthrough(api):
     cited = worker.reader_cite(cache_id, line, line)
     assert cited["reference_id"] == cache_id
     assert cited["citation"] == f"[{cache_id}:{line}-{line}]"
-    worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding"])
+    with pytest.raises(Invalid):
+        worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding"])   # no claim tag
+    added = worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding", "technical"])
+    assert added["review"]["status"] == "pending" and "not approved" in added["message"]
 
     # the planner can read the reference because it can read a node that cites it
     rendered = planner.render_citation(cited["citation"])
@@ -139,3 +164,100 @@ def test_walkthrough(api):
     assert admin.end_admin_session() == {"ended": True}
     with pytest.raises(Forbidden):
         admin.me()
+
+
+def test_citation_gate_and_content_review(api, http):
+    """Spec tests 11-16 + build log #50: no citation -> 422; cited -> review pending -> taken by the
+    review-task worker -> fail -> planner sees it -> node can't be done -> replace -> pass -> done."""
+    admin_token = api.start_admin_session(ADMIN_PASSWORD)["token"]
+    admin = api.with_token(admin_token)
+    project = admin.create_project("Cache service", "We are building a caching service.")
+    plan = admin.create_node(project["id"], "Plan", "high-level plan", "Plan the cache.")
+    design = admin.create_node(plan["id"], "Design", "design", "Design the cache.")
+    modules = admin.create_node(design["id"], "Modules", "module specs", "Specify the modules.")
+    task = admin.create_node(modules["id"], "cache lifetime", "build", "How long entries live.")
+    planner_token = admin.mint_credential("planner", project["id"], None, "planner-1")["token"]
+    planner = api.with_token(planner_token)
+    worker_token = planner.assign(task["id"], "worker-1", "feat/ttl")["worker_token"]
+    worker = api.with_token(worker_token)
+
+    # titles make no claims (spec 16)
+    for bad in ("Entries live 72 hours.", "x" * 51, ""):
+        with pytest.raises(Invalid):
+            planner.create_node(modules["id"], bad, "build", "c")
+    with pytest.raises(Invalid):
+        planner.update_node(task["id"], title="ttl [ref-x:1-1]")
+    with pytest.raises(Invalid):
+        worker.create_supplementary_task(task["id"], "requirement_request", "Which TTL?", "Ask the user.")
+
+    # the user's words, via the quote key
+    quote = api.with_token(admin.mint_quote_key("laptop")["token"])
+    user = quote.store_user_exchange("s-1", "Use 72 hours.", "How long should entries live?")
+    user_id = user["reference_id"]
+
+    # spec 11: no citation -> 422 saying what to add; nothing stored, no review record
+    with pytest.raises(Invalid) as error:
+        worker.add_content(task["id"], "Entries live 72 hours", ["requirement"])
+    assert "needs a user quote" in str(error.value)
+    with pytest.raises(Invalid) as error:
+        worker.add_content(task["id"], f"Entries live 72 hours [{user_id}:2-9]", ["requirement"])
+    assert "has 2 lines" in str(error.value)
+    assert "Entries live" not in worker.context(task["id"])["context"]
+    reviews = Reviews(http, planner_token)
+    assert reviews.list(project["id"]).json() == []
+
+    # spec 12: cited -> pending, listed
+    added = worker.add_content(task["id"], f"Entries live 72 hours [{user_id}:2-2]", ["requirement"])
+    assert added["review"]["status"] == "pending" and added["message"] == "submitted for review (not approved)"
+    first_review = added["review"]["id"]
+    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review]
+
+    # the planner starts the standing review task (a worker on a task labelled "review")
+    review_task = planner.create_node(modules["id"], "citation review", "build", "Review cited claims.",
+                                      labels=["review"])
+    reviewer_token = planner.assign(review_task["id"], "reviewer-1", "main")["worker_token"]
+    reviewer = Reviews(http, reviewer_token)
+    assert reviewer.take(project["id"]).status_code == 403          # task not started yet
+    planner.set_state(review_task["id"], "in_progress")
+
+    # spec 13: a worker not on a review task -> 403; the review-task worker -> packet; empty -> 204
+    assert Reviews(http, worker_token).take(project["id"]).status_code == 403
+    taken = reviewer.take(project["id"])
+    assert taken.status_code == 200, taken.text
+    packet = taken.json()
+    assert packet["review_id"] == first_review and packet["claim_tag"] == "requirement"
+    [citation] = packet["citations"]
+    assert citation["quoted_text"] == "Use 72 hours."
+    assert citation["pre_text"] == "How long should entries live?"
+    assert reviewer.take(project["id"]).status_code == 204
+    # build log #50: the holder may read the quotes of the review it holds
+    holder = api.with_token(reviewer_token)
+    assert "Use 72 hours." in holder.render_citation(f"[{user_id}:2-2]")["text"]
+
+    # only the holder decides
+    assert Reviews(http, admin_token).verdict(first_review, True, "ok").status_code == 409
+
+    # spec 14: fail -> the planner sees reason + suggested title; node state unchanged
+    failed = reviewer.verdict(first_review, False, "quote does not mention entries", "entry lifetime")
+    assert failed.status_code == 200 and failed.json()["status"] == "failed"
+    [seen] = reviews.list(project["id"], "failed").json()
+    assert (seen["reason"], seen["suggested_title"]) == ("quote does not mention entries", "entry lifetime")
+    assert planner.get_node(task["id"])["state"] == "assigned"
+
+    # build log #50: can't be done with a failed review
+    with pytest.raises(Invalid) as error:
+        planner.set_state(task["id"], "done")
+    assert first_review in str(error.value)
+
+    # spec 15: replace -> old review superseded, new one pending
+    replaced = planner.replace_content(task["id"], added["reference_id"], f"Use 72 hours [{user_id}:2-2]")
+    assert replaced["review"]["status"] == "pending"
+    statuses = {r["id"]: r["status"] for r in reviews.list(project["id"]).json()}
+    assert statuses == {first_review: "superseded", replaced["review"]["id"]: "pending"}
+    with pytest.raises(Invalid):
+        planner.set_state(task["id"], "done")                       # still pending
+
+    # pass -> done allowed
+    assert reviewer.take(project["id"]).json()["review_id"] == replaced["review"]["id"]
+    assert reviewer.verdict(replaced["review"]["id"], True, "quote states it").json()["status"] == "passed"
+    assert planner.set_state(task["id"], "done")["state"] == "done"

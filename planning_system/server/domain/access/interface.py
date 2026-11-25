@@ -1,6 +1,6 @@
 """Public interface of access: pure rules; callers pass in the tree facts they need."""
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Optional, Sequence
 
 from .types import (CredentialScope, KnowledgeBaseFacts, NodeFacts, Principal,
                     ReferenceFacts, TempEntryFacts)
@@ -32,6 +32,12 @@ class PermissionPolicy(ABC):
     def can_answer_requirement_request(self, p: Principal, request: NodeFacts) -> bool: ...
     @abstractmethod
     def can_add_content(self, p: Principal, node: NodeFacts) -> bool: ...
+
+    # content review (build log #49/#50)
+    @abstractmethod
+    def can_review(self, p: Principal, project_id: int, own_task: Optional[NodeFacts]) -> bool:
+        """List/take/decide reviews in a project: admin, its planner, or a worker whose own task
+        (own_task) is in that project, labelled "review" and in progress."""
 
     # references
     @abstractmethod

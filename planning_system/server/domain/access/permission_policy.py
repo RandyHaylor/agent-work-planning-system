@@ -6,7 +6,9 @@ context_assembly, not by reading the ancestor nodes, so can_read_node grants a w
 task only.
 """
 from .interface import PermissionPolicy
-from .types import ADMIN, PLANNER, QUOTE_CLIENT, WORKER
+from .types import ADMIN, PLANNER, QUOTE_CLIENT, REVIEW_TASK_LABEL, WORKER
+
+IN_PROGRESS = "in_progress"
 
 MINTABLE_BY_ADMIN = frozenset({PLANNER, WORKER, QUOTE_CLIENT})
 MINTABLE_BY_PLANNER = frozenset({PLANNER, WORKER})   # decision #20: a planner may mint a dev manager
@@ -66,6 +68,13 @@ class RulePermissionPolicy(PermissionPolicy):
 
     def can_add_content(self, p, node):
         return _manages(p, node) or _works_on(p, node)
+
+    # content review
+    def can_review(self, p, project_id, own_task):
+        if _is_admin(p) or _plans_project(p, project_id):
+            return True
+        return (own_task is not None and _works_on(p, own_task) and own_task.project_id == project_id
+                and REVIEW_TASK_LABEL in own_task.labels and own_task.state == IN_PROGRESS)
 
     # references
     def can_submit_user_quote(self, p):

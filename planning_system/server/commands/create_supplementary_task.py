@@ -30,5 +30,6 @@ class CreateSupplementaryTask(WriteCommand):
         return CanCreateSupplementaryTask(self.node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
+        services.enforcement.check_title(self.title)
         return services.tree.insert_before(self.node_id, self.title, (KIND_LABELS[self.kind],),
                                            self.context_summary)

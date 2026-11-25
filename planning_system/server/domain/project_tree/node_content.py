@@ -16,12 +16,12 @@ class NodeContentStore:
         self._storage.add_content(node_id, content)
         return content
 
-    def replace(self, node_id, old_reference_id, new_text):
+    def replace(self, node_id, old_reference_id, new_text, tags=None):
         old = next((c for c in self.list(node_id) if c.reference_id == old_reference_id), None)
         if old is None:
             raise NotFound(f"content {old_reference_id} on node {node_id}")
         reference = self._references.store_node_text(new_text, node_id, replaces=old_reference_id)
-        content = NodeContent(reference.id, old.tags)
+        content = NodeContent(reference.id, old.tags if tags is None else frozenset(tags))
         self._storage.replace_content(node_id, old_reference_id, content)
         return content
 

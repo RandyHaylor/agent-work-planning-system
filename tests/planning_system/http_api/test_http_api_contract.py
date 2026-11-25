@@ -95,6 +95,14 @@ CASES = [
      C.CreateSupplementaryTask(5, "tech_spike", "t", "c")),
     ("POST", "/nodes/5/content", {"text": "x", "tags": ["t"]}, None, C.AddNodeContent(5, "x", ("t",))),
     ("PUT", "/nodes/5/content/ref-1", {"text": "y"}, None, C.ReplaceNodeContent(5, "ref-1", "y")),
+    ("PUT", "/nodes/5/content/ref-1", {"text": "y", "tags": ["note"]}, None,
+     C.ReplaceNodeContent(5, "ref-1", "y", ("note",))),
+    ("GET", "/reviews", None, {"project_id": 1, "status": "failed", "node_id": 5},
+     C.ListReviews(1, "failed", 5)),
+    ("POST", "/reviews/take", {"project_id": 1}, None, C.TakeReview(1)),
+    ("POST", "/reviews/rev-1/verdict", {"passed": False, "reason": "r", "suggested_title": "t"}, None,
+     C.SubmitReviewVerdict("rev-1", False, "r", "t")),
+    ("POST", "/reviews/rev-1/release", None, None, C.ReleaseReview("rev-1")),
     ("GET", "/nodes/5/context", None, None, C.AssembleNodeContext(5)),
     ("POST", "/reader/load", {"url": "https://x"}, None, C.LoadIntoReader(url="https://x")),
     ("GET", "/reader/tmp-1/toc", None, None, C.ReaderToc("tmp-1")),
@@ -127,6 +135,21 @@ def test_1_every_route_hands_its_command_and_principal_to_the_runner(server):
     assert response.status_code == 200 and runner.last == (C.StartAdminSession("pw"), None)
     covered.add(C.StartAdminSession)
     assert covered == set(ROUTES.values())
+
+
+def test_1c_take_review_with_nothing_pending_is_204(server):
+    client, runner, _ = server
+    runner.respond = lambda command, _: None
+    response = client.post("/reviews/take", json={"project_id": 1})
+    assert response.status_code == 204 and response.content == b""
+
+
+def test_1d_conflict_is_409(server):
+    from planning_system.contract import Conflict
+    client, runner, _ = server
+    runner.error = Conflict("not the holder")
+    response = client.post("/reviews/rev-1/verdict", json={"passed": True, "reason": "ok"})
+    assert response.status_code == 409 and response.json() == {"error": "Conflict", "detail": "not the holder"}
 
 
 def test_1b_app_serves_exactly_the_catalog_routes_plus_guidance(server):

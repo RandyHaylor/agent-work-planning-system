@@ -63,5 +63,5 @@ class ProjectTree(ABC):
 
     @abstractmethod
     def replace_content(self, node_id: NodeId, old_reference_id: ReferenceId,
-                        new_text: str) -> NodeContent:
-        """New reference that supersedes the old one."""
+                        new_text: str, tags: Optional[Iterable[str]] = None) -> NodeContent:
+        """New reference that supersedes the old one; tags None keeps the old item's tags."""

@@ -14,6 +14,10 @@ from planning_system.server.domain.agent_registry.registry import AgentRegistryS
 from planning_system.server.domain.authentication.admin_session import AdminSessionService
 from planning_system.server.domain.authentication.credential_issuer import CredentialIssuerService
 from planning_system.server.domain.authentication.interface import AdminSessions, CredentialIssuer
+from planning_system.server.domain.citation_enforcement import (CitationEnforcement, CitationEnforcementService,
+                                                                ClaimPolicy)
+from planning_system.server.domain.content_review import ReviewLedger, ReviewLedgerService
+from planning_system.server.domain.content_review.types import DEFAULT_LEASE
 from planning_system.server.domain.context_assembly.context_assembler import ContextAssemblerService
 from planning_system.server.domain.context_assembly.interface import ContextAssembler
 from planning_system.server.domain.project_tree.interface import ProjectTree
@@ -39,6 +43,8 @@ class Services:
     admin_sessions: AdminSessions
     policy: PermissionPolicy
     task_assigner: TaskAssigner
+    enforcement: CitationEnforcement
+    reviews: ReviewLedger
     reader: Optional[Reader] = None
 
 
@@ -66,6 +72,8 @@ class DomainSettings:
     admin_session_ttl: timedelta = timedelta(hours=8)
     clock: Any = field(default_factory=SystemClock)
     policy: PermissionPolicy = field(default_factory=RulePermissionPolicy)
+    claim_policy: ClaimPolicy = field(default_factory=ClaimPolicy.default)
+    review_lease: timedelta = DEFAULT_LEASE
 
 
 class DomainServicesFactory(ServicesFactory):
@@ -87,4 +95,6 @@ class DomainServicesFactory(ServicesFactory):
             context=ContextAssemblerService(tree, references), agents=agents, issuer=issuer,
             admin_sessions=AdminSessionService(stores.credentials, s.clock, s.admin_session_ttl),
             policy=s.policy, task_assigner=TaskAssignerService(tree, issuer, agents),
+            enforcement=CitationEnforcementService(references, s.claim_policy),
+            reviews=ReviewLedgerService(stores.reviews, references, tree, s.clock, s.review_lease),
             reader=ReaderService(temp_cache, references, ingestion, s.scanner_config, s.json_reader))

@@ -6,9 +6,10 @@ from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from planning_system.contract import Forbidden, NotFound, Principal
-from planning_system.server.domain.access.types import (ADMIN, CredentialScope, NodeFacts, ReferenceFacts,
-                                                        TempEntryFacts)
-from planning_system.server.domain.references.citation_format import parse_citation
+from planning_system.server.domain.access.types import (ADMIN, WORKER, CredentialScope, NodeFacts,
+                                                        ReferenceFacts, TempEntryFacts)
+from planning_system.server.domain.content_review.types import TAKEN
+from planning_system.server.domain.references.citation_format import cites, parse_citation
 
 from . import permissions as P
 from .permissions import Permission
@@ -29,13 +30,12 @@ class TreeFacts:
         self._tree = services.tree
 
     def of(self, node_id: int) -> NodeFacts:
-        node = self._tree.get(node_id)
-        ancestors = self._tree.ancestors(node_id)
-        return NodeFacts(node.id, ancestors[0].id if ancestors else node.id, node.assignee)
+        return self.of_node(self._tree.get(node_id))
 
     def of_node(self, node) -> NodeFacts:
         ancestors = self._tree.ancestors(node.id)
-        return NodeFacts(node.id, ancestors[0].id if ancestors else node.id, node.assignee)
+        return NodeFacts(node.id, ancestors[0].id if ancestors else node.id, node.assignee,
+                         frozenset(node.labels), node.state)
 
 
 class RequestAuthorizer(RequestAuthorizerInterface):
@@ -61,6 +61,9 @@ class RequestAuthorizer(RequestAuthorizerInterface):
             P.CanRenderCitation: lambda p, perm, s: self._can_read_reference(
                 p, parse_citation(perm.citation).reference_id, s),
             P.CanSubmitUserQuote: lambda p, perm, s: s.policy.can_submit_user_quote(p),
+            P.CanReviewProject: lambda p, perm, s: self._can_review(p, perm.project_id, s),
+            P.CanReviewRecord: lambda p, perm, s: self._can_review(
+                p, s.reviews.get(perm.review_id).project_id, s),
         }
 
     def check(self, principal, permission, services):
@@ -115,10 +118,29 @@ class RequestAuthorizer(RequestAuthorizerInterface):
         return s.policy.can_read_temp_entry(p, TempEntryFacts(entry.cache_id, entry.owner))
 
     @staticmethod
+    def _can_review(p, project_id, s) -> bool:
+        own_task = TreeFacts(s).of(p.scope_node_id) if p.role == WORKER and p.scope_node_id is not None else None
+        return s.policy.can_review(p, project_id, own_task)
+
+    @staticmethod
+    def _holds_review_citing(p, reference_id, s) -> bool:
+        """Build log #50: the review-task worker may read the content + quotes of a review it holds."""
+        if p.role != WORKER or p.agent_id is None or p.project_id is None:
+            return False
+        for record in s.reviews.list(p.project_id, TAKEN):
+            if record.reviewer != p.agent_id:
+                continue
+            if record.content_reference_id == reference_id or cites(
+                    s.references.get(record.content_reference_id, follow_superseded=False).text, reference_id):
+                return RequestAuthorizer._can_review(p, record.project_id, s)
+        return False
+
+    @staticmethod
     def _can_read_reference(p, reference_id, s) -> bool:
         ref = s.references.get(reference_id, follow_superseded=False)
         if p.agent_id is not None and ref.owner == p.agent_id:
             return True                           # the agent that cited it into references
         facts = TreeFacts(s)
         citing = [facts.of_node(node) for node in s.tree.citing_nodes(ref.id)]
-        return s.policy.can_read_reference(p, ReferenceFacts(ref.id, ref.owner), citing)
+        return s.policy.can_read_reference(p, ReferenceFacts(ref.id, ref.owner), citing) or \
+            RequestAuthorizer._holds_review_citing(p, ref.id, s)

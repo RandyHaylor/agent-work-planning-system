@@ -23,6 +23,11 @@ class NodeFacts:
     node_id: NodeId
     project_id: NodeId               # the top-level (parentless) node it sits under; itself for a project
     assignee: Optional[AgentId] = None
+    labels: frozenset = frozenset()  # e.g. "review" (the review task, build log #49)
+    state: Optional[str] = None
+
+
+REVIEW_TASK_LABEL = "review"         # a worker on an in-progress task with this label may review its project
 
 
 @dataclass(frozen=True)

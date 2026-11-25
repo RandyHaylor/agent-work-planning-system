@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel, Field
 
 from planning_system.contract import Principal
@@ -97,6 +97,17 @@ class ContentBody(BaseModel):
 
 class ReplaceContentBody(BaseModel):
     text: str
+    tags: Optional[list[str]] = None          # None keeps the old item's tags
+
+
+class TakeReviewBody(BaseModel):
+    project_id: int
+
+
+class VerdictBody(BaseModel):
+    passed: bool
+    reason: str
+    suggested_title: Optional[str] = None
 
 
 def _run(runner, command, principal: Optional[Principal], shape: Callable[[Any], Any] = to_json) -> Any:
@@ -223,10 +234,38 @@ def add_node_content(node_id: int, body: ContentBody, principal: Principal = Who
 @router.put("/nodes/{node_id}/content/{reference_id}")
 def replace_node_content(node_id: int, reference_id: str, body: ReplaceContentBody,
                          principal: Principal = Who, runner=Runner):
-    return _run(runner, C.ReplaceNodeContent(node_id, reference_id, body.text), principal,
+    tags = None if body.tags is None else tuple(body.tags)
+    return _run(runner, C.ReplaceNodeContent(node_id, reference_id, body.text, tags), principal,
                 shapes.node_content(node_id, body.text))
 
 
 @router.get("/nodes/{node_id}/context")
 def assemble_node_context(node_id: int, principal: Principal = Who, runner=Runner):
     return _run(runner, C.AssembleNodeContext(node_id), principal, shapes.assembled_context)
+
+
+# ---- content review
+
+@router.get("/reviews")
+def list_reviews(project_id: int, status: Optional[str] = None, node_id: Optional[int] = None,
+                 principal: Principal = Who, runner=Runner):
+    return _run(runner, C.ListReviews(project_id, status, node_id), principal)
+
+
+@router.post("/reviews/take")
+def take_review(body: TakeReviewBody, principal: Principal = Who, runner=Runner):
+    packet = runner.run(C.TakeReview(body.project_id), principal)
+    if packet is None:
+        return Response(status_code=204)          # nothing pending
+    return to_json(packet)
+
+
+@router.post("/reviews/{review_id}/verdict")
+def submit_review_verdict(review_id: str, body: VerdictBody, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.SubmitReviewVerdict(review_id, body.passed, body.reason, body.suggested_title),
+                principal)
+
+
+@router.post("/reviews/{review_id}/release")
+def release_review(review_id: str, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.ReleaseReview(review_id), principal)

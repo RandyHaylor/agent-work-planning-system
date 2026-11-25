@@ -59,7 +59,7 @@ class ProjectTreeService(ProjectTree):
         self._editor.touch(node_id)
         return content
 
-    def replace_content(self, node_id, old_reference_id, new_text):
-        content = self._content.replace(node_id, old_reference_id, new_text)
+    def replace_content(self, node_id, old_reference_id, new_text, tags=None):
+        content = self._content.replace(node_id, old_reference_id, new_text, tags)
         self._editor.touch(node_id)
         return content

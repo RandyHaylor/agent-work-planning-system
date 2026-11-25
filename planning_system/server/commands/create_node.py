@@ -24,5 +24,6 @@ class CreateNode(WriteCommand):
         return CanCreateNode(self.parent_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
+        services.enforcement.check_title(self.title)
         return services.tree.create(self.parent_id, self.title, self.level_label, self.context_summary,
                                     self.labels, self.depends_on, self.position)

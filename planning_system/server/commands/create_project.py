@@ -22,4 +22,5 @@ class CreateProject(WriteCommand):
         return RoleIs(("admin",))
 
     def run(self, services, principal: Optional[Principal]) -> Any:
+        services.enforcement.check_title(self.title)
         return services.tree.create(None, self.title, PROJECT_LEVEL, self.context_summary)

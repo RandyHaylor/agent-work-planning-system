@@ -9,7 +9,6 @@ from planning_system.server.domain.references.types import Citation
 PENDING, TAKEN, PASSED, FAILED, SUPERSEDED = "pending", "taken", "passed", "failed", "superseded"
 STATUSES = (PENDING, TAKEN, PASSED, FAILED, SUPERSEDED)
 BLOCKING_STATUSES = frozenset({PENDING, TAKEN, FAILED})   # a node can't be "done" with these (log #50)
-REVIEW_TASK_LABEL = "review"
 DEFAULT_LEASE = timedelta(minutes=10)
 
 

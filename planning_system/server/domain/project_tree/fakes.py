@@ -210,12 +210,12 @@ class FakeProjectTree(ProjectTree):
         self._touch(node_id)
         return content
 
-    def replace_content(self, node_id, old_reference_id, new_text):
+    def replace_content(self, node_id, old_reference_id, new_text, tags=None):
         old = next((c for c in self.content(node_id) if c.reference_id == old_reference_id), None)
         if old is None:
             raise NotFound(f"content {old_reference_id} on node {node_id}")
         ref = self._refs.store_node_text(new_text, node_id, replaces=old_reference_id)
-        content = NodeContent(ref.id, old.tags)
+        content = NodeContent(ref.id, old.tags if tags is None else frozenset(tags))
         self._s.replace_content(node_id, old_reference_id, content)
         self._touch(node_id)
         return content

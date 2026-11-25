@@ -3,7 +3,8 @@ services, CommandRunner, FastAPI app and bootstrap, and offers the commands `run
 `set-admin-password`. Named in config/server.json as the server component's factory.
 
 Config keys read here (each child section goes to the module that owns it): storage, http_api,
-authentication.admin_session_hours, references.temp_cache_ttl_hours, source_fetching,
+authentication.admin_session_hours, references.temp_cache_ttl_hours, citation_enforcement.claim_policy,
+content_review.lease_minutes, source_fetching,
 document_extraction, quick_json_reader, prompt_builder.store_folder (all optional except storage)."""
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ from planning_system.server.adapters.uploaded_file_source import UploadedFileSou
 from planning_system.server.adapters.web_search_source import WebSearchSource
 from planning_system.server.commands import CommandRunner, RequestAuthorizer
 from planning_system.server.commands.services import DomainServicesFactory, DomainSettings
+from planning_system.server.domain.citation_enforcement import ClaimPolicy
 from planning_system.server.domain.authentication.credential_authenticator import CredentialAuthenticatorService
 from planning_system.server.domain.authentication.interface import CredentialAuthenticator
 from planning_system.server.domain.references.source_fetcher_port import (SourceFetcher, UploadRequest,
@@ -73,7 +75,10 @@ def domain_settings(section: ConfigSection, source_fetcher: Optional[SourceFetch
     """The per-process pieces from config; `source_fetcher` replaces the network adapters (tests)."""
     references = _child(section, "references")
     authentication = _child(section, "authentication")
+    content_review = _child(section, "content_review")
     return DomainSettings(
+        claim_policy=ClaimPolicy.from_mapping(_child(section, "citation_enforcement").get("claim_policy", None)),
+        review_lease=timedelta(minutes=float(content_review.get("lease_minutes", 10))),
         scanner_config=load_config(SCANNER_CONFIG_PATH),
         source_fetcher=source_fetcher or default_source_fetcher(_child(section, "source_fetching")),
         document_extractor=build_document_extractor(_child(section, "document_extraction").as_dict()),

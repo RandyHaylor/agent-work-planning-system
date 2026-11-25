@@ -18,6 +18,10 @@ from .list_ancestors import ListAncestors
 from .list_children import ListChildren
 from .list_nodes_by_state import ListNodesByState
 from .list_ready_children import ListReadyChildren
+from .list_reviews import ListReviews
+from .release_review import ReleaseReview
+from .submit_review_verdict import SubmitReviewVerdict
+from .take_review import TakeReview
 from .load_into_reader import LoadIntoReader
 from .mint_credential import MintCredential
 from .mint_quote_key import MintQuoteKey
@@ -58,6 +62,11 @@ CORE_ROUTES = {
     ("POST", "/nodes/{node_id}/content"): AddNodeContent,
     ("PUT", "/nodes/{node_id}/content/{reference_id}"): ReplaceNodeContent,
     ("GET", "/nodes/{node_id}/context"): AssembleNodeContext,
+    # content review (05-spec-citation-enforcement-and-review.md "Routes")
+    ("GET", "/reviews"): ListReviews,
+    ("POST", "/reviews/take"): TakeReview,
+    ("POST", "/reviews/{review_id}/verdict"): SubmitReviewVerdict,
+    ("POST", "/reviews/{review_id}/release"): ReleaseReview,
 }
 
 REFERENCE_ROUTES = {

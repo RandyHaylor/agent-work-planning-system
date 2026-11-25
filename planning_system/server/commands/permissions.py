@@ -100,3 +100,15 @@ class CanRenderCitation(Permission):
 @dataclass(frozen=True)
 class CanSubmitUserQuote(Permission):
     """Quote key only."""
+
+
+@dataclass(frozen=True)
+class CanReviewProject(Permission):
+    """List / take reviews in a project: admin, its planner, or the worker on its in-progress `review` task."""
+    project_id: int
+
+
+@dataclass(frozen=True)
+class CanReviewRecord(Permission):
+    """CanReviewProject for the record's project (the ledger then checks the caller holds it)."""
+    review_id: str

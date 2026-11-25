@@ -18,6 +18,8 @@ from planning_system.server.domain.agent_registry.fakes import FakeAgentRegistry
 from planning_system.server.domain.agent_registry.fakes import FakeClock as RegistryClock
 from planning_system.server.domain.authentication.fakes import FakeAuthentication
 from planning_system.server.domain.authentication.fakes import FakeClock as AuthClock
+from planning_system.server.domain.citation_enforcement.fakes import FakeCitationEnforcement
+from planning_system.server.domain.content_review.fakes import FakeReviewLedger
 from planning_system.server.domain.context_assembly.fakes import FakeContextAssembler
 from planning_system.server.domain.project_tree.fakes import FakeProjectTree, TickingClock
 from planning_system.server.domain.references.fakes import FakeClock as ReferenceClock
@@ -48,7 +50,9 @@ def fake_services(stores=None) -> Services:
     return Services(tree=tree, references=references, temp_cache=temp_cache,
                     context=FakeContextAssembler(tree, references), agents=agents, issuer=auth,
                     admin_sessions=auth, policy=policy,
-                    task_assigner=FakeTaskAssigner(tree, auth, agents), reader=reader)
+                    task_assigner=FakeTaskAssigner(tree, auth, agents),
+                    enforcement=FakeCitationEnforcement(references), reviews=FakeReviewLedger(references, tree),
+                    reader=reader)
 
 
 class FixedServicesFactory(ServicesFactory):
@@ -65,7 +69,7 @@ def node_facts(services: Services, node_id: int) -> NodeFacts:
     node = services.tree.get(node_id)
     ancestors = services.tree.ancestors(node_id)
     project_id = ancestors[0].id if ancestors else node.id
-    return NodeFacts(node.id, project_id, node.assignee)
+    return NodeFacts(node.id, project_id, node.assignee, frozenset(node.labels), node.state)
 
 
 class FakeRequestAuthorizer(RequestAuthorizerInterface):
@@ -116,6 +120,11 @@ class FakeRequestAuthorizer(RequestAuthorizerInterface):
             return True                                 # no citation parser scaffolded yet (gap)
         if isinstance(perm, P.CanSubmitUserQuote):
             return policy.can_submit_user_quote(p)
+        if isinstance(perm, (P.CanReviewProject, P.CanReviewRecord)):
+            project_id = perm.project_id if isinstance(perm, P.CanReviewProject) else \
+                s.reviews.get(perm.review_id).project_id
+            own = node_facts(s, p.scope_node_id) if p.role == "worker" and p.scope_node_id is not None else None
+            return policy.can_review(p, project_id, own)
         raise TypeError(f"unknown permission {perm!r}")
 
     def _can_read_item(self, p, reader_id, s) -> bool:

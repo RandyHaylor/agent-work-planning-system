@@ -132,3 +132,18 @@ def test_10_revoking_a_planner_revokes_the_worker_tokens_it_minted(policy):
     auth.revoke(ADMIN, planner.credential_id)
     with pytest.raises(Exception):
         auth.authenticate(worker.token)
+
+
+def test_can_review_admin_planner_or_worker_on_an_in_progress_review_task(policy):
+    review_task = NodeFacts(TASK.node_id, PROJECT, "w1", frozenset({"review"}), "in_progress")
+    assert policy.can_review(ADMIN, OTHER_PROJECT, None)
+    assert policy.can_review(PLANNER, PROJECT, None)
+    assert not policy.can_review(PLANNER, OTHER_PROJECT, None)
+    assert policy.can_review(WORKER, PROJECT, review_task)
+    assert not policy.can_review(WORKER, OTHER_PROJECT, review_task)
+    assert not policy.can_review(WORKER, PROJECT, TASK)                                   # not labelled review
+    assert not policy.can_review(WORKER, PROJECT, NodeFacts(TASK.node_id, PROJECT, "w1", frozenset({"review"}),
+                                                            "assigned"))                 # not started
+    assert not policy.can_review(WORKER, PROJECT, NodeFacts(SIBLING.node_id, PROJECT, "w2", frozenset({"review"}),
+                                                            "in_progress"))              # not its own task
+    assert not policy.can_review(QUOTE, PROJECT, None)

@@ -19,4 +19,6 @@ class UpdateNode(WriteCommand):
         return CanEditNode(self.node_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
+        if "title" in self.fields:
+            services.enforcement.check_title(self.fields["title"])
         return services.tree.update(self.node_id, **self.fields)
