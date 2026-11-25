@@ -8,7 +8,7 @@ from .command_table import COMMANDS
 from .types import Arg
 
 _ARG_KWARGS = {
-    "str": {}, "int": {"type": int}, "ints": {"type": int, "nargs": "+"}, "strs": {"nargs": "*"},
+    "str": {}, "int": {"type": int}, "float": {"type": float}, "ints": {"type": int, "nargs": "+"}, "strs": {"nargs": "*"},
     "flag": {"action": "store_true"}, "remainder": {"nargs": argparse.REMAINDER},
 }
 

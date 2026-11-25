@@ -104,6 +104,10 @@ SERVER_COMMANDS = [
     (["guidance", "planner"], "guidance", {"role": "planner"}),
     (["guidance", "templates"], "guidance_templates", {}),
     (["guidance", "rules"], "guidance_rules", {}),
+    (["review", "list", "--project", "1", "--status", "failed", "--node", "3"], "list_reviews",
+     {"project_id": 1, "status": "failed", "node_id": 3}),
+    (["review", "list", "--project", "1"], "list_reviews", {"project_id": 1}),
+    (["review", "show", "rev-9"], "get_review", {"review_id": "rev-9"}),
 ]
 
 
@@ -145,6 +149,22 @@ def test_1_local_commands_call_local_client_only(harness, argv, method):
     assert harness.run(*argv) == 0
     assert [name for name, _ in harness.local.calls] == [method]
     assert harness.api.calls == []
+
+
+def test_review_serve_calls_local_client_with_options(harness):
+    assert harness.run("review", "serve", "--project", "4", "--backend", "pi", "--model", "m",
+                       "--poll-seconds", "0.5", "--once") == 0
+    assert harness.local.calls == [("serve_reviews", {"project_id": 4, "backend": "pi", "model": "m",
+                                                      "poll_seconds": 0.5, "once": True})]
+    assert harness.api.calls == []
+    assert harness.run("review", "serve", "--project", "4") == 0
+    assert harness.local.calls[-1] == ("serve_reviews", {"project_id": 4, "backend": None, "model": None,
+                                                         "poll_seconds": 5.0, "once": False})
+
+
+def test_review_serve_needs_a_token(harness):
+    assert harness.run("review", "serve", "--project", "4", env={}) == 2
+    assert harness.local.calls == []
 
 
 def test_1_task_start_builds_request(harness):
