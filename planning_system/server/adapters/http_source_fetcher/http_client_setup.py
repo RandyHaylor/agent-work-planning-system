@@ -17,10 +17,15 @@ class HttpFetchSettings:
 
     @classmethod
     def from_config(cls, config: Mapping) -> "HttpFetchSettings":
-        """`config` is the "source_fetching" section."""
-        raise NotImplementedError("level 7")
+        """`config` is the "source_fetching" section; missing keys keep the defaults."""
+        defaults = cls()
+        return cls(timeout_seconds=float(config.get("timeout_seconds", defaults.timeout_seconds)),
+                   max_bytes=int(config.get("max_bytes", defaults.max_bytes)),
+                   user_agent=str(config.get("user_agent", defaults.user_agent)),
+                   follow_redirects=bool(config.get("follow_redirects", defaults.follow_redirects)))
 
 
 def build_http_client(settings: HttpFetchSettings, transport: httpx.BaseTransport | None = None) -> httpx.Client:
     """httpx.Client with timeout, redirects and user agent from settings (`transport` for tests)."""
-    raise NotImplementedError("level 7")
+    return httpx.Client(timeout=settings.timeout_seconds, follow_redirects=settings.follow_redirects,
+                        headers={"User-Agent": settings.user_agent}, transport=transport)
