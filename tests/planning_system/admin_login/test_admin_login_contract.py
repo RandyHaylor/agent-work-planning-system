@@ -15,7 +15,7 @@ WRONG = "s3cret-wrong-guess"
 
 IMPLEMENTATIONS = [
     pytest.param(FakeAdminLoginFlow, id="fake"),
-    pytest.param(AdminLoginFlow, id="real", marks=pytest.mark.xfail(strict=False, reason="level 7")),
+    pytest.param(AdminLoginFlow, id="real"),
 ]
 
 
