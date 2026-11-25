@@ -7,10 +7,7 @@ from planning_system.server.domain.agent_registry.interface import AgentRegistry
 from planning_system.server.domain.agent_registry.ports import AgentRegistryStoragePort
 from planning_system.server.domain.agent_registry.registry import AgentRegistryService
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
-
-
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def setup(request):
     storage, clock = InMemoryAgentRegistryStorage(), FakeClock()
     cls = FakeAgentRegistry if request.param == "fake" else AgentRegistryService

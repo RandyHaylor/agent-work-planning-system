@@ -8,10 +8,7 @@ from planning_system.server.domain.project_tree.fakes import (FakeProjectTree, I
                                                               TickingClock)
 from planning_system.server.domain.references.fakes import FakeReferenceLibrary
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
-
-
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def env(request):
     refs = FakeReferenceLibrary()
     tree = FakeProjectTree(InMemoryTreeStorage(), refs, TickingClock())

@@ -12,11 +12,10 @@ from planning_system.server.domain.project_tree.ports import TreeStoragePort
 from planning_system.server.domain.project_tree.project_tree import ProjectTreeService
 from planning_system.server.domain.references.fakes import FakeReferenceLibrary
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 SPIKE = ("tech spike",)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def env(request):
     refs = FakeReferenceLibrary()
     cls = FakeProjectTree if request.param == "fake" else ProjectTreeService

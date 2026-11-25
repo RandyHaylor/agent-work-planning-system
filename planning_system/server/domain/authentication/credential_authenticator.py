@@ -1,4 +1,6 @@
 """credential_authenticator: presented token -> Principal."""
+from planning_system.contract import Forbidden
+
 from .interface import CredentialAuthenticator
 from .token_hashing import TokenHasher
 
@@ -10,4 +12,9 @@ class CredentialAuthenticatorService(CredentialAuthenticator):
         self._hasher = hasher or TokenHasher()
 
     def authenticate(self, presented_token):
-        raise NotImplementedError
+        stored = self._storage.find_by_digest(self._hasher.digest(presented_token))
+        if stored is None or stored.revoked:
+            raise Forbidden("unknown or revoked credential")
+        if stored.expires_at is not None and self._clock.now() >= stored.expires_at:
+            raise Forbidden("expired credential")
+        return stored.principal
