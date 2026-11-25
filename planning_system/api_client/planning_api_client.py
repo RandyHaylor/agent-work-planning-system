@@ -64,7 +64,7 @@ class PlanningApiClient(PlanningApiClientInterface):
                     position=None):
         return self._call("POST", "/nodes", {
             "parent_id": parent_id, "title": title, "level_label": level_label,
-            "context_summary": context_summary, "labels": list(labels),
+            "context_summary": context_summary, "labels": list(labels or ()),
             "depends_on": None if depends_on is None else list(depends_on), "position": position})
 
     def nodes_by_state(self, project_id, state):
@@ -99,7 +99,7 @@ class PlanningApiClient(PlanningApiClientInterface):
                           {"kind": kind, "title": title, "context_summary": context_summary})
 
     def add_content(self, node_id, text, tags=()):
-        return self._call("POST", f"/nodes/{node_id}/content", {"text": text, "tags": list(tags)})
+        return self._call("POST", f"/nodes/{node_id}/content", {"text": text, "tags": list(tags or ())})
 
     def replace_content(self, node_id, reference_id, text):
         return self._call("PUT", f"/nodes/{node_id}/content/{reference_id}", {"text": text})
@@ -124,10 +124,10 @@ class PlanningApiClient(PlanningApiClientInterface):
         return self._call("GET", f"/reader/{reader_id}/get", params=params)
 
     def reader_search(self, terms, ids=(), **opts):
-        return self._call("POST", "/reader/search", {"terms": terms, "ids": list(ids), **opts})
+        return self._call("POST", "/reader/search", {"terms": terms, "ids": list(ids or ()), **opts})
 
     def reader_json(self, reader_id, flags):
-        return self._call("POST", f"/reader/{reader_id}/json", {"flags": list(flags)})
+        return self._call("POST", f"/reader/{reader_id}/json", {"flags": list(flags or ())})
 
     def reader_lines(self, reader_id, start, end):
         return self._call("GET", f"/reader/{reader_id}/lines", params={"start": start, "end": end})
