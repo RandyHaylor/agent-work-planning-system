@@ -1,0 +1,9 @@
+{
+  "format": "planning-system/role-presets@1",
+  "rolePresets": {
+    "planner": "Planner",
+    "dev_manager": "Dev manager",
+    "worker": "Worker",
+    "admin": "Planner"
+  }
+}
