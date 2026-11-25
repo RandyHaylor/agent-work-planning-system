@@ -7,3 +7,7 @@ planner-server.log
 backups/
 .env
 full_backups/
+node_modules/
+tools/pi/agent/sessions/
+stop-settings.json
+.claude/worktrees/

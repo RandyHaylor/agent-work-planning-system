@@ -6,6 +6,7 @@ Collected during the build instead of stopping (user: "noting any issues to addr
 1. `agent_instruction_injections.json` (copied as-is into guidance) still uses old-server wording: workorders, `kb_proposal`, "the reference run", and repeats rules that are now rule categories. Needs your review.
 2. Knowledge bases are deferred out of the first build (log #16).
 3. web_ui, database_backup, Codex adapter: out of the first build (log #7).
+10. **pi reviewer backend needs your OK to run.** pi (`@earendil-works/pi-coding-agent` 1.6.1, MIT) is installed locally in `tools/pi` with its own config in `tools/pi/agent` (pointed at the local llama.cpp gemma4). Running it was blocked as unreviewed third-party code. If you want it live, allow running `node tools/pi/node_modules/@earendil-works/pi-coding-agent/dist/cli.js` (or install pi yourself); the `local_llm` backend calls the same model directly and works now.
 7. `planning task start` (real headless `claude -p` session) has not been run live: it's a billed run, so it waits for your go. Its test: `PLANNING_RUN_CLAUDE=1 uv run --extra test python -m pytest tests/planning_system/local_client -q`.
 8. Small output inconsistency: `planning cite-exchange` prints the bare reference id, while other commands print JSON objects.
 9. New nodes (including projects) start in state "assigned" (the only non-terminal start state in the approved states), even before anyone is assigned.

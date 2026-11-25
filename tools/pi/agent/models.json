@@ -1,0 +1,22 @@
+{
+  "providers": {
+    "local-llamacpp": {
+      "baseUrl": "http://127.0.0.1:8898/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "gemma4-31b-jang-q3:latest",
+          "name": "gemma4-31b-jang-q3",
+          "contextWindow": 32000,
+          "maxTokens": 1024,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    }
+  }
+}
