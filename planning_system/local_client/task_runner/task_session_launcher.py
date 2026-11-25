@@ -29,7 +29,7 @@ class TaskSessionLauncher:
         prompt = self._start_prompt(request)
         handle = self._adapter.spawn_headless_session(HeadlessSessionSpec(
             request.agent_id, request.working_directory, self._session_environment(request),
-            request.allowed_tools))
+            request.allowed_tools, model=request.model))
         threading.Thread(target=handle.send_prompt_and_await_response, args=(prompt,), daemon=True).start()
         self._wait_for_prompt_handoff(handle)
         return handle

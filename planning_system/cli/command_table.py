@@ -58,7 +58,9 @@ COMMANDS: tuple[CommandSpec, ...] = (
         NODE_ID, Arg("--agent", "agent_id", required=True), Arg("--branch", "branch", required=True))),
     CommandSpec(("task", "start"), TARGET_LOCAL, "start_task", (
         NODE_ID, Arg("--agent", "agent_id", required=True), Arg("--token", "token", required=True),
-        Arg("--dir", "working_directory", required=True), Arg("--role", "role")), mapper="task_start_request"),
+        Arg("--dir", "working_directory", required=True), Arg("--role", "role"), Arg("--model", "model"),
+        Arg("--allow-tools", "allowed_tools", "strs")),
+        mapper="task_start_request"),
     CommandSpec(("task", "stop"), TARGET_LOCAL, "stop_task", (Arg("agent_id", "agent_id"),), authenticated=False),
     CommandSpec(("task", "list"), TARGET_LOCAL, "running_tasks", authenticated=False),
     CommandSpec(("review", "ask"), TARGET_LOCAL, "ask_reviewer", (

@@ -31,7 +31,9 @@ def own_task(arguments: dict, api) -> dict:
 def task_start_request(arguments: dict, api) -> dict:
     return {"request": TaskStartRequest(arguments["node_id"], arguments["agent_id"],
                                         arguments["role"] or DEFAULT_ROLE, arguments["token"],
-                                        Path(arguments["working_directory"]))}
+                                        Path(arguments["working_directory"]),
+                                        allowed_tools=tuple(arguments.get("allowed_tools") or ()),
+                                        model=arguments.get("model"))}
 
 
 def load_source(arguments: dict, api) -> dict:

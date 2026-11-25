@@ -16,6 +16,7 @@ class TaskStartRequest:
     token: str = field(repr=False)    # goes only into the session's environment, never into the prompt
     working_directory: Path = Path(".")
     allowed_tools: tuple[str, ...] = ()
+    model: Optional[str] = None       # e.g. "haiku"; None = the harness default
 
 
 @dataclass
