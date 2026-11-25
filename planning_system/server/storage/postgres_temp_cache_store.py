@@ -3,9 +3,12 @@ temp_cache_entries; clearing the cache touches no other table."""
 from __future__ import annotations
 
 from sqlalchemy import JSON, Column, DateTime, Table, Text
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
 from planning_system.server.domain.references.ports import TempCacheStoragePort
+from planning_system.server.domain.references.types import TempCacheEntry
 
 from .metadata import METADATA
 
@@ -25,13 +28,24 @@ class PostgresTempCacheStore(TempCacheStoragePort):
         self._conn = conn
 
     def get(self, cache_id):
-        raise NotImplementedError("level 7")
+        found = self._entries(select(TEMP_CACHE_ENTRIES).where(TEMP_CACHE_ENTRIES.c.cache_id == cache_id))
+        return found[0] if found else None
 
     def save(self, entry):
-        raise NotImplementedError("level 7")
+        row = dict(cache_id=entry.cache_id, owner=entry.owner, text=entry.text, sha256=entry.sha256,
+                   created_at=entry.created_at, metadata=dict(entry.metadata))
+        statement = insert(TEMP_CACHE_ENTRIES).values(**row)
+        self._conn.execute(statement.on_conflict_do_update(
+            index_elements=[TEMP_CACHE_ENTRIES.c.cache_id],
+            set_={k: statement.excluded[k] for k in row if k != "cache_id"}))
 
     def delete(self, cache_id):
-        raise NotImplementedError("level 7")
+        self._conn.execute(TEMP_CACHE_ENTRIES.delete().where(TEMP_CACHE_ENTRIES.c.cache_id == cache_id))
 
     def created_before(self, cutoff):
-        raise NotImplementedError("level 7")
+        return self._entries(select(TEMP_CACHE_ENTRIES).where(TEMP_CACHE_ENTRIES.c.created_at < cutoff)
+                             .order_by(TEMP_CACHE_ENTRIES.c.created_at))
+
+    def _entries(self, statement):
+        return [TempCacheEntry(r.cache_id, r.owner, r.text, r.sha256, r.created_at, dict(r.metadata))
+                for r in self._conn.execute(statement)]

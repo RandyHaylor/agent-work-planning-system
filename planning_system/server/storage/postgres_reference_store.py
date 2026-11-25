@@ -3,9 +3,12 @@ Text is never updated and nothing is deleted; only superseded_by changes."""
 from __future__ import annotations
 
 from sqlalchemy import JSON, Column, Table, Text
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
 from planning_system.server.domain.references.ports import ReferenceStoragePort
+from planning_system.server.domain.references.types import Reference
 
 from .metadata import METADATA
 
@@ -26,10 +29,23 @@ class PostgresReferenceStore(ReferenceStoragePort):
         self._conn = conn
 
     def get(self, ref_id):
-        raise NotImplementedError("level 7")
+        return self._one(select(REFERENCES).where(REFERENCES.c.id == ref_id))
 
     def find_by_sha256(self, sha256):
-        raise NotImplementedError("level 7")
+        # prefer a current (not superseded) reference when several share the text
+        return self._one(select(REFERENCES).where(REFERENCES.c.sha256 == sha256)
+                         .order_by(REFERENCES.c.superseded_by.is_not(None), REFERENCES.c.id).limit(1))
 
     def save(self, reference):
-        raise NotImplementedError("level 7")   # insert; on an existing id only superseded_by may change
+        """Insert; on an existing id only superseded_by changes (text is never updated)."""
+        statement = insert(REFERENCES).values(
+            id=reference.id, origin=reference.origin, text=reference.text, sha256=reference.sha256,
+            metadata=dict(reference.metadata), owner=reference.owner, superseded_by=reference.superseded_by)
+        self._conn.execute(statement.on_conflict_do_update(
+            index_elements=[REFERENCES.c.id], set_={"superseded_by": statement.excluded.superseded_by}))
+
+    def _one(self, statement):
+        r = self._conn.execute(statement).first()
+        if r is None:
+            return None
+        return Reference(r.id, r.origin, r.text, r.sha256, dict(r.metadata), r.owner, r.superseded_by)

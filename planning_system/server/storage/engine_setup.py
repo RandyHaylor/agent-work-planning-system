@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, contextmanager
 
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Connection, Engine
 
 from planning_system.configuration import ConfigSection
@@ -27,12 +28,16 @@ class Transactions(TransactionsInterface):
         self._engine = engine
 
     def read_write(self):
-        raise NotImplementedError("level 7")
+        return self._engine.begin()
 
+    @contextmanager
     def read_only(self):
-        raise NotImplementedError("level 7")
+        with self._engine.begin() as conn:
+            conn.execute(text("SET TRANSACTION READ ONLY"))
+            yield conn
 
 
 def create_engine_from_section(section: ConfigSection) -> Engine:
     """Keys: dsn (postgresql+psycopg://...), pool_size. Nobody else interprets them."""
-    raise NotImplementedError("level 7")
+    return create_engine(section.get("dsn"), pool_size=section.get("pool_size", 5),
+                         pool_pre_ping=True)

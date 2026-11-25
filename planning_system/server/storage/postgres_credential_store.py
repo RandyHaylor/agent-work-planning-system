@@ -8,9 +8,13 @@ the hash and the port only reads it (gap reported; see bootstrap.ports.AdminPass
 from __future__ import annotations
 
 from sqlalchemy import (BigInteger, Boolean, CheckConstraint, Column, DateTime, Integer, Table, Text)
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
+from planning_system.contract import Forbidden, Principal
 from planning_system.server.domain.authentication.ports import CredentialStoragePort
+from planning_system.server.domain.authentication.types import StoredCredential
 
 from .metadata import METADATA
 
@@ -42,23 +46,45 @@ class PostgresCredentialStore(CredentialStoragePort):
         self._conn = conn
 
     def save(self, credential):
-        raise NotImplementedError("level 7")
+        p = credential.principal
+        row = dict(credential_id=credential.credential_id, token_digest=credential.token_digest,
+                   kind=credential.kind, role=p.role, agent_id=p.agent_id, project_id=p.project_id,
+                   scope_node_id=p.scope_node_id, minted_by=credential.minted_by, label=credential.label,
+                   revoked=credential.revoked, expires_at=credential.expires_at)
+        statement = insert(CREDENTIALS).values(**row)
+        self._conn.execute(statement.on_conflict_do_update(
+            index_elements=[CREDENTIALS.c.credential_id],
+            set_={k: statement.excluded[k] for k in row if k != "credential_id"}))
 
     def get(self, credential_id):
-        raise NotImplementedError("level 7")
+        found = self._credentials(select(CREDENTIALS).where(CREDENTIALS.c.credential_id == credential_id))
+        return found[0] if found else None
 
     def find_by_digest(self, token_digest):
-        raise NotImplementedError("level 7")
+        found = self._credentials(select(CREDENTIALS).where(CREDENTIALS.c.token_digest == token_digest))
+        return found[0] if found else None
 
     def minted_by(self, agent_id):
-        raise NotImplementedError("level 7")
+        return self._credentials(select(CREDENTIALS).where(CREDENTIALS.c.minted_by == agent_id)
+                                 .order_by(CREDENTIALS.c.credential_id))
 
     def admin_password_hash(self):
-        raise NotImplementedError("level 7")
+        password_hash = self._conn.execute(select(ADMIN_PASSWORD.c.password_hash)).scalar_one_or_none()
+        if password_hash is None:
+            raise Forbidden("no admin password set: run `planning-server bootstrap` first")
+        return password_hash
 
     # beyond the port (bootstrap)
     def has_admin_password(self) -> bool:
-        raise NotImplementedError("level 7")
+        return self._conn.execute(select(ADMIN_PASSWORD.c.id)).first() is not None
 
     def set_admin_password_hash(self, password_hash: str) -> None:
-        raise NotImplementedError("level 7")
+        statement = insert(ADMIN_PASSWORD).values(id=1, password_hash=password_hash)
+        self._conn.execute(statement.on_conflict_do_update(
+            index_elements=[ADMIN_PASSWORD.c.id], set_={"password_hash": statement.excluded.password_hash}))
+
+    def _credentials(self, statement):
+        return [StoredCredential(r.credential_id, r.token_digest,
+                                 Principal(r.agent_id, r.role, r.project_id, r.scope_node_id), r.kind,
+                                 r.minted_by, r.label, r.revoked, r.expires_at)
+                for r in self._conn.execute(statement)]

@@ -1,8 +1,8 @@
 """Contract tests for storage (spec: planning/05-spec-storage.md).
 
 Each Postgres store implements one domain port; the port's expectations run against
-[the domain's in-memory fake port, the Postgres store (xfail until level 7)]. The level-7 run needs
-a real `planning_system` database (PLANNING_TEST_DSN); the hollow stores fail before touching one.
+[the domain's in-memory fake port, the Postgres store]. Real runs use a migrated throwaway database
+on the real Postgres container (conftest.py); each test's connection is rolled back afterwards.
 """
 import dataclasses
 from datetime import datetime, timedelta, timezone
@@ -29,16 +29,17 @@ from planning_system.server.storage import (PostgresAgentRegistryStore, Postgres
                                             PostgresTreeStore, Storage, Stores, Transactions)
 from planning_system.server.storage.fakes import InMemoryStorage, RecordingTransactions
 from planning_system.server.storage.metadata import METADATA
+from planning_system.server.storage.postgres_agent_registry_store import AGENT_SESSIONS
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
 T0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def store_fixture(fake_cls, real_cls):
-    @pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+    @pytest.fixture(params=["fake", "real"])
     def fixture(request):
-        # real: bound to a connection from a throwaway schema at level 7; hollow now
-        return fake_cls() if request.param == "fake" else real_cls(None)
+        if request.param == "fake":
+            return fake_cls()
+        return real_cls(request.getfixturevalue("connection"))
     return fixture
 
 
@@ -91,34 +92,41 @@ def test_stores_for_binds_all_five_stores_to_one_connection():
 
 # ---- transactions (1, 2)
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def transactions(request):
     if request.param == "fake":
         return RecordingTransactions()
-    from sqlalchemy import create_engine
-    import os
-    return Transactions(create_engine(os.environ.get(
-        "PLANNING_TEST_DSN", "postgresql+psycopg://localhost:1/planning_system_test")))
+    return Transactions(request.getfixturevalue("engine"))
+
+
+def _session(agent_id):
+    return AgentSession(agent_id=agent_id, first_seen=T0, last_seen=T0)
 
 
 def test_1_read_write_commits_on_success_and_rolls_back_on_error(transactions):
-    with transactions.read_write():
-        pass
+    with transactions.read_write() as conn:
+        if not isinstance(transactions, RecordingTransactions):
+            PostgresAgentRegistryStore(conn).save(_session("tx-committed"))
     with pytest.raises(RuntimeError):
-        with transactions.read_write():
+        with transactions.read_write() as conn:
+            if not isinstance(transactions, RecordingTransactions):
+                PostgresAgentRegistryStore(conn).save(_session("tx-rolled-back"))
             raise RuntimeError("boom")
     if isinstance(transactions, RecordingTransactions):
         assert [(r.committed, r.rolled_back) for r in transactions.records] == [(True, False), (False, True)]
+    else:
+        with transactions.read_only() as conn:
+            store = PostgresAgentRegistryStore(conn)
+            assert store.get("tx-committed") is not None and store.get("tx-rolled-back") is None
+        with transactions.read_write() as conn:
+            conn.execute(AGENT_SESSIONS.delete().where(AGENT_SESSIONS.c.agent_id == "tx-committed"))
 
 
-@LEVEL7
-def test_2_read_only_rejects_an_insert():
-    from sqlalchemy import create_engine, text
-    import os
-    tx = Transactions(create_engine(os.environ.get("PLANNING_TEST_DSN", "postgresql+psycopg://localhost:1/x")))
-    with pytest.raises(Exception):
-        with tx.read_only() as conn:
-            conn.execute(text("CREATE TEMP TABLE t (x int)"))
+def test_2_read_only_rejects_an_insert(engine):
+    from sqlalchemy.exc import DBAPIError
+    with pytest.raises(DBAPIError, match="read-only"):
+        with Transactions(engine).read_only() as conn:
+            PostgresAgentRegistryStore(conn).save(_session("never"))
 
 
 # ---- tree (3, 4)
@@ -204,13 +212,13 @@ def test_agent_registry_upsert_and_list(agent_store):
 
 # ---- migrations (9)
 
-@LEVEL7
-def test_9_upgrade_head_creates_exactly_the_metadata_tables():
-    import os
+def test_9_upgrade_head_creates_exactly_the_metadata_tables(migrated_dsn, engine):
+    from sqlalchemy import inspect
     from planning_system.configuration import ConfigSection
     from planning_system.server.storage import run_migrations
-    run_migrations(ConfigSection("storage", {"dsn": os.environ.get("PLANNING_TEST_DSN", "postgresql+psycopg://localhost:1/x")}))
-    raise AssertionError("compare inspector table names with METADATA at level 7")
+    run_migrations(ConfigSection("storage", {"dsn": migrated_dsn}))   # a second upgrade is a no-op
+    tables = set(inspect(engine).get_table_names()) - {"alembic_version"}
+    assert tables == set(METADATA.tables)
 
 
 def test_in_memory_storage_shares_one_set_of_stores():

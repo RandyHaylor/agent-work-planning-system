@@ -10,7 +10,10 @@ from planning_system.server.domain.authentication.ports import CredentialStorage
 from planning_system.server.domain.project_tree.ports import TreeStoragePort
 from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
 
-from .engine_setup import TransactionsInterface
+from alembic import command
+from alembic.config import Config as AlembicConfig
+
+from .engine_setup import Transactions, TransactionsInterface, create_engine_from_section
 from .postgres_agent_registry_store import PostgresAgentRegistryStore
 from .postgres_credential_store import PostgresCredentialStore
 from .postgres_reference_store import PostgresReferenceStore
@@ -41,9 +44,12 @@ class Storage:
 
 def create_storage(section: ConfigSection) -> Storage:
     """Engine from the section -> Transactions -> Storage."""
-    raise NotImplementedError("level 7")
+    return Storage(Transactions(create_engine_from_section(section)))
 
 
 def run_migrations(section: ConfigSection) -> None:
     """alembic upgrade head on the section's dsn (script_location = MIGRATIONS_DIR); used by bootstrap."""
-    raise NotImplementedError("level 7")
+    config = AlembicConfig()
+    config.set_main_option("script_location", str(MIGRATIONS_DIR))
+    config.set_main_option("sqlalchemy.url", section.get("dsn").replace("%", "%%"))
+    command.upgrade(config, "head")
