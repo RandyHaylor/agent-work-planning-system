@@ -74,7 +74,6 @@ def test_two_connections_never_take_the_same_record(engine):
             conn.execute(delete(CONTENT_REVIEWS).where(CONTENT_REVIEWS.c.project_id == project))
 
 
-@pytest.mark.xfail(raises=NotImplementedError)
 def test_two_ledgers_on_two_connections_take_different_records(engine):
     """The real ledger end to end on Postgres: concurrent take_next in two open transactions."""
     project = secrets.randbits(40)

@@ -29,7 +29,7 @@ def world():
     return dict(references=references, tree=tree, project=project, node=node, user=user, content=content)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=pytest.mark.xfail(raises=NotImplementedError))])
+@pytest.fixture(params=["fake", "real"])
 def make_ledger(request, world):
     def make(clock=None):
         clock = clock or TickingClock()

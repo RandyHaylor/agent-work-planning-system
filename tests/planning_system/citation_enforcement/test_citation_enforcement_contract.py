@@ -21,7 +21,7 @@ def library():
     return FakeReferenceLibrary(storage)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=pytest.mark.xfail(raises=NotImplementedError))])
+@pytest.fixture(params=["fake", "real"])
 def gate(request, library):
     if request.param == "fake":
         return FakeCitationEnforcement(library)
@@ -109,7 +109,6 @@ def test_8b_good_title(gate):
     gate.check_title("x" * 50)
 
 
-@pytest.mark.xfail(raises=NotImplementedError)
 def test_policy_from_config_can_add_a_tag(library):
     table = {"requirement": {"needs": ["user_exchange"], "allowed": ["user_exchange"], "hint": "needs a user quote"},
              "risk": {"needs": [], "allowed": ["document"]}}
