@@ -1,0 +1,25 @@
+{
+  "server": {
+    "factory": "planning_system.server.composition:create_server",
+    "storage": {
+      "dsn": "${PLANNING_DSN}",
+      "pool_size": 5
+    },
+    "http_api": {
+      "host": "127.0.0.1",
+      "port": 8788,
+      "cert_dir": "certs",
+      "routers": [
+        {"router": "planning_system.server.http_api.command_routes:router", "prefix": ""},
+        {"router": "planning_system.server.domain.references.http_routes:router", "prefix": ""},
+        {"router": "planning_system.prompt_builder.http_routes:router", "prefix": ""}
+      ]
+    },
+    "authentication": {
+      "admin_session_hours": 8
+    },
+    "references": {
+      "temp_cache_ttl_hours": 72
+    }
+  }
+}
