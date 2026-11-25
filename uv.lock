@@ -17,6 +17,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "json-source-map" },
     { name = "lxml-html-clean" },
     { name = "markdownify" },
     { name = "pdfminer-six" },
@@ -44,6 +45,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "httpx", marker = "extra == 'test'", specifier = ">=0.27" },
+    { name = "json-source-map", specifier = ">=1.0.5" },
     { name = "lxml-html-clean" },
     { name = "markdownify", specifier = ">=1.1" },
     { name = "pdfminer-six" },
@@ -703,6 +705,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/01/e1/2069291243c926a2ff1cd706c7f3eeb9b62144bf60f77c9fb9ff2fb26bd3/iniconfig-2.3.1.tar.gz", hash = "sha256:67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960", size = 21209, upload-time = "2026-10-06T22:48:38.076Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/43/4ca9e49d27a1fcf6bece6f6aec0ea46bb9112489b93d4b688fb415457bdb/iniconfig-2.3.1-py3-none-any.whl", hash = "sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7", size = 7552, upload-time = "2026-10-06T22:48:36.959Z" },
+]
+
+[[package]]
+name = "json-source-map"
+version = "1.0.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/f0/560df0f36ad3e6c1e9b2a077a297df2c4dc4a2c427580d1995782aff67d1/json_source_map-1.0.5.tar.gz", hash = "sha256:de99103c0637707368eb888d7aaa82bad1e21dbe2d21813998caabaa7c2e52f9", size = 6676, upload-time = "2022-12-20T12:01:25.669Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/5c/bdddb48cf521428117bd1338c531c0027f1c32beba23c89f9713229fe17c/json_source_map-1.0.5-py3-none-any.whl", hash = "sha256:c8ddb8db76dc238fce485abb548e5c7fc2b44d5ae8efb766e90e7c15840afaca", size = 7432, upload-time = "2022-12-20T12:01:24.323Z" },
 ]
 
 [[package]]

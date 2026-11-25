@@ -25,7 +25,6 @@ from planning_system.document_extraction.text_decoding import ChainedTextDecoder
 from planning_system.document_extraction.text_normalization import KindTextNormalizer
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
-LEVEL_7 = pytest.mark.xfail(strict=False, reason="level 7")
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 LONG_PROSE = " ".join(["word"] * 60)  # 299 chars
 
@@ -55,7 +54,7 @@ def make_real(strategies):
     return build_document_extractor({}, strategies=list(strategies.values()))
 
 
-EXTRACTORS = [pytest.param(make_fake, id="fake"), pytest.param(make_real, id="real", marks=LEVEL_7)]
+EXTRACTORS = [pytest.param(make_fake, id="fake"), pytest.param(make_real, id="real")]
 
 
 def html_document(body: bytes = (FIXTURES / "article.html").read_bytes()) -> SourceDocument:
@@ -128,7 +127,7 @@ def make_real_decoder(guess):
     return ChainedTextDecoder(guess)
 
 
-DECODERS = [pytest.param(make_fake_decoder, id="fake"), pytest.param(make_real_decoder, id="real", marks=LEVEL_7)]
+DECODERS = [pytest.param(make_fake_decoder, id="fake"), pytest.param(make_real_decoder, id="real")]
 
 
 class RecordingGuess:
@@ -167,7 +166,7 @@ def test_6_neither_calls_charset_normalizer(make):
 # --- 7: content type ----------------------------------------------------------------------------
 
 DETECTORS = [pytest.param(FakeContentTypeDetector, id="fake"),
-             pytest.param(LayeredContentTypeDetector, id="real", marks=LEVEL_7)]
+             pytest.param(LayeredContentTypeDetector, id="real")]
 
 
 @pytest.mark.parametrize("make", DETECTORS)
@@ -181,7 +180,7 @@ def test_7_content_type_detection(make):
 # --- 8: normalization ---------------------------------------------------------------------------
 
 NORMALIZERS = [pytest.param(FakeTextNormalizer, id="fake"),
-               pytest.param(KindTextNormalizer, id="real", marks=LEVEL_7)]
+               pytest.param(KindTextNormalizer, id="real")]
 
 
 @pytest.mark.parametrize("make", NORMALIZERS)
@@ -231,7 +230,7 @@ def test_10_strategy_names_and_available_strategies(make):
 
 # --- 11: FallbackRunner alone -------------------------------------------------------------------
 
-RUNNERS = [pytest.param(FakeFallbackRunner, id="fake"), pytest.param(FallbackRunner, id="real", marks=LEVEL_7)]
+RUNNERS = [pytest.param(FakeFallbackRunner, id="fake"), pytest.param(FallbackRunner, id="real")]
 
 
 @pytest.mark.parametrize("make", RUNNERS)
