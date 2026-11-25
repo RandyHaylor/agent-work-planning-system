@@ -2,6 +2,7 @@
 
 Collected during the build instead of stopping (user: "noting any issues to address for the end").
 
+0. **Set your own admin password before use.** During the build, an agent ran `planning-server bootstrap` with a generated admin password, so an agent has seen the current one (it was never committed). That breaks "a password only they know". Run `uv run planning-server set-admin-password` yourself and type a new one. Agents must never set or see it again (rule added to the build log, #42).
 1. `agent_instruction_injections.json` (copied as-is into guidance) still uses old-server wording: workorders, `kb_proposal`, "the reference run", and repeats rules that are now rule categories. Needs your review.
 2. Knowledge bases are deferred out of the first build (log #16).
 3. web_ui, database_backup, Codex adapter: out of the first build (log #7).
