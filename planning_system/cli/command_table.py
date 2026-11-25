@@ -65,6 +65,16 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(("task", "list"), TARGET_LOCAL, "running_tasks", authenticated=False),
     CommandSpec(("review", "ask"), TARGET_LOCAL, "ask_reviewer", (
         Arg("question", "question"), Arg("--context", "context_paths", "strs")), authenticated=False),
+    # Content reviews (05-spec-citation-enforcement-and-review.md "CLI"); serve runs under the review task's token
+    CommandSpec(("review", "serve"), TARGET_LOCAL, "serve_reviews", (
+        Arg("--project", "project_id", "int", required=True),
+        Arg("--backend", "backend", help="local_llm (default) | claude_code | pi"), Arg("--model", "model"),
+        Arg("--poll-seconds", "poll_seconds", "float", default=5.0), Arg("--once", "once", "flag"))),
+    CommandSpec(("review", "list"), TARGET_API, "list_reviews", (
+        Arg("--project", "project_id", "int", required=True),
+        Arg("--status", "status", help="pending | taken | passed | failed | superseded"),
+        Arg("--node", "node_id", "int"))),
+    CommandSpec(("review", "show"), TARGET_API, "get_review", (Arg("review_id", "review_id"),)),
     # Reader
     CommandSpec(("load",), TARGET_API, "reader_load", (
         Arg("source", "source", "strs"), Arg("--search", "search_terms"), Arg("--strategy", "strategy"),

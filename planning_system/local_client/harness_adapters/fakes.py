@@ -65,6 +65,7 @@ class FakeAiCliAdapter(AiCliAdapterInterface):
                                           reviewer_model_name, streaming_event_appender=None):
         handle = FakeSessionHandle(str(uuid.uuid4()), self._reply)
         handle.prompts.append(priming_prompt_text)
+        handle.reviewer_spawn = {"allowed_tool_names": list(allowed_tool_names), "model": reviewer_model_name}
         self.sessions.append(handle)
         return handle
 

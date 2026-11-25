@@ -17,7 +17,7 @@ from .types import (EXIT_OK, EXIT_SERVER_ERROR, EXIT_USAGE, TARGET_API, TARGET_G
                     TARGET_LOCAL, TARGET_LOGIN, Arg, CliDependencies, CommandSpec)
 
 _ARG_KWARGS = {
-    "str": {}, "int": {"type": int}, "ints": {"type": int, "nargs": "+"}, "strs": {"nargs": "*"},
+    "str": {}, "int": {"type": int}, "float": {"type": float}, "ints": {"type": int, "nargs": "+"}, "strs": {"nargs": "*"},
     "flag": {"action": "store_true"}, "remainder": {"nargs": argparse.REMAINDER},
 }
 

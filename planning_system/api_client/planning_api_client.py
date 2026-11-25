@@ -149,6 +149,23 @@ class PlanningApiClient(PlanningApiClientInterface):
         return self._call("POST", "/references/user-exchange",
                           {"session_id": session_id, "user_message": user_message, "pre_text": pre_text})
 
+    # content reviews
+    def list_reviews(self, project_id, status=None, node_id=None):
+        return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})
+
+    def get_review(self, review_id):
+        return self._call("GET", f"/reviews/{review_id}")
+
+    def take_review(self, project_id):
+        return self._call("POST", "/reviews/take", {"project_id": project_id}) or None   # 204 -> ""
+
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None):
+        return self._call("POST", f"/reviews/{review_id}/verdict",
+                          {"passed": passed, "reason": reason, "suggested_title": suggested_title})
+
+    def release_review(self, review_id):
+        return self._call("POST", f"/reviews/{review_id}/release")
+
     # guidance
     def guidance(self, role):
         return self._call("GET", f"/guidance/{role}")

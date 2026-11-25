@@ -8,7 +8,8 @@ from planning_system.api_client import PlanningApiClientInterface
 
 from .client_credentials import ClientCredentialsInterface
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceId,
-                        ReferenceSyncPort)
+                        ReferenceSyncPort, ReviewModeFactory)
+from .review_mode.serve_until_signalled import run_review_mode
 from .review_worker import ReviewWorkerInterface
 from .task_runner import RunningSession, TaskRunnerInterface, TaskStartRequest
 
@@ -52,12 +53,13 @@ class FakeLocalClient(LocalClientInterface):
 
     def __init__(self, task_runner: TaskRunnerInterface, review_worker: ReviewWorkerInterface,
                  reference_sync: ReferenceSyncPort, exchange_reader: ExchangeReaderPort,
-                 hook_installer: HookInstallerPort):
+                 hook_installer: HookInstallerPort, review_mode_factory: Optional[ReviewModeFactory] = None):
         self._task_runner = task_runner
         self._review_worker = review_worker
         self._reference_sync = reference_sync
         self._exchange_reader = exchange_reader
         self._hook_installer = hook_installer
+        self._review_mode_factory = review_mode_factory
 
     def install_hooks(self) -> None:
         self._hook_installer.install()
@@ -79,6 +81,9 @@ class FakeLocalClient(LocalClientInterface):
 
     def ask_reviewer(self, question: str, context_paths: Sequence[Path] = ()) -> str:
         return self._review_worker.ask(question, context_paths)
+
+    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False):
+        return run_review_mode(self._review_mode_factory(project_id, backend, model, poll_seconds), once)
 
 
 class RecordingLocalClient(LocalClientInterface):
@@ -111,3 +116,7 @@ class RecordingLocalClient(LocalClientInterface):
 
     def ask_reviewer(self, question, context_paths=()):
         return self._record("ask_reviewer", question=question, context_paths=tuple(context_paths))
+
+    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False):
+        return self._record("serve_reviews", project_id=project_id, backend=backend, model=model,
+                            poll_seconds=poll_seconds, once=once)

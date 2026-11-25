@@ -23,7 +23,7 @@ TARGET_GUIDANCE_EDITOR = "guidance_editor"   # launches prompt_builder's website
 @dataclass(frozen=True)
 class Arg:
     """One argparse argument. name starting with '--' is an option, otherwise positional.
-    kind: str | int | ints (1+) | strs (0+) | flag | remainder."""
+    kind: str | int | float | ints (1+) | strs (0+) | flag | remainder."""
     name: str
     dest: str
     kind: str = "str"
