@@ -41,10 +41,10 @@ class PlanningApiClientInterface(ABC):
     def mint_quote_key(self, install_label: str) -> dict: ...          # POST /credentials/quote-key
 
     @abstractmethod
-    def revoke_credential(self, credential_id: int) -> dict: ...       # POST /credentials/{id}/revoke
+    def revoke_credential(self, credential_id: str) -> dict: ...       # POST /credentials/{id}/revoke
 
     @abstractmethod
-    def rotate_credential(self, credential_id: int) -> dict: ...       # POST /credentials/{id}/rotate
+    def rotate_credential(self, credential_id: str) -> dict: ...       # POST /credentials/{id}/rotate
 
     @abstractmethod
     def register_agent(self, agent_id: str, **metadata: Any) -> dict: ...  # POST /agents
@@ -93,7 +93,7 @@ class PlanningApiClientInterface(ABC):
     def add_content(self, node_id: int, text: str, tags: Iterable[str] = ()) -> dict: ...  # POST /nodes/{id}/content
 
     @abstractmethod
-    def replace_content(self, node_id: int, reference_id: int, text: str) -> dict: ...  # PUT /nodes/{id}/content/{ref}
+    def replace_content(self, node_id: int, reference_id: str, text: str) -> dict: ...  # PUT /nodes/{id}/content/{ref}
 
     @abstractmethod
     def context(self, node_id: int) -> dict: ...                       # GET /nodes/{id}/context
@@ -124,10 +124,10 @@ class PlanningApiClientInterface(ABC):
     def reader_cite(self, reader_id: str, start_line: int, end_line: int) -> dict: ...  # POST /reader/cite
 
     @abstractmethod
-    def get_reference(self, reference_id: int, follow_superseded: bool = False) -> dict: ...  # GET /references/{id}
+    def get_reference(self, reference_id: str, follow_superseded: bool = False) -> dict: ...  # GET /references/{id}
 
     @abstractmethod
-    def reference_lines(self, reference_id: int, start: Optional[int] = None,
+    def reference_lines(self, reference_id: str, start: Optional[int] = None,
                         end: Optional[int] = None) -> Json: ...        # GET /references/{id}/lines
 
     @abstractmethod

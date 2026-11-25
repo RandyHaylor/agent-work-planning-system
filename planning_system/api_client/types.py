@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
-DEFAULT_BASE_URL = "https://127.0.0.1:8443"
+DEFAULT_BASE_URL = "https://127.0.0.1:8788"
 
 ENV_URL = "PLANNING_URL"
 ENV_CA_CERT = "PLANNING_CA_CERT"

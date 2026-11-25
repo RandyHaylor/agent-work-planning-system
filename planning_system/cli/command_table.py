@@ -18,8 +18,8 @@ COMMANDS: tuple[CommandSpec, ...] = (
         Arg("--scope", "scope_node_id", "int"), Arg("--agent", "agent_id", required=True))),
     CommandSpec(("credentials", "quote-key"), TARGET_API, "mint_quote_key",
                 (Arg("--label", "install_label", required=True),), after="store_quote_key"),
-    CommandSpec(("credentials", "revoke"), TARGET_API, "revoke_credential", (Arg("id", "credential_id", "int"),)),
-    CommandSpec(("credentials", "rotate"), TARGET_API, "rotate_credential", (Arg("id", "credential_id", "int"),)),
+    CommandSpec(("credentials", "revoke"), TARGET_API, "revoke_credential", (Arg("id", "credential_id"),)),
+    CommandSpec(("credentials", "rotate"), TARGET_API, "rotate_credential", (Arg("id", "credential_id"),)),
     CommandSpec(("agents", "register"), TARGET_API, "register_agent", (
         Arg("agent_id", "agent_id"), Arg("--host", "host"), Arg("--platform", "platform"), Arg("--model", "model"),
         Arg("--path", "path"), Arg("--system", "system"), Arg("--url", "url")), mapper="drop_unset"),
@@ -48,7 +48,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(("content", "add"), TARGET_API, "add_content", (
         NODE_ID, Arg("--text", "text"), Arg("--file", "file"), Arg("--tags", "tags", "strs")), mapper="text_or_file"),
     CommandSpec(("content", "replace"), TARGET_API, "replace_content", (
-        NODE_ID, Arg("reference_id", "reference_id", "int"), Arg("--text", "text"), Arg("--file", "file")),
+        NODE_ID, Arg("reference_id", "reference_id"), Arg("--text", "text"), Arg("--file", "file")),
         mapper="text_or_file"),
     CommandSpec(("supplementary", "create"), TARGET_API, "create_supplementary_task", (
         Arg("--kind", "kind", required=True), Arg("--title", "title", required=True),
@@ -82,9 +82,9 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(("help",), TARGET_HELP, arguments=(Arg("command", "command", "strs"),), authenticated=False),
     # References
     CommandSpec(("references", "get"), TARGET_API, "get_reference", (
-        Arg("id", "reference_id", "int"), Arg("--follow-superseded", "follow_superseded", "flag"))),
+        Arg("id", "reference_id"), Arg("--follow-superseded", "follow_superseded", "flag"))),
     CommandSpec(("references", "lines"), TARGET_API, "reference_lines", (
-        Arg("id", "reference_id", "int"), Arg("--start", "start", "int"), Arg("--end", "end", "int"))),
+        Arg("id", "reference_id"), Arg("--start", "start", "int"), Arg("--end", "end", "int"))),
     CommandSpec(("references", "render"), TARGET_API, "render_citation", (Arg("citation", "citation"),)),
     # Guidance (one subcommand per role, so the cli never branches on a role)
     *(CommandSpec(("guidance", role), TARGET_API, "guidance", fixed={"role": role}) for role in GUIDANCE_ROLES),
