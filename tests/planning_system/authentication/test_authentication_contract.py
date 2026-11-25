@@ -12,7 +12,8 @@ from planning_system.server.domain.authentication.credential_issuer import Crede
 from planning_system.server.domain.authentication.fakes import (FakeAuthentication, FakeClock,
                                                                 InMemoryCredentialStorage)
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
+from authentication_test_support import PbkdfCredentialStorage
+
 ADMIN_PASSWORD = "only-the-human-knows"
 TTL = timedelta(hours=1)
 
@@ -22,7 +23,8 @@ class Auth:
 
     def __init__(self, kind):
         self.kind = kind
-        self.storage = InMemoryCredentialStorage(ADMIN_PASSWORD)
+        storage_class = InMemoryCredentialStorage if kind == "fake" else PbkdfCredentialStorage
+        self.storage = storage_class(ADMIN_PASSWORD)
         self.clock = FakeClock()
         self.build()
 
@@ -37,7 +39,7 @@ class Auth:
             self.sessions = AdminSessionService(self.storage, self.clock, TTL)
 
 
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def auth(request):
     return Auth(request.param)
 
