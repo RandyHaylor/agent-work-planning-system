@@ -6,6 +6,9 @@ Collected during the build instead of stopping (user: "noting any issues to addr
 1. `agent_instruction_injections.json` (copied as-is into guidance) still uses old-server wording: workorders, `kb_proposal`, "the reference run", and repeats rules that are now rule categories. Needs your review.
 2. Knowledge bases are deferred out of the first build (log #16).
 3. web_ui, database_backup, Codex adapter: out of the first build (log #7).
+7. `planning task start` (real headless `claude -p` session) has not been run live: it's a billed run, so it waits for your go. Its test: `PLANNING_RUN_CLAUDE=1 uv run --extra test python -m pytest tests/planning_system/local_client -q`.
+8. Small output inconsistency: `planning cite-exchange` prints the bare reference id, while other commands print JSON objects.
+9. New nodes (including projects) start in state "assigned" (the only non-terminal start state in the approved states), even before anyone is assigned.
 5. Round 4.3 said raw bytes are kept for reference; the first build stores only their hash (log #24).
 6. ~~json-source-map license~~ Resolved (log #31): PyPI classifier Apache Software License; last release 1.0.5 on 2022-12-20 (not actively maintained, small pure-Python library). Used anyway; FYI only.
 4. `process-levels.md` says questions go to a backlog "asked in batches" and also "one at a time"; the guidance uses the existing batch-questions rule that combines both.

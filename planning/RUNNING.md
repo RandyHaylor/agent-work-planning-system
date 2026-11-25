@@ -32,4 +32,6 @@ Environment for any client: `PLANNING_URL=https://127.0.0.1:8788`, `PLANNING_CA_
 
 `uv run --extra test python -m pytest -q tests/planning_system planning_system/prompt_builder/tests planning_system/fastreader/test` (717 passed at handover; storage tests use throwaway Postgres databases). quick-json-reader JS: `node --test planning_system/quick_json_reader/tests/test_quick_json_reader.js planning_system/quick_json_reader/tests/test_stdin_runner.js`.
 
-A live smoke test (throwaway database, real HTTPS server, real CLI) passed: admin session, project, nodes, assign + worker token, tech spike, load, toc, search, cite, reference lines, context, guidance, quote key.
+Live smoke test: `uv run python -I scripts/live_smoke_test.py` (stop any server on 8788 first). It bootstraps a throwaway `planning_system_smoke` database with a throwaway admin password, starts the real HTTPS server, drives the real CLI, and drops the database. It passed: admin session, project, nodes, assign + worker token, tech spike, load, toc, search, cite, reference lines, context, guidance, quote key, and the Claude Code UserPromptSubmit hook capturing a prompt locally then `cite-exchange` syncing it as a `user_exchange` reference.
+
+Not yet run live: `planning task start` (it starts a real, billed `claude -p` session); its test runs only with `PLANNING_RUN_CLAUDE=1`.
