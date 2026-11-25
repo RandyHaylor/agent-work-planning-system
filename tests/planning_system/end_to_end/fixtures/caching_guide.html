@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Caching guide</title>
+</head>
+<body>
+  <article>
+    <h1>Caching guide</h1>
+    <p>This guide explains how the service caches responses for its clients.</p>
+    <h2>Time to live</h2>
+    <p>Every cached response expires after seventy two hours. Expired entries are purged when the server starts.</p>
+    <p>The time to live is configured per deployment and never per request.</p>
+    <h2>Invalidation</h2>
+    <p>Entries are invalidated when the underlying document changes. Identical content reuses the stored copy.</p>
+    <h2>Limits</h2>
+    <p>A single response may not exceed twenty five megabytes; larger bodies are rejected before extraction.</p>
+  </article>
+</body>
+</html>
