@@ -1,0 +1,77 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Op-Ed Writer",
+  "entries": [
+    {
+      "categoryId": "document-type",
+      "optionId": "opinion-piece",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "plan-first",
+      "optionId": "outline-and-agree",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "must-ask-before-writing",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "tone",
+      "optionId": "neutral-and-precise",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "politics",
+      "optionId": "non-partisan",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-layout",
+      "optionId": "bottom-line-up-front",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-format",
+      "optionId": "markdown",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "target-audience",
+      "optionId": "general-public",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Write an op-ed about the latest legal decision about school lunches",
+    "placement": "end",
+    "enabled": true
+  }
+}

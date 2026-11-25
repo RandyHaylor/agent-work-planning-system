@@ -1,0 +1,19 @@
+usage: fastReader <subcommand> [args...]
+subcommands: load | toc | get | search
+examples:
+  fastReader load big_doc.md
+  fastReader toc <hash> --sections --show-line-range-count
+  fastReader get <hash> --section 3
+  fastReader search error --manifests <hash>
+Add --help / --help-examples / --help-use-cases to any subcommand
+for argparse flags, copy-paste recipes, or trigger->command mapping.
+
+Optional module:
+  json  (NOT INSTALLED)
+        fastReader already efficiently parses and displays bracketed and
+        tagged text. For much more versatile JSON-specific integration -
+        schema inference, value search, field exclusion - install the
+        quick-json-reader skill alongside this one. When the binary is
+        detected at <skills-parent>/quick-json-reader/quick-json-reader
+        (or the FAST_READER_JSON_BIN env var), the json module becomes
+        available automatically. No reinstall of fastReader required.

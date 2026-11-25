@@ -1,0 +1,35 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Proofreader",
+  "entries": [
+    {
+      "categoryId": "editing-the-users-text",
+      "optionId": "edit-keep-voice",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "tone",
+      "optionId": "match-the-source-tone",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Proofread: fix spelling, grammar, punctuation and consistency (names, terms, numbers). Change nothing else.\n\nProofread the attached cover letter. UK spelling.",
+    "placement": "end",
+    "enabled": true
+  }
+}

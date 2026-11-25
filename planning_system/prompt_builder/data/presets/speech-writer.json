@@ -1,0 +1,77 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Speech writer",
+  "entries": [
+    {
+      "categoryId": "document-type",
+      "optionId": "speech",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "plan-first",
+      "optionId": "outline-and-agree",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "ask-for-detailed-speech-requirements",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "tone",
+      "optionId": "passionate-empathetic",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "length",
+      "optionId": "speaking-time",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "fact-checking",
+      "optionId": "check-every-claim",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "politics",
+      "optionId": "non-partisan",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-format",
+      "optionId": "word-document",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "target-audience",
+      "optionId": "general-public",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Write a 10-minute keynote for our CEO at the annual all-hands meeting, announcing the move to a four-day work week. Write it in Barack Obama's voice.",
+    "placement": "end",
+    "enabled": true
+  }
+}

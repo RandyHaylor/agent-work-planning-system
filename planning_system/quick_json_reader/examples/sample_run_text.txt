@@ -1,0 +1,4 @@
+user
+  profile
+    bio: loves synths, math, and "quotes"
+    secretNote: deep hidden note

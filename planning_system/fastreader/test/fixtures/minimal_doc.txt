@@ -1,0 +1,7 @@
+This is a minimal document with very little structure.
+
+It has a few lines of text but no chapters, sections, or other markers.
+
+Just plain text content that should fall back to block-based chunking.
+
+The blocks will be created since there are no other structural markers to use.

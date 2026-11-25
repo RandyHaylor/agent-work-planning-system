@@ -1,0 +1,108 @@
+{
+  "_note": "All examples below use the `fastReader.sh` wrapper (Linux/macOS) shorthand. Prepend the skill folder's absolute path, e.g. `~/.claude/skills/fastReader/fastReader.sh ...`. On Windows substitute `fastReader.bat`. Raw Python fallback: `PYTHONPATH=<parent-of-skill-dir> python3 -m fastReader.<cmd>` — but PYTHONPATH must be the PARENT of the fastReader folder, not the folder itself. The wrapper avoids that foot-gun.",
+  "load": {
+    "examples": [
+      "# Scan one file (prints marker-count histogram + hash; this is always your first move)",
+      "fastReader.sh load big_doc.md",
+      "",
+      "# Load many files at once - each gets its own hash, same call",
+      "fastReader.sh load doc1.md doc2.md doc3.md",
+      "",
+      "# Slice-load: carve out lines START..START+COUNT-1 as a new hashed sub-document.",
+      "# Use this after toc shows you that section 4 spans 1382 lines starting at line 668.",
+      "fastReader.sh load big_doc.md --line 668 1382",
+      "",
+      "# Load and immediately search inside (shortcut for common case)",
+      "fastReader.sh load session.jsonl --search 'error timeout' --sample-size 80",
+      "",
+      "# Recall an older Claude Code session transcript",
+      "fastReader.sh load ~/.claude/projects/<project-slug>/<session-id>.jsonl"
+    ],
+    "use_cases": [
+      "User says 'look at this file'             -> load <file>",
+      "User says 'search across my N files'      -> load <files...>  then search --manifests <all-hashes>",
+      "User says 'drill into section X'          -> load <file> --line <start> <count>  (from the toc you saw)",
+      "User says 'what did we talk about X'      -> load ~/.claude/projects/<slug>/<session>.jsonl  then search",
+      "User says 'quickly show me a huge file'   -> load <file>  (read the histogram, choose a scanner; do NOT Read it)"
+    ]
+  },
+  "toc": {
+    "examples": [
+      "# Sections with line ranges and sizes - the essential markdown overview",
+      "fastReader.sh toc <hash> --sections --show-line-range-count --sample-size 80",
+      "",
+      "# Hypothesis + conclusion view: intro AND closing thought of every section, no entry cap",
+      "fastReader.sh toc <hash> --sections --show-line-range-count \\",
+      "    --sample-size 80 --end-sample-size 120 --limit 0",
+      "",
+      "# Python / YAML / indented-code navigation",
+      "fastReader.sh toc <hash> --indent-depth 0 --sample-size 80  # top-level defs/classes",
+      "fastReader.sh toc <hash> --indent-depth 1 --sample-size 80  # methods, inner scopes",
+      "",
+      "# JSONL record-level navigation - each line at bracket depth 1",
+      "fastReader.sh toc <hash> --bracket-depth 1 --sample-size 120 --limit 20",
+      "",
+      "# HTML / XML navigation by tag nesting (pick depth from the load histogram)",
+      "fastReader.sh toc <hash> --tag-depth 2 --sample-size 60",
+      "",
+      "# Fallback for files with no detectable structure",
+      "fastReader.sh toc <hash> --blocks --show-line-range-count"
+    ],
+    "use_cases": [
+      "'overview this doc'                 -> --sections --show-line-range-count --sample-size 80",
+      "'which sections are meatiest'       -> --sections --show-line-range-count (sort by line_span)",
+      "'gist + conclusion of each section' -> --sample-size 80 --end-sample-size 120",
+      "'list every function in this py'    -> --indent-depth 0 (top-level) or --indent-depth 1 (methods)",
+      "'what record types in this jsonl'   -> --bracket-depth 1 --sample-size 120",
+      "'map out this HTML page'            -> --tag-depth N  (pick N from the load histogram — often 5 for <div>-heavy docs)",
+      "'no headers, unstructured text'     -> --blocks --show-line-range-count"
+    ]
+  },
+  "get": {
+    "examples": [
+      "# Get a whole section's content (use after toc to identify section N)",
+      "fastReader.sh get <hash> --section 3",
+      "",
+      "# Chapter-level",
+      "fastReader.sh get <hash> --chapter 1",
+      "",
+      "# Specific subsection",
+      "fastReader.sh get <hash> --subsection 12",
+      "",
+      "# Block (fixed-size fallback chunk, useful for files without headers)",
+      "fastReader.sh get <hash> --block 42"
+    ],
+    "use_cases": [
+      "After toc reveals section of interest    -> get --section N     (read it in full)",
+      "Chapter-level drill                      -> get --chapter N",
+      "Subsection drill                         -> get --subsection N",
+      "No markdown headers, raw block fallback  -> get --block N",
+      "Tip: for bracket/tag/indent-depth rows, get has no flag for them — use `load --line START COUNT` to re-ingest the slice and then toc/get on the new hash."
+    ]
+  },
+  "search": {
+    "examples": [
+      "# Search one loaded manifest",
+      "fastReader.sh search SessionStart --manifests <hash> --sample-size 80",
+      "",
+      "# Cross-search across many loaded files at once",
+      "fastReader.sh search 'error code' --manifests <h1> <h2> <h3>",
+      "",
+      "# Exact-word match (vs substring)",
+      "fastReader.sh search 'hook' --manifests <hash> --exact",
+      "",
+      "# Case-sensitive",
+      "fastReader.sh search 'SessionStart' --manifests <hash> --case-sensitive",
+      "",
+      "# All keywords on the same line (AND) rather than any-match (OR)",
+      "fastReader.sh search user assistant --manifests <hash> --all"
+    ],
+    "use_cases": [
+      "'find X across all loaded files'    -> search X --manifests <all-hashes>",
+      "'find the exact word X, not Xy'     -> search X --manifests <hash> --exact",
+      "'find lines with both A and B'      -> search A B --manifests <hash> --all",
+      "'find where a topic is discussed'   -> search X  (hits include chapter/section/subsection breadcrumbs)",
+      "Bridge from search to get: each hit shows `section N ln <start>  <preview>` — use that N in `get --section N`."
+    ]
+  }
+}

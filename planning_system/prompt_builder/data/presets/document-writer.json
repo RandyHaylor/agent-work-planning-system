@@ -1,0 +1,71 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Document writer",
+  "entries": [
+    {
+      "categoryId": "plan-first",
+      "optionId": "outline-and-agree",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-layout",
+      "optionId": "bottom-line-up-front",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "must-ask-before-writing",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-type",
+      "optionId": "guide",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "document-format",
+      "optionId": "markdown",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "tone",
+      "optionId": "plain-and-direct",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "target-audience",
+      "optionId": "general-public",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Write a one-page guide for new staff on how to request time off, using the attached HR policy.",
+    "placement": "end",
+    "enabled": true
+  }
+}

@@ -1,0 +1,14 @@
+usage: fastReader <subcommand> [args...]
+subcommands: load | toc | get | search | json
+examples:
+  fastReader load big_doc.md
+  fastReader toc <hash> --sections --show-line-range-count
+  fastReader get <hash> --section 3
+  fastReader search error --manifests <hash>
+  fastReader json file.json --search-vals error
+Add --help / --help-examples / --help-use-cases to any subcommand
+for argparse flags, copy-paste recipes, or trigger->command mapping.
+
+The json subcommand is provided by the sibling quick-json-reader skill,
+detected on the skills-root alongside fastReader. Override the probed
+path with the FAST_READER_JSON_BIN environment variable.

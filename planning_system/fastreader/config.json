@@ -1,0 +1,49 @@
+{
+  "chapter": {
+    "patterns": [
+      "^# ",
+      "^Chapter \\d+",
+      "^CHAPTER \\d+"
+    ],
+    "preview_length": 30
+  },
+  "section": {
+    "patterns": [
+      "^## ",
+      "^Section \\d+"
+    ],
+    "preview_length": 30
+  },
+  "subsection": {
+    "patterns": [
+      "^### ",
+      "^#### ",
+      "^##### "
+    ],
+    "preview_length": 30
+  },
+  "page_break": {
+    "patterns": [
+      "\\f",
+      "^--- PAGE BREAK ---$"
+    ],
+    "preview_length": 20
+  },
+  "page": {
+    "patterns": [
+      "^Page \\d+",
+      "^--- \\d+ ---$"
+    ],
+    "preview_length": 20
+  },
+  "double_line_break": {
+    "patterns": [
+      "double_break"
+    ],
+    "preview_length": 20
+  },
+  "block": {
+    "size": 800,
+    "preview_length": 30
+  }
+}

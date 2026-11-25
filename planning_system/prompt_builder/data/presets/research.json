@@ -1,0 +1,47 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Research",
+  "entries": [
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "wiki-style",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "questions",
+      "optionId": "batch-questions",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "explicit-permission",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Research this and change nothing. Use official sources, cite every finding, and keep apart what is established, what is likely and what is unknown.\n\nQuestion: which open-source libraries can render Markdown to PDF from Python today, and which of them keep code-block syntax highlighting?",
+    "placement": "end",
+    "enabled": true
+  }
+}

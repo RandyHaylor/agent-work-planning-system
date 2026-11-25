@@ -1,0 +1,18 @@
+{
+  "user": {
+    "name": "alice",
+    "token": "abc123",
+    "profile": {
+      "bio": "loves synths, math, and \"quotes\"",
+      "secretNote": "deep hidden note"
+    },
+    "events": [
+      {"type": "login", "status": "ok"},
+      {"type": "purchase", "status": "failed"}
+    ]
+  },
+  "system": {
+    "status": "ok",
+    "long": "The quick brown fox jumps over the lazy dog."
+  }
+}

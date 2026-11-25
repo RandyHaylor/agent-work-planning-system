@@ -1,0 +1,14 @@
+{
+  "after_load_single": [
+    "Browse: fastReader.sh toc {manifest_id} --sections --show-line-range-count  (or --indent-depth N / --bracket-depth N / --tag-depth N based on this file's histogram above)",
+    "Search: fastReader.sh search <keywords> --manifests {manifest_id} [--exact] [--case-sensitive] [--all]"
+  ],
+  "after_load_multi": [
+    "Browse: fastReader.sh toc <hash> --sections --show-line-range-count  (pick scanner per file from the histograms above)",
+    "Search: fastReader.sh search <keywords> --manifests {all_hashes} [--exact] [--case-sensitive] [--all]"
+  ],
+  "after_toc": "To search: fastReader.sh search <keywords> --manifests {manifest_id} [hash2 ...] [--exact] [--case-sensitive] [--all]. To read a row in full: fastReader.sh get {manifest_id} --section N (or --chapter N / --subsection N / --block N). To drill deeper: fastReader.sh load <file> --line START COUNT (from the line range shown).",
+  "after_toc_truncation_note": "INTEGRITY NOTE: Previews above are truncated. This tool is for FAST SCANNING and DRILLING, not for final answers. Once you identify a section of interest, READ IT IN FULL with 'fastReader.sh get <hash> --section N' (or 'fastReader.sh load --line START COUNT' to re-ingest just that slice). If new terminology appeared in a preview, run 'fastReader.sh search <term> --manifests <hash>' across the doc before concluding — previews may crop out the details that matter most.",
+  "after_toc_truncation_warning_high_ratio": "WARNING: '{section_label}' spans {span} lines but the preview is a tiny window. The end-preview shown is the LAST line of that block, NOT a summary. Do not treat it as the section's conclusion. Use 'fastReader.sh get' or 'fastReader.sh load --line' for the real content.",
+  "_invocation_note": "The `fastReader.sh` shorthand above refers to the wrapper script in the skill's own folder. Prepend the skill's absolute path to run it, e.g. `~/.claude/skills/fastReader/fastReader.sh toc <hash> --sections`. On Windows use `fastReader.bat`. The wrapper auto-resolves PYTHONPATH so you do not set any env var."
+}

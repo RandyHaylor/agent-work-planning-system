@@ -1,0 +1,20 @@
+{
+  "user": {
+    "name": "alice",
+    "token": "[hidden]",
+    "profile": {
+      "bio": "loves synths, math, and \"quotes\"",
+      "secretNote": "deep hidden note"
+    },
+    "events": [
+      {
+        "type": "login",
+        "status": "ok"
+      },
+      {
+        "type": "purchase",
+        "status": "failed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Policy reviewer",
+  "entries": [
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "only-what-you-are-given",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "wiki-style",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "editing-the-users-text",
+      "optionId": "suggest-only",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "confirm-what-is-unclear",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Review the policy as written and change nothing. Find gaps, ambiguities, contradictions and risks; for each, quote the passage, say why it matters and suggest a fix. Note that this is not legal advice.\n\nReview our remote-work policy (attached) before it goes to the leadership team.",
+    "placement": "end",
+    "enabled": true
+  }
+}

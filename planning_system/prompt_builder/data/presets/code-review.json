@@ -1,0 +1,47 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Comprehensive code review",
+  "entries": [
+    {
+      "categoryId": "review-depth",
+      "optionId": "comprehensive-review",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "adding-details",
+      "optionId": "do-not-add-or-change-details",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "full-report",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "only-what-you-are-given",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "naming",
+      "optionId": "verbose-oop",
+      "enabled": false,
+      "editedText": null
+    },
+    {
+      "categoryId": "modularity",
+      "optionId": "generic-standalone-modules",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Review this and change nothing. Check each requirement yourself and report met or not met with evidence, then list defects by severity with file and line.\n\nReview the pull request that adds CSV export to the reports page. The requirements are in the linked issue.",
+    "placement": "end",
+    "enabled": true
+  }
+}

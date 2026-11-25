@@ -1,0 +1,1172 @@
+{
+  "format": "ai-prompt-builder/rule-categories@1",
+  "categories": [
+    {
+      "categoryId": "adding-details",
+      "categoryName": "Interpreting requests",
+      "options": [
+        {
+          "optionId": "do-not-add-or-change-details",
+          "shortName": "Literally: never add or change",
+          "fullText": "- Take requests as stated\n  - Don't infer what the user \"really meant\"\n  - Don't add to it\n  - Don't change it\n- Applies whenever you turn their words into\n  - Tasks\n  - Specs\n  - Rules\n  - Instructions for others\n- Why: an agent got it wrong twice\n  - Mistake 1\n    - User: \"be brief\"\n    - Agent: \"keep it to one line\"\n    - User never limited length\n    - Agent added a limit itself\n  - Mistake 2\n    - User: \"never add details I didn't state\"\n    - Agent: \"record in the user's own words\"\n    - User never forbade rewording\n      - Only adding or changing detail\n      - Less constraining than exact words\n  - Same mistake both times\n    - A gap\n    - Filled with the agent's own guess\n    - Presented as the user's words\n- Agents infer and guess far too much\n- Never add what wasn't stated\n  - No detail\n  - No limit\n  - No number\n  - No rule\n- A gap in the request?\n  - Name it as your assumption\n  - Ask, or leave it open\n  - Never quietly make it a rule"
+        },
+        {
+          "optionId": "fill-gaps-and-list-them",
+          "shortName": "Fill gaps, list assumptions",
+          "fullText": "- Read requests sensibly\n- Small gaps\n  - Fill them with reasonable choices\n- List every assumption\n  - At the end"
+        },
+        {
+          "optionId": "use-judgement",
+          "shortName": "Interpret freely",
+          "fullText": "- Interpret requests freely\n  - Infer what the user most likely wants\n  - Decide gaps yourself"
+        }
+      ]
+    },
+    {
+      "categoryId": "requirements-to-gather",
+      "categoryName": "Requirements to gather",
+      "options": [
+        {
+          "optionId": "must-ask-before-starting",
+          "shortName": "Ask for detailed technical requirements",
+          "fullText": "- Before starting, ask or confirm with the user\n  - Never assume any of these\n- What it's for\n  - The goal\n  - Who it's for: the target audience or users\n- Stage of the work, for example\n  - Tech spike\n  - Prototype\n  - Class project\n  - Alpha\n  - Beta\n  - Production\n- Scale\n  - How many users, how much data, how long it must last\n- Technology\n  - Language\n  - Stack and frameworks\n  - Where it runs or deploys\n- Constraints\n  - Deadline\n  - Budget, including paid services\n  - Anything it must work with\n- What done looks like\n- These are examples, not the full list\n  - Ask about anything else the work depends on"
+        },
+        {
+          "optionId": "must-ask-before-writing",
+          "shortName": "Ask for detailed requirements",
+          "fullText": "- Before writing, ask or confirm with the user\n  - Never assume any of these\n- Purpose\n  - What the document must achieve\n- Audience\n  - Who reads it\n  - What they already know\n- Shape\n  - Length\n  - Format\n  - Required sections\n- Tone\n- Sources\n  - What to draw on\n  - What to cite\n- Deadline\n- These are examples, not the full list\n  - Ask about anything else it depends on"
+        },
+        {
+          "optionId": "ask-for-detailed-speech-requirements",
+          "shortName": "Ask for detailed speech requirements",
+          "fullText": "- Before writing, ask or confirm\n  - Never assume any of these\n- The speaker\n  - Background and views\n  - How they talk\n  - Words to avoid\n  - Past speeches to learn from\n- The occasion\n  - Event and venue\n  - Their slot in the program\n- The audience\n  - Who they are\n  - What they know and care about\n- Speaking time\n- The one thing the audience must remember\n- Sensitivities\n  - Topics to avoid\n  - Anything legal or confidential\n- These are examples, not the full list"
+        },
+        {
+          "optionId": "confirm-what-is-unclear",
+          "shortName": "Confirm only what's unclear",
+          "fullText": "- Ask only about what's unclear\n  - Goal, audience, stage, scale, technology, constraints, what done looks like\n- State what you assumed for the rest"
+        },
+        {
+          "optionId": "use-defaults",
+          "shortName": "Use defaults, don't ask",
+          "fullText": "- Don't ask\n- Use sensible defaults\n  - State them at the start"
+        }
+      ]
+    },
+    {
+      "categoryId": "source-of-truth",
+      "categoryName": "Source of truth",
+      "options": [
+        {
+          "optionId": "only-what-you-are-given",
+          "shortName": "Only what you are given",
+          "fullText": "- True = only what you were given\n- Other files or work\n  - Only when told you may\n  - Only as told"
+        },
+        {
+          "optionId": "official-researched-truths",
+          "shortName": "Official researched truths",
+          "fullText": "- True only when confirmed\n  - By current official sources\n    - Documentation\n    - Specifications\n    - Release notes\n    - Issue tracker\n  - Or by running it yourself\n- Training memory = hypothesis\n  - Until checked\n- Cite each fact's source"
+        },
+        {
+          "optionId": "explore-freely",
+          "shortName": "Explore freely",
+          "fullText": "- Use anything that helps\n  - In the project\n  - In the environment"
+        }
+      ]
+    },
+    {
+      "categoryId": "fact-checking",
+      "categoryName": "Fact-checking",
+      "options": [
+        {
+          "optionId": "check-every-claim",
+          "shortName": "Check every claim",
+          "fullText": "- Check every factual claim\n  - Names\n  - Numbers\n  - Dates\n  - Quotes\n- Against a reliable source\n- List the sources at the end\n- Can't confirm a claim?\n  - Flag it\n  - Don't leave it in silently"
+        },
+        {
+          "optionId": "flag-claims-to-check",
+          "shortName": "Flag claims to check",
+          "fullText": "- Don't check claims yourself\n- Mark every factual claim\n  - For someone to check"
+        }
+      ]
+    },
+    {
+      "categoryId": "existing-solutions",
+      "categoryName": "Reinvent wheels",
+      "options": [
+        {
+          "optionId": "follow-established-patterns",
+          "shortName": "Never",
+          "fullText": "- Never reinvent a wheel\n- Prioritize\n  - Industry standards\n  - Proven patterns\n  - How major products and libraries already do it\n- Find them with good, broad research\n  - Generic search terms\n  - NOT searches built on your own guesses\n- Your own reasoning is no substitute\n- Departing from the standard pattern\n  - Approval first\n  - Say what the pattern is\n  - Say why you depart"
+        },
+        {
+          "optionId": "check-for-existing-libraries",
+          "shortName": "Check for libraries first",
+          "fullText": "- Before writing general-purpose code\n  - Check for a maintained library"
+        },
+        {
+          "optionId": "build-from-scratch",
+          "shortName": "Fine to build your own",
+          "fullText": "- Build what's needed directly"
+        }
+      ]
+    },
+    {
+      "categoryId": "scope",
+      "categoryName": "Scope adherence",
+      "options": [
+        {
+          "optionId": "strict-scope",
+          "shortName": "Strict scope",
+          "fullText": "- Exactly what was asked\n  - No more\n  - No less\n- Nothing outside the scope\n  - Not added\n  - Not cleaned up\n  - Not \"improved\"\n  - However tempting\n- Noticed something outside it?\n  - Report it\n  - Don't act on it\n- Can't build a piece to spec?\n  - Leave it incomplete\n  - Never substitute"
+        },
+        {
+          "optionId": "scope-with-reported-extras",
+          "shortName": "Scope, plus small fixes reported",
+          "fullText": "- Stay in scope\n- Small related fixes OK\n  - List each one"
+        },
+        {
+          "optionId": "closest-working-version",
+          "shortName": "Closest working version",
+          "fullText": "- Can't build it as specified?\n  - Build the closest working version\n  - Say what differs"
+        }
+      ]
+    },
+    {
+      "categoryId": "escalation",
+      "categoryName": "When blocked",
+      "options": [
+        {
+          "optionId": "escalation-is-a-blocker",
+          "shortName": "An escalation is a blocker",
+          "fullText": "- An escalation is a blocker\n  - Post it\n  - Stop\n  - Do NOT pick\n- Blocked means\n  - Instruction silent on your decision\n  - Tests contradict each other\n  - Test contradicts the instruction\n  - Piece can't be built to spec\n  - You need something not given\n- One question per escalation\n  - Question\n  - Context (file:line)\n  - Options\n  - Blocking: yes\n- Not blocking? Not an escalation\n  - Decide yourself\n  - Record it in your response"
+        },
+        {
+          "optionId": "handle-only-within-scope",
+          "shortName": "Handle it only if in scope",
+          "fullText": "- Blocked?\n  - Fix it yourself only within strict scope\n  - Otherwise stop and ask"
+        },
+        {
+          "optionId": "decide-and-note",
+          "shortName": "Decide and note it",
+          "fullText": "- Unsure?\n  - Decide\n  - Keep going\n- List your decisions\n  - At the end"
+        },
+        {
+          "optionId": "ask-freely",
+          "shortName": "Ask whenever unsure",
+          "fullText": "- Unsure? Ask"
+        }
+      ]
+    },
+    {
+      "categoryId": "questions",
+      "categoryName": "Asking questions",
+      "options": [
+        {
+          "optionId": "batch-questions",
+          "shortName": "Batch questions",
+          "fullText": "- Don't alternate asking and working\n- Research first\n- Then ask all questions together\n  - One at a time\n- Answers raise new questions?\n  - Research again\n  - Then ask the new ones together"
+        },
+        {
+          "optionId": "ask-as-they-come",
+          "shortName": "Ask as they come up",
+          "fullText": "- Ask questions as they come up"
+        }
+      ]
+    },
+    {
+      "categoryId": "offering-options",
+      "categoryName": "Choices",
+      "options": [
+        {
+          "optionId": "decide-without-asking",
+          "shortName": "Decide yourself",
+          "fullText": "- A choice? Make it yourself\n- Say what you chose"
+        },
+        {
+          "optionId": "quick-options",
+          "shortName": "Quick options, with your pick",
+          "fullText": "- A choice? List the options you see\n  - Briefly\n- Say which you'd pick"
+        },
+        {
+          "optionId": "research-before-options",
+          "shortName": "Researched options, with your pick",
+          "fullText": "- A choice? Research it first\n- Then present\n  - The options\n  - What you found\n  - Your recommendation\n- Asking is not researching"
+        },
+        {
+          "optionId": "researched-neutral-options",
+          "shortName": "Researched options, no pick",
+          "fullText": "- A choice? Research it first\n- Then present\n  - The options\n  - Their trade-offs\n- Recommend none"
+        }
+      ]
+    },
+    {
+      "categoryId": "plan-first",
+      "categoryName": "Document Writing Plan",
+      "options": [
+        {
+          "optionId": "outline-and-agree",
+          "shortName": "Outline, agree, then do",
+          "fullText": "- Outline first\n  - The parts\n  - The point of each\n- Agree the outline with the user\n- Then do the work\n- Outline in the order the Document layout sets, if one is set"
+        },
+        {
+          "optionId": "outline-then-proceed",
+          "shortName": "Outline, then proceed",
+          "fullText": "- Outline first\n  - Show it\n- Then do the work\n  - Without waiting for approval\n- Outline in the order the Document layout sets, if one is set"
+        },
+        {
+          "optionId": "brief-first",
+          "shortName": "Brief first",
+          "fullText": "- Write a short brief first\n  - Purpose\n  - Audience\n  - The one key message\n- Agree it with the user\n- Then outline, then draft\n- Outline in the order the Document layout sets, if one is set"
+        },
+        {
+          "optionId": "pyramid-principle",
+          "shortName": "Pyramid principle (Minto)",
+          "fullText": "- Plan the pyramid before drafting\n  - The main conclusion, at the top\n  - Supporting points grouped beneath it\n  - Evidence under each point\n- Agree it with the user\n- Then write it top-down\n  - Conclusion first"
+        },
+        {
+          "optionId": "working-backwards",
+          "shortName": "Working backwards (PR/FAQ)",
+          "fullText": "- Start from the finished result\n  - A one-page press release, as if it has launched\n  - An FAQ: the questions readers will ask, answered\n- Agree them with the user\n- Then write the full document from them"
+        },
+        {
+          "optionId": "headline-outline",
+          "shortName": "Headline outline",
+          "fullText": "- Outline as headlines\n  - Every heading is a full statement of its point\n  - The argument must make sense from the headings alone\n- Agree it with the user\n- Then fill in each section\n- Outline in the order the Document layout sets, if one is set"
+        },
+        {
+          "optionId": "straight-to-a-draft",
+          "shortName": "Straight to a first version",
+          "fullText": "- Go straight to a complete first version\n- List what you assumed\n  - Audience\n  - Length\n  - Structure"
+        }
+      ]
+    },
+    {
+      "categoryId": "document-layout",
+      "categoryName": "Document layout",
+      "options": [
+        {
+          "optionId": "bottom-line-up-front",
+          "shortName": "Bottom line up front (BLUF)",
+          "fullText": "- The bottom line first\n  - The conclusion, recommendation or ask\n- Then the support\n- Source: US Army writing standard (AR 25-50)"
+        },
+        {
+          "optionId": "inverted-pyramid",
+          "shortName": "Inverted pyramid",
+          "fullText": "- Most important first\n- Then details, in falling importance\n  - It can be cut from the bottom\n- Source: news writing (Purdue OWL)"
+        },
+        {
+          "optionId": "situation-complication-resolution",
+          "shortName": "Situation, complication, resolution (SCR)",
+          "fullText": "- Situation\n  - What the reader already accepts\n- Complication\n  - What changed or went wrong\n- Resolution\n  - The main point\n- Source: Barbara Minto, The Pyramid Principle"
+        },
+        {
+          "optionId": "problem-then-solution",
+          "shortName": "Problem, then solution",
+          "fullText": "- The problem\n  - Causes\n  - Scope\n  - Consequences\n- Then the solution\n- Source: university writing-center organization patterns"
+        },
+        {
+          "optionId": "chronological",
+          "shortName": "Chronological",
+          "fullText": "- In time order\n  - Events, or steps in a process\n- Source: university writing-center organization patterns"
+        },
+        {
+          "optionId": "compare-and-contrast",
+          "shortName": "Compare and contrast",
+          "fullText": "- Options side by side\n  - Similarities\n  - Differences\n- Then a verdict, if asked for\n- Source: university writing-center organization patterns"
+        },
+        {
+          "optionId": "cause-and-effect",
+          "shortName": "Cause and effect",
+          "fullText": "- Causes\n- Then their effects\n  - Or each cause paired with its effect\n- Source: university writing-center organization patterns"
+        }
+      ]
+    },
+    {
+      "categoryId": "structure",
+      "categoryName": "Build skeleton first",
+      "options": [
+        {
+          "optionId": "hollow-before-full",
+          "shortName": "Skeleton first",
+          "fullText": "- Big picture first\n  - \"If we can't solve the big picture first, how can we hope to build the details?\"\n- Every part hollow before full\n  - Exists\n  - Reachable\n  - Testable from outside\n  - Returns a placeholder\n- Decided in the hollow stage\n  - Interfaces\n  - Types\n  - Names\n- Unknown content?\n  - The part still exists\n  - It says what to find out\n- Interface tests first\n  - Pass against placeholders\n- Filling adds no new structure\n  - Missing structure found later?\n  - Design change\n  - Back to the user"
+        },
+        {
+          "optionId": "vertical-slices",
+          "shortName": "Thin working slices",
+          "fullText": "- One thin slice end to end\n- Then extend it"
+        },
+        {
+          "optionId": "just-build-it",
+          "shortName": "Just build it",
+          "fullText": "- Build in whatever order makes sense"
+        }
+      ]
+    },
+    {
+      "categoryId": "work-chunks",
+      "categoryName": "Breaking down work",
+      "options": [
+        {
+          "optionId": "sprint-features",
+          "shortName": "Sprint features",
+          "fullText": "- Break work into sprint features\n- Each feature\n  - Strictly defined interface\n  - A standalone tool\n  - Own definition of done\n  - Own integration tests\n  - Delivered with\n    - README\n    - Packaging\n    - Example code"
+        },
+        {
+          "optionId": "small-tasks",
+          "shortName": "Small tasks",
+          "fullText": "- Break work into small tasks\n  - Each done in one sitting"
+        },
+        {
+          "optionId": "one-piece",
+          "shortName": "One piece",
+          "fullText": "- Do the work as one piece"
+        }
+      ]
+    },
+    {
+      "categoryId": "design-patterns",
+      "categoryName": "Design patterns",
+      "options": [
+        {
+          "optionId": "object-oriented",
+          "shortName": "OOP",
+          "fullText": "- Object-oriented\n  - Small single-purpose classes\n  - Composition over inheritance"
+        },
+        {
+          "optionId": "functional",
+          "shortName": "Functional",
+          "fullText": "- Functional\n  - Pure functions\n  - No mutation\n  - Side effects at the edges"
+        },
+        {
+          "optionId": "match-the-codebase-patterns",
+          "shortName": "Match the codebase",
+          "fullText": "- Use the codebase's existing patterns"
+        }
+      ]
+    },
+    {
+      "categoryId": "modularity",
+      "categoryName": "Modularity",
+      "options": [
+        {
+          "optionId": "generic-standalone-modules",
+          "shortName": "Generic, standalone modules",
+          "fullText": "- Separable piece = standalone module\n- Knows nothing of its user\n  - No project names\n  - No project assumptions\n  - No reaching into caller data\n- Liftable into any project\n  - Small, explicit interface\n  - Own short docs\n  - Own tests\n- Project glue\n  - Thin\n  - Separate from the modules"
+        },
+        {
+          "optionId": "clear-interfaces",
+          "shortName": "Clear interfaces only",
+          "fullText": "- Split work into parts\n  - Small, explicit interfaces"
+        },
+        {
+          "optionId": "abstract-on-second-use",
+          "shortName": "Abstract on second use",
+          "fullText": "- Abstract only on a second use"
+        }
+      ]
+    },
+    {
+      "categoryId": "naming",
+      "categoryName": "Naming",
+      "options": [
+        {
+          "optionId": "verbose-oop",
+          "shortName": "Verbose OOP",
+          "fullText": "- Name for what it IS or DOES\n- NEVER for implementation\n  - `retry_with_backoff`, not `loop_helper`\n  - `customer_lookup`, not `redis_cache_wrapper`\n- NEVER for who uses it\n  - Applies a rule to a string?\n  - It's a `string_rule_applier`\n  - Even if only checkout calls it\n- Paper and pencil analogy\n  - You map with them\n  - They aren't a \"mapper tool\"\n  - They're writing and recording tools\n- Clear outside any app context\n  - No app or product branding\n- Err toward verbose\n  - A sentence-long name beats a vague one"
+        },
+        {
+          "optionId": "modern-clean",
+          "shortName": "Modern clean",
+          "fullText": "- Short, idiomatic names\n  - In the language's style\n  - In the framework's style"
+        },
+        {
+          "optionId": "match-the-codebase",
+          "shortName": "Match the codebase",
+          "fullText": "- Name things like the codebase does"
+        }
+      ]
+    },
+    {
+      "categoryId": "review-depth",
+      "categoryName": "Review depth",
+      "options": [
+        {
+          "optionId": "real-issues-in-the-diff-only",
+          "shortName": "Diff only, real issues",
+          "fullText": "- Review only the diff\n  - Code outside it: only where the diff breaks it\n- Only real, immediate issues\n  - Bugs\n  - Security holes\n  - Data loss\n  - Broken behaviour or contracts\n  - Missed requirements\n- No nitpicks\n  - Style\n  - Naming\n  - Formatting\n  - Personal preference\n  - \"Could be cleaner\"\n- Nothing real found?\n  - Say so in one line\n  - Don't invent findings"
+        },
+        {
+          "optionId": "balanced-review",
+          "shortName": "Balanced",
+          "fullText": "- Review the diff and the code it touches\n- Real issues first\n- Then maintainability problems that matter\n- Nitpicks only if few\n  - Marked \"Nit:\""
+        },
+        {
+          "optionId": "comprehensive-review",
+          "shortName": "Comprehensive",
+          "fullText": "- Review the whole change and its surroundings\n  - Correctness\n  - Security\n  - Performance\n  - Error handling\n  - Tests\n  - Design and structure\n  - Readability and naming\n  - Documentation\n- Every finding ranked by severity\n  - Nitpicks marked \"Nit:\""
+        }
+      ]
+    },
+    {
+      "categoryId": "testing",
+      "categoryName": "Testing",
+      "options": [
+        {
+          "optionId": "no-testing",
+          "shortName": "No testing",
+          "fullText": "- No tests"
+        },
+        {
+          "optionId": "simple-post-testing",
+          "shortName": "Simple post testing",
+          "fullText": "- Test what you've made\n  - Ensure it works"
+        },
+        {
+          "optionId": "tdd-module-level",
+          "shortName": "Test first TDD, module level",
+          "fullText": "- Test first\n  - Interface level\n  - Module level\n- Automated tests\n  - Wherever possible\n  - In git or similar\n  - Alongside the code\n- Each module\n  - Interface tests first\n  - They fail\n  - Then pass once built\n- Finer tests inside modules\n  - Your discretion\n- Integration tests fully real\n  - Real entry points\n  - Real services\n  - Real data\n- Unit tests pass?\n  - Time to integration test\n  - NOT done yet"
+        },
+        {
+          "optionId": "tdd-granular",
+          "shortName": "Test first TDD, granular",
+          "fullText": "- Strict test-first TDD\n  - Every behaviour\n- Automated tests\n  - In version control"
+        }
+      ]
+    },
+    {
+      "categoryId": "troubleshooting",
+      "categoryName": "Troubleshooting",
+      "options": [
+        {
+          "optionId": "research-errors",
+          "shortName": "Research errors, never guess and retry",
+          "fullText": "- No \"try and repeat\" loops\n  - Skipping proper research\n  - Testing random guesses\n  - In slow, expensive workflows\n- The cost\n  - Hours wasted\n  - Hundreds of dollars\n- NOT authorized\n  - Wild guesses through CI/CD\n- Errors MUST be researched\n  - Good generic search terms\n  - NOT niche terms from your hypothesis\n    - That's as bad as guessing"
+        },
+        {
+          "optionId": "quick-experiments",
+          "shortName": "Quick experiments first",
+          "fullText": "- Try quick, cheap experiments first\n- Not settled?\n  - Research"
+        }
+      ]
+    },
+    {
+      "categoryId": "billed-runs",
+      "categoryName": "Paid runs",
+      "options": [
+        {
+          "optionId": "explicit-permission",
+          "shortName": "Explicit permission",
+          "fullText": "- Costs money per use?\n  - Explicit permission first"
+        },
+        {
+          "optionId": "research-first",
+          "shortName": "Research first",
+          "fullText": "- Costs money per use?\n  - Research the fix first\n  - Prove it first"
+        },
+        {
+          "optionId": "research-then-permission",
+          "shortName": "Research, then permission",
+          "fullText": "- Costs money per use?\n  - Research the fix\n  - Prove it\n  - Then ask permission"
+        },
+        {
+          "optionId": "judgement-within-limit",
+          "shortName": "Best judgement within a limit",
+          "fullText": "- Paid runs: your judgement\n  - Within [time / usage / cost limit]"
+        },
+        {
+          "optionId": "no-billed-run-limits",
+          "shortName": "No restriction",
+          "fullText": "- No limits on paid runs"
+        }
+      ]
+    },
+    {
+      "categoryId": "documentation",
+      "categoryName": "Documentation",
+      "options": [
+        {
+          "optionId": "no-documentation",
+          "shortName": "None",
+          "fullText": "- No documentation"
+        },
+        {
+          "optionId": "keep-docs-in-sync",
+          "shortName": "Keep existing docs in sync",
+          "fullText": "- Existing docs your change makes wrong\n  - Update them"
+        },
+        {
+          "optionId": "readme-for-what-you-build",
+          "shortName": "README for what you build",
+          "fullText": "- A README for everything you build\n  - What it is\n  - How to use it\n  - An example"
+        },
+        {
+          "optionId": "full-documentation",
+          "shortName": "Full documentation",
+          "fullText": "- Document each part\n  - README\n  - Interface\n  - Decisions made, and why"
+        }
+      ]
+    },
+    {
+      "categoryId": "prs",
+      "categoryName": "Pull requests",
+      "options": [
+        {
+          "optionId": "stacked-prs-and-review",
+          "shortName": "Stacked PRs and review",
+          "fullText": "- Stacked PRs\n  - Keep working, don't wait on merges\n- Review each PR\n  - By a separate agent"
+        },
+        {
+          "optionId": "single-pr",
+          "shortName": "One PR at the end",
+          "fullText": "- One pull request at the end"
+        },
+        {
+          "optionId": "commit-directly",
+          "shortName": "Commit directly",
+          "fullText": "- Commit directly\n  - No pull requests"
+        }
+      ]
+    },
+    {
+      "categoryId": "parallel-work",
+      "categoryName": "Parallel work",
+      "options": [
+        {
+          "optionId": "suggest-parallel-work",
+          "shortName": "Suggest parallel work",
+          "fullText": "- Suggest work that can run in parallel"
+        },
+        {
+          "optionId": "sequential",
+          "shortName": "One thing at a time",
+          "fullText": "- One thing at a time"
+        }
+      ]
+    },
+    {
+      "categoryId": "repo",
+      "categoryName": "Repository",
+      "options": [
+        {
+          "optionId": "no-repo",
+          "shortName": "Do not use",
+          "fullText": "- No repository\n  - Don't create one\n  - Don't commit"
+        },
+        {
+          "optionId": "local-repo-only",
+          "shortName": "Local only",
+          "fullText": "- Local git repository only\n  - Create one if there is none\n  - Commit as you go\n  - Never push to a remote"
+        },
+        {
+          "optionId": "local-and-remote-repo",
+          "shortName": "Local and remote",
+          "fullText": "- Local git repository, pushed to a remote\n  - Create them if there are none\n    - Ask before creating the remote\n  - Commit and push as you go"
+        },
+        {
+          "optionId": "pre-existing-repo",
+          "shortName": "Pre-existing",
+          "fullText": "- Use the existing repository\n  - Don't create a new one\n  - Follow its branches and commit conventions"
+        }
+      ]
+    },
+    {
+      "categoryId": "document-type",
+      "categoryName": "Document type",
+      "options": [
+        {
+          "optionId": "email",
+          "shortName": "Email",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - Microsoft Writing Style Guide\n- An email\n  - Subject line\n  - Greeting\n  - The ask or point first\n  - Short paragraphs\n  - Sign-off"
+        },
+        {
+          "optionId": "memo",
+          "shortName": "Memo",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n- A memo\n  - To / From / Date / Subject\n  - Purpose first\n  - Then background and detail\n  - Actions needed, at the end"
+        },
+        {
+          "optionId": "report",
+          "shortName": "Report",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n- A report\n  - Summary first\n  - Sections with headings\n  - Conclusions\n  - Recommendations"
+        },
+        {
+          "optionId": "one-pager",
+          "shortName": "One-pager",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n    - Nielsen Norman Group (nngroup.com) on writing for skimmers\n- One page at most\n  - The point in the first lines\n  - Headings and bullets\n  - Nothing that can be cut"
+        },
+        {
+          "optionId": "faq",
+          "shortName": "FAQ",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n    - Writing to GOV.UK standards (guidance.publishing.service.gov.uk)\n- Questions and answers\n  - Questions as readers would ask them\n  - Short, direct answers\n  - Most common first"
+        },
+        {
+          "optionId": "guide",
+          "shortName": "Guide / how-to",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Google developer documentation style guide\n    - Writing to GOV.UK standards (guidance.publishing.service.gov.uk)\n- A guide\n  - What it helps the reader do, first\n  - Steps in order\n  - One action per step\n  - What to do when something goes wrong"
+        },
+        {
+          "optionId": "policy",
+          "shortName": "Policy",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The organization's existing policies\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n- A policy\n  - Purpose and scope first\n  - Defined terms, defined once\n  - Must / may / must not, used exactly\n  - One meaning per sentence\n  - Who owns it, when it's reviewed"
+        },
+        {
+          "optionId": "opinion-piece",
+          "shortName": "Opinion piece (op-ed)",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The target publication's submission guidelines\n- An opinion piece\n  - A clear stance, stated early\n  - Argued with evidence\n  - Counterarguments answered\n  - Ends with a call to think or act"
+        },
+        {
+          "optionId": "technical-documentation",
+          "shortName": "Technical documentation",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Google developer documentation style guide\n    - Microsoft Writing Style Guide\n- Technical documentation\n  - Task-focused\n  - Numbered steps\n  - Terms and names verbatim\n  - Examples for each case"
+        },
+        {
+          "optionId": "academic-paper",
+          "shortName": "Academic paper",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The target journal's author guidelines\n    - APA Style (apastyle.apa.org)\n- An academic paper\n  - Claims supported and cited\n  - Hedged where evidence is limited\n  - Field terms used correctly\n  - Standard sections for the field"
+        },
+        {
+          "optionId": "marketing-copy",
+          "shortName": "Marketing copy",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The brand's existing style guide\n    - Mailchimp Content Style Guide\n- Marketing copy\n  - Benefits before features\n  - Concrete and vivid\n  - A clear call to action\n  - No claims that can't be backed up"
+        },
+        {
+          "optionId": "letter",
+          "shortName": "Letter",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n- A letter\n  - Date and recipient\n  - Greeting\n  - Purpose in the first paragraph\n  - Sign-off and name"
+        },
+        {
+          "optionId": "cover-letter",
+          "shortName": "Cover letter",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - A university career center's guides\n- A cover letter\n  - The role, named first\n  - Why you fit: two or three specifics\n  - Close with next step\n  - One page"
+        },
+        {
+          "optionId": "resume",
+          "shortName": "Resume / CV",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - A university career center's guides\n- A resume\n  - Contact details\n  - Short summary\n  - Experience, most recent first\n    - Results, with numbers\n  - Skills\n  - Education"
+        },
+        {
+          "optionId": "proposal",
+          "shortName": "Proposal",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - The requester's required format, if given\n- A proposal\n  - The problem\n  - What you propose\n  - Cost and timeline\n  - Why it will work\n  - The decision needed"
+        },
+        {
+          "optionId": "grant-proposal",
+          "shortName": "Grant proposal",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The funder's own guidelines and templates\n    - Grants.gov (for US federal grants)\n- A grant proposal\n  - Need and who benefits\n  - Goals and measurable outcomes\n  - Activities and timeline\n  - Budget\n  - How success is evaluated\n  - The funder's required sections, in their order"
+        },
+        {
+          "optionId": "executive-summary",
+          "shortName": "Executive summary",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n- An executive summary\n  - The conclusion first\n  - Key findings\n  - Recommendation and decision needed\n  - Readable alone, without the full document"
+        },
+        {
+          "optionId": "business-plan",
+          "shortName": "Business plan",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - U.S. Small Business Administration (sba.gov) business plan guide\n    - SCORE (score.org) templates\n- A business plan\n  - Summary\n  - Problem and market\n  - Product or service\n  - How it makes money\n  - Team\n  - Financials\n  - What's needed"
+        },
+        {
+          "optionId": "case-study",
+          "shortName": "Case study",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Published case studies from leading firms in the field\n- A case study\n  - The client and situation\n  - The challenge\n  - What was done\n  - Results, with numbers\n  - A quote, if given"
+        },
+        {
+          "optionId": "white-paper",
+          "shortName": "White paper",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Published white papers from leading firms in the field\n    - Purdue OWL (owl.purdue.edu)\n- A white paper\n  - The problem, in depth\n  - Evidence and analysis\n  - The approach proposed\n  - Sourced throughout"
+        },
+        {
+          "optionId": "press-release",
+          "shortName": "Press release",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - AP Stylebook\n    - The organization's past press releases\n- A press release\n  - Headline\n  - Dateline and the news in the first sentence\n  - Who, what, when, where, why\n  - A quote\n  - About the organization\n  - Media contact"
+        },
+        {
+          "optionId": "announcement",
+          "shortName": "Announcement",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - digital.gov plain language guide (digital.gov/guides/plain-language)\n    - The organization's past announcements\n- An announcement\n  - What's happening, first\n  - When it takes effect\n  - What it means for the reader\n  - What they need to do"
+        },
+        {
+          "optionId": "newsletter",
+          "shortName": "Newsletter",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Mailchimp Content Style Guide\n    - The organization's past newsletters\n- A newsletter\n  - Short headline items\n  - Most important first\n  - Each item: a line or two and a link"
+        },
+        {
+          "optionId": "blog-post",
+          "shortName": "Blog post / article",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Nielsen Norman Group (nngroup.com) on writing for the web\n    - Mailchimp Content Style Guide\n- A blog post\n  - A headline that says what it's about\n  - The point in the opening\n  - Subheadings\n  - A closing takeaway"
+        },
+        {
+          "optionId": "social-media-post",
+          "shortName": "Social media post",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The platform's own business and creator guides\n- A social media post\n  - The point in the first line\n  - Within the platform's length\n  - One call to action"
+        },
+        {
+          "optionId": "speech",
+          "shortName": "Speech / talk",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Published speeches of the same kind\n    - Toastmasters International resources\n- A speech\n  - Written to be heard\n    - Read it aloud and edit by ear\n    - Short sentences\n    - Key points repeated\n  - Opening hook\n  - Three main points at most\n  - Key lines built to be remembered\n    - Rule of three\n    - Parallel phrasing\n    - Repetition at the start of lines (anaphora)\n  - Clear close\n  - Marked up to read aloud\n    - Short paragraphs, one idea each\n    - [PAUSE] marked where it helps\n    - Key words to stress, marked\n    - Hard names spelled out phonetically"
+        },
+        {
+          "optionId": "presentation-outline",
+          "shortName": "Presentation outline",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Duarte (duarte.com) presentation resources\n    - The organization's slide templates\n- A slide-by-slide outline\n  - One idea per slide\n  - Slide title states the point\n  - Speaker notes under each"
+        },
+        {
+          "optionId": "meeting-agenda",
+          "shortName": "Meeting agenda",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Atlassian team playbook and templates\n    - The organization's own templates\n- A meeting agenda\n  - Purpose of the meeting\n  - Items in order, each with time and owner\n  - Decisions needed, marked"
+        },
+        {
+          "optionId": "meeting-minutes",
+          "shortName": "Meeting minutes",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Atlassian meeting-notes templates\n    - Robert's Rules of Order (for formal bodies)\n- Meeting minutes\n  - Date and attendees\n  - Decisions made\n  - Actions: owner and due date\n  - Open questions"
+        },
+        {
+          "optionId": "standard-operating-procedure",
+          "shortName": "Standard operating procedure",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The organization's existing procedures\n    - ISO 9001 documentation guidance (for regulated work)\n- A standard operating procedure\n  - Purpose and scope\n  - Who does it\n  - Numbered steps\n  - Checks and records\n  - Version and review date"
+        },
+        {
+          "optionId": "training-material",
+          "shortName": "Training material",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The organization's existing training\n    - Writing to GOV.UK standards (guidance.publishing.service.gov.uk)\n- Training material\n  - Learning goals first\n  - Explain, then show an example, then practice\n  - A short check at the end"
+        },
+        {
+          "optionId": "job-description",
+          "shortName": "Job description",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - SHRM (shrm.org) job description templates\n    - The organization's existing job descriptions\n- A job description\n  - Role summary\n  - Responsibilities\n  - Required and preferred qualifications, separate\n  - Pay and location, if given\n  - How to apply"
+        },
+        {
+          "optionId": "product-requirements",
+          "shortName": "Product requirements (PRD)",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Atlassian product requirements template\n    - The organization's existing PRDs\n- A product requirements document\n  - Problem and users\n  - Goals and non-goals\n  - Requirements, each testable\n  - Success measures\n  - Open questions"
+        },
+        {
+          "optionId": "release-notes",
+          "shortName": "Release notes",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Keep a Changelog (keepachangelog.com)\n    - The project's past release notes\n- Release notes\n  - Version and date\n  - New\n  - Changed\n  - Fixed\n  - Anything users must do"
+        },
+        {
+          "optionId": "incident-report",
+          "shortName": "Incident report / postmortem",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Google SRE book: postmortem culture (sre.google)\n    - Atlassian incident postmortem template\n- An incident report\n  - What happened, in a timeline\n  - Impact\n  - Root cause\n  - What fixed it\n  - Actions to prevent it, with owners\n  - Blameless"
+        },
+        {
+          "optionId": "survey",
+          "shortName": "Survey / questionnaire",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Pew Research Center: questionnaire design\n    - SurveyMonkey survey design guidance\n- A survey\n  - Purpose stated to respondents\n  - One idea per question\n  - Neutral wording\n  - Answer choices that cover every case"
+        },
+        {
+          "optionId": "literature-review",
+          "shortName": "Literature review",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Purdue OWL (owl.purdue.edu)\n    - The target field's style guide (APA, MLA, Chicago)\n- A literature review\n  - Scope and how sources were chosen\n  - Grouped by theme\n  - Agreements, disagreements, gaps\n  - Every source cited"
+        },
+        {
+          "optionId": "product-description",
+          "shortName": "Product description",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - The selling platform's listing guidelines\n    - The brand's existing style guide\n- A product description\n  - What it is and who it's for\n  - Key benefits\n  - Specifications\n  - Within the length the channel allows"
+        },
+        {
+          "optionId": "faq-style-help-article",
+          "shortName": "Help-center article",
+          "fullText": "- First, get a reference\n  - Examples and structure from a trusted source\n  - The organization's own template wins, if there is one\n  - Suggested sources\n    - Writing to GOV.UK standards (guidance.publishing.service.gov.uk)\n    - Microsoft Writing Style Guide\n- A help-center article\n  - Title phrased as the reader's question\n  - The answer first\n  - Steps if needed\n  - Related articles"
+        },
+        {
+          "optionId": "novel",
+          "shortName": "Book: novel",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A novel\n  - Fiction, 40,000 words or more\n  - Adult: usually 80,000–100,000\n  - Literary fiction: up to about 110,000\n  - Characters, plot, setting, point of view kept consistent"
+        },
+        {
+          "optionId": "novella",
+          "shortName": "Book: novella",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A novella\n  - Fiction, 17,500–40,000 words\n  - One main plot line"
+        },
+        {
+          "optionId": "short-story",
+          "shortName": "Book: short story",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A short story\n  - Fiction, under 7,500 words\n  - Novelette: 7,500–17,500"
+        },
+        {
+          "optionId": "short-story-collection",
+          "shortName": "Book: short story collection",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A collection of short stories\n  - Each complete on its own\n  - A shared theme or thread, if any"
+        },
+        {
+          "optionId": "young-adult-novel",
+          "shortName": "Book: young adult (YA) novel",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A young adult novel\n  - About 50,000–80,000 words\n  - Teen protagonist and concerns"
+        },
+        {
+          "optionId": "middle-grade-novel",
+          "shortName": "Book: middle grade novel",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A middle grade novel\n  - Readers about 8–12\n  - Roughly 25,000–60,000 words\n    - Sources differ"
+        },
+        {
+          "optionId": "chapter-book",
+          "shortName": "Book: chapter book",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A chapter book\n  - Early independent readers\n  - About 5,000–12,000 words\n  - Short chapters"
+        },
+        {
+          "optionId": "picture-book",
+          "shortName": "Book: picture book",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A picture book\n  - Usually under 1,000 words\n    - Often under 600\n  - Text and illustrations tell it together\n  - Illustration notes only where needed"
+        },
+        {
+          "optionId": "memoir",
+          "shortName": "Book: memoir",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A memoir\n  - True story from the author's own life\n  - About 70,000–90,000 words\n  - A theme, not a full life history"
+        },
+        {
+          "optionId": "biography",
+          "shortName": "Book: biography",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A biography\n  - Someone else's life\n  - Researched and sourced"
+        },
+        {
+          "optionId": "narrative-nonfiction",
+          "shortName": "Book: narrative nonfiction",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- Narrative nonfiction\n  - A true story told with fiction's techniques\n  - Every fact sourced"
+        },
+        {
+          "optionId": "prescriptive-nonfiction",
+          "shortName": "Book: self-help / how-to",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- Prescriptive nonfiction\n  - Teaches the reader to do or change something\n  - A clear promise\n  - Steps, examples, exercises"
+        },
+        {
+          "optionId": "business-book",
+          "shortName": "Book: business book",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A business book\n  - One central idea or framework\n  - Cases and evidence\n  - What to do on Monday"
+        },
+        {
+          "optionId": "textbook",
+          "shortName": "Book: textbook",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A textbook\n  - Learning objectives per chapter\n  - Builds from basics\n  - Examples, exercises, summaries"
+        },
+        {
+          "optionId": "cookbook",
+          "shortName": "Book: cookbook",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A cookbook\n  - Recipes in a consistent format\n    - Ingredients with amounts, in order of use\n    - Numbered steps\n    - Yield and times\n  - Head notes for each recipe"
+        },
+        {
+          "optionId": "poetry-collection",
+          "shortName": "Book: poetry collection",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A poetry collection\n  - Poems ordered with intent\n  - Sections or an arc, if any"
+        },
+        {
+          "optionId": "graphic-novel-script",
+          "shortName": "Book: graphic novel / comic script",
+          "fullText": "- First, get a reference\n  - Comparable published books (comp titles)\n    - Recent, same category and audience\n  - The publisher's or agent's guidelines win, if there are any\n- A graphic novel or comic script\n  - Page by page, panel by panel\n  - Art description per panel\n  - Dialogue and captions per panel"
+        }
+      ]
+    },
+    {
+      "categoryId": "document-format",
+      "categoryName": "File format",
+      "options": [
+        {
+          "optionId": "markdown",
+          "shortName": "Markdown",
+          "fullText": "- Markdown\n  - Headings for sections\n  - Lists for steps and items\n  - Tables for comparisons"
+        },
+        {
+          "optionId": "plain-text",
+          "shortName": "Plain text",
+          "fullText": "- Plain text\n  - No markup\n  - Blank lines between sections"
+        },
+        {
+          "optionId": "word-document",
+          "shortName": "Paste into Word / Google Docs",
+          "fullText": "- Ready to paste into Word or Google Docs\n  - Real headings\n  - Real lists\n  - No markup symbols"
+        },
+        {
+          "optionId": "word-docx-file",
+          "shortName": "Word file (.docx)",
+          "fullText": "- A Word file (.docx)\n  - Built-in heading styles\n  - Real lists and tables"
+        },
+        {
+          "optionId": "pdf",
+          "shortName": "PDF",
+          "fullText": "- A PDF\n  - Laid out for printing and sharing\n  - Page numbers"
+        },
+        {
+          "optionId": "html",
+          "shortName": "HTML",
+          "fullText": "- An HTML page\n  - Semantic headings and lists\n  - No inline styling unless asked"
+        },
+        {
+          "optionId": "rich-text",
+          "shortName": "Rich text (.rtf)",
+          "fullText": "- Rich text (.rtf)\n  - Opens in any word processor"
+        },
+        {
+          "optionId": "latex",
+          "shortName": "LaTeX",
+          "fullText": "- LaTeX source\n  - Compiles without errors\n  - Standard packages only"
+        },
+        {
+          "optionId": "opendocument-text",
+          "shortName": "OpenDocument text (.odt)",
+          "fullText": "- An OpenDocument text file (.odt)\n  - For LibreOffice and similar"
+        },
+        {
+          "optionId": "slides",
+          "shortName": "Slides (PowerPoint / Google Slides)",
+          "fullText": "- Slides\n  - One idea per slide\n  - Speaker notes under each slide"
+        },
+        {
+          "optionId": "email-body",
+          "shortName": "Email body",
+          "fullText": "- Ready to paste into an email\n  - Subject line first\n  - No markup symbols"
+        },
+        {
+          "optionId": "csv",
+          "shortName": "CSV",
+          "fullText": "- CSV\n  - Header row first\n  - One record per line"
+        },
+        {
+          "optionId": "json",
+          "shortName": "JSON",
+          "fullText": "- JSON\n  - Valid and parseable\n  - No comments"
+        }
+      ]
+    },
+    {
+      "categoryId": "target-audience",
+      "categoryName": "Target audience",
+      "options": [
+        {
+          "optionId": "general-public",
+          "shortName": "General public",
+          "fullText": "- For the general public\n- Plain language\n  - Aim for 6th–8th grade reading level\n  - Everyday words, no jargon\n  - Any needed term explained\n- Short sentences, short paragraphs\n- People and actions in each sentence\n  - Not passive and impersonal\n- Answer their questions in the order they'd ask"
+        },
+        {
+          "optionId": "non-specialist-professionals",
+          "shortName": "Professionals outside the field",
+          "fullText": "- For educated readers outside this field\n- Don't confuse expertise with intelligence\n  - Never talk down\n- Field terms defined on first use\n- Background given, or pointed to\n- Examples from everyday work, not deep theory"
+        },
+        {
+          "optionId": "experienced-engineers",
+          "shortName": "Experienced engineers / experts",
+          "fullText": "- For experts in the field\n- Skip the basics\n- Precise technical terms, undefined\n- Theory, mechanisms, trade-offs\n- Data and specifics, not simplified examples\n- Assume they will check your claims"
+        },
+        {
+          "optionId": "technicians-practitioners",
+          "shortName": "Technicians, hands-on practitioners",
+          "fullText": "- For people who build, run or repair it\n- Practical, not theoretical\n- Steps in order\n- Exact settings, values, commands\n- Warnings before the step they apply to"
+        },
+        {
+          "optionId": "executives",
+          "shortName": "Executives, decision-makers",
+          "fullText": "- For busy decision-makers\n  - Many read only the opening\n- Conclusion and decision needed, first\n- Impact in their terms\n  - Cost\n  - Risk\n  - Time\n  - Results\n- Short\n- Technical detail only in an appendix"
+        },
+        {
+          "optionId": "policymakers",
+          "shortName": "Policymakers, legislators",
+          "fullText": "- For policymakers short on time\n- Finding first\n  - Not built up to, as in academic writing\n- Two pages, four at most\n- No jargon, but precise\n  - Specific numbers and mechanisms\n- Recommendation stated directly\n  - Ends with a call to action"
+        },
+        {
+          "optionId": "non-native-english-readers",
+          "shortName": "Non-native English readers, global",
+          "fullText": "- For readers who learned English as another language\n- Plain, literal wording\n- No idioms or slang\n  - Say what the idiom means instead\n- No culture-bound references\n- One meaning per word\n  - Same term every time"
+        },
+        {
+          "optionId": "mixed-audience",
+          "shortName": "Mixed audience",
+          "fullText": "- Name the primary audience\n  - Write for them\n- Serve secondary readers too\n  - Executives, experts, other departments\n- Opening states topic, purpose, audience\n- Headings so each reader finds their part\n- Summary and technical detail in separate sections"
+        }
+      ]
+    },
+    {
+      "categoryId": "length",
+      "categoryName": "Length",
+      "options": [
+        {
+          "optionId": "speaking-time",
+          "shortName": "Speaking time",
+          "fullText": "- Fit [N] minutes of speaking\n  - [N] comes from the user\n  - Not given? Ask before writing\n  - Offer typical lengths\n    - Introduction or toast: under 2 minutes\n    - Acceptance speech: under 5 minutes\n    - Eulogy or commencement: 10–20 minutes\n    - Conference keynote: 30–60 minutes, 45 is common\n    - Or the length of their slot in the program\n- Plan on 125–150 words a minute\n  - 135 is a common drafting figure\n- Calibrate to the speaker\n  - Time them reading a sample aloud"
+        },
+        {
+          "optionId": "word-count",
+          "shortName": "Word count",
+          "fullText": "- About [N] words"
+        },
+        {
+          "optionId": "one-page",
+          "shortName": "One page",
+          "fullText": "- One page at most"
+        },
+        {
+          "optionId": "as-short-as-possible",
+          "shortName": "As short as possible",
+          "fullText": "- As short as it can be\n  - Without losing anything that matters"
+        }
+      ]
+    },
+    {
+      "categoryId": "tone",
+      "categoryName": "Tone",
+      "options": [
+        {
+          "optionId": "neutral-and-precise",
+          "shortName": "Neutral and precise",
+          "fullText": "- Neutral and precise\n  - No opinion\n  - No persuasion\n  - Exact wording"
+        },
+        {
+          "optionId": "formal",
+          "shortName": "Formal",
+          "fullText": "- Formal\n  - No contractions\n  - No slang"
+        },
+        {
+          "optionId": "internal-formal",
+          "shortName": "Professional, warm",
+          "fullText": "- Professional but not stiff\n  - Courteous\n  - Direct"
+        },
+        {
+          "optionId": "plain-and-direct",
+          "shortName": "Plain and direct",
+          "fullText": "- Plain language\n  - Short sentences\n  - Everyday words\n- No filler\n- No marketing tone"
+        },
+        {
+          "optionId": "friendly",
+          "shortName": "Friendly",
+          "fullText": "- Warm and conversational\n  - Still clear and exact"
+        },
+        {
+          "optionId": "persuasive",
+          "shortName": "Persuasive",
+          "fullText": "- Persuasive\n  - A clear position\n  - Confident\n  - Aimed at a decision or action"
+        },
+        {
+          "optionId": "technical",
+          "shortName": "Technical",
+          "fullText": "- Technical\n  - Exact terms\n  - No simplifying that loses accuracy\n  - Assumes a knowledgeable reader"
+        },
+        {
+          "optionId": "casual",
+          "shortName": "Casual",
+          "fullText": "- Casual\n  - Relaxed, everyday language\n  - Contractions are fine\n  - Still accurate"
+        },
+        {
+          "optionId": "match-the-source-tone",
+          "shortName": "Match the source",
+          "fullText": "- Match the tone of the existing text or examples given"
+        },
+        {
+          "optionId": "conversational",
+          "shortName": "Conversational",
+          "fullText": "- Natural, direct, low key\n  - Casual, never overly familiar\n  - Talking with the room, not lecturing\n- Sentences of 8–16 words\n- Plain words, no jargon\n  - Would a smart non-expert get it first time?\n- Contractions and concrete nouns\n- One real story at the centre\n  - Problem, action, outcome"
+        },
+        {
+          "optionId": "formal-oratorical",
+          "shortName": "Formal, oratorical",
+          "fullText": "- For a large audience or a formal occasion\n- More formal wording\n  - Still clear, never ornate\n- Classical devices\n  - Parallelism\n  - Antithesis\n  - Anaphora\n  - Triads, not overused\n- Cadence and imagery\n  - One metaphor at a time"
+        },
+        {
+          "optionId": "inspirational",
+          "shortName": "Inspirational",
+          "fullText": "- For commencements, launches, kick-offs\n- Inspire, don't lecture\n  - No policy detail unless needed\n- Vivid imagery\n- Repetition with variation\n- Close on a line that carries\n  - A shared future, stated with confidence\n  - Never \"thanks for your time\""
+        },
+        {
+          "optionId": "solemn-commemorative",
+          "shortName": "Solemn, commemorative",
+          "fullText": "- For memorials, eulogies, remembrance days\n- Somber, and hopeful\n- Restrained emotion\n  - From sincerity, not heightened rhetoric\n- Service and sacrifice honoured\n- Exact wording matters\n  - Written to be read as scripted\n- Pauses marked"
+        },
+        {
+          "optionId": "apology-crisis",
+          "shortName": "Apology, crisis",
+          "fullText": "- Apologise at the very start\n  - Not after the explanation\n  - No apology sandwich\n- Own it\n  - Name the impact\n  - No minimising\n  - No deflecting blame\n- One steady tone\n  - No swings in emotion\n  - Not scripted-sounding\n- Say what happens next\n- Slow pace, key pauses marked\n- Flag wording that may admit legal liability\n  - For legal review"
+        },
+        {
+          "optionId": "rallying-supporters",
+          "shortName": "Rallying supporters",
+          "fullText": "- For an audience already on side\n  - Party gathering, team rally\n- Strong, energising language\n- Contrast: our way or nothing\n- Short, rhythmic lines for applause\n- Never for a mixed or non-partisan audience"
+        },
+        {
+          "optionId": "persuading-the-unconvinced",
+          "shortName": "Persuading the unconvinced",
+          "fullText": "- For an audience that disagrees or is unsure\n- Goodwill first\n  - \"A drop of honey catches more flies than a gallon of gall\"\n- Appeal to shared values\n  - More than to data\n- Attention, problem, solution\n- Three main points at most\n  - Signposted\n  - Statistics used sparingly"
+        },
+        {
+          "optionId": "light-celebratory",
+          "shortName": "Light, celebratory",
+          "fullText": "- For dinners, awards, toasts, retirements\n- Warm, entertaining\n- Gentle, self-deprecating humour\n  - Never about personal lives, religion or ethnicity\n- Anecdotes like spices\n  - Few, and on point\n- After dinner: very short"
+        },
+        {
+          "optionId": "passionate-empathetic",
+          "shortName": "Passionate, empathetic",
+          "fullText": "- Speak to the audience's feelings first\n  - Name their concerns\n  - Validate them before arguing\n- Share the author's own feelings\n  - How they felt, in a real moment\n- Real stories, specific details\n- Conviction\n  - Say the hard truths plainly\n  - Repetition and parallel lines for emphasis\n- Sincere, never performed\n  - Show the feeling, don't just label it\n- Warm and conversational\n  - As if to one listener"
+        }
+      ]
+    },
+    {
+      "categoryId": "politics",
+      "categoryName": "Politics",
+      "options": [
+        {
+          "optionId": "non-partisan",
+          "shortName": "Non-partisan",
+          "fullText": "- No political opinions\n  - Express none\n  - Imply none\n- Don't support or oppose\n  - Candidates\n  - Parties\n  - Legislation or ballot measures\n- Political topics, when unavoidable\n  - Facts only, sourced\n  - Each side described fairly, in its own terms\n- For organizations that must stay non-partisan\n  - Charities and nonprofits\n  - Public bodies\n  - Employers with a neutrality policy"
+        },
+        {
+          "optionId": "no-political-restriction",
+          "shortName": "No restriction",
+          "fullText": "- No restriction on political content"
+        }
+      ]
+    },
+    {
+      "categoryId": "editing-the-users-text",
+      "categoryName": "Editing my text",
+      "options": [
+        {
+          "optionId": "suggest-only",
+          "shortName": "Suggest only",
+          "fullText": "- Don't change the text\n- List each suggested change\n  - Where\n  - What\n  - Why"
+        },
+        {
+          "optionId": "edit-keep-voice",
+          "shortName": "Edit, keep my voice",
+          "fullText": "- Make the edits\n- Keep the author's voice\n  - Word choices\n  - Sentence style\n- Show every change"
+        },
+        {
+          "optionId": "rewrite-freely",
+          "shortName": "Rewrite freely",
+          "fullText": "- Rewrite as needed\n- Keep every fact and point"
+        }
+      ]
+    },
+    {
+      "categoryId": "response-format",
+      "categoryName": "Response format",
+      "options": [
+        {
+          "optionId": "full-report",
+          "shortName": "Full report",
+          "fullText": "- End with\n  - Status\n  - Built\n  - Tests: commands and results\n  - Deviations\n  - Decisions\n  - Open items"
+        },
+        {
+          "optionId": "wiki-style",
+          "shortName": "Wiki style",
+          "fullText": "- Respond wiki style\n  - Headings\n  - Short indented bullets\n  - No prose paragraphs"
+        },
+        {
+          "optionId": "slides-style",
+          "shortName": "Slide style",
+          "fullText": "- Respond like slides\n  - Short titled sections\n  - 3–5 bullets each"
+        },
+        {
+          "optionId": "tldr",
+          "shortName": "TL;DR",
+          "fullText": "- Start with a TL;DR\n  - One or two sentences"
+        },
+        {
+          "optionId": "takeaway-only",
+          "shortName": "Takeaway only",
+          "fullText": "- Give only the answer or result"
+        },
+        {
+          "optionId": "condensed",
+          "shortName": "Condensed",
+          "fullText": "- Condensed\n  - Nested fragments\n  - No filler\n  - No lost facts\n  - Outcome first, detail nested under it\n  - Every list split into bullets\n  - A contrast stays on one line\n- Example\n  - Before\n    - \"I bumped the S3 retry count from 3 to 5 on the platform team's suggestion, though I doubt it fixes the timeouts since the failures we saw were permission errors rather than load. I did not touch the parquet writer, which is still the slowest step.\"\n  - Not quite\n    ```\n    - S3 retry count 3 -> 5\n      - Platform team's suggestion\n      - Doubt it fixes the timeouts\n      - Failures\n        - Permission errors\n      - Success\n        - Load\n    - Parquet writer NOT touched\n      - Still the slowest step\n    ```\n  - Why not quite\n    - \"Success: load\" was never said\n      - Splitting the contrast invented it\n    - The reason sits beside the doubt, not under it\n    - \"I\" dropped\n      - \"NOT touched\" now claims no one touched it\n  - Ideal\n    ```\n    - I bumped the S3 retry count 3 -> 5\n      - Platform team's suggestion\n      - I doubt it fixes the timeouts\n        - Failures we saw were permission errors, not load\n    - I did NOT touch the parquet writer\n      - Still the slowest step\n    ```"
+        }
+      ]
+    }
+  ]
+}

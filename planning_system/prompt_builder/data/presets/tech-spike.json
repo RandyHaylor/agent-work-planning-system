@@ -1,0 +1,59 @@
+{
+  "format": "ai-prompt-builder/ruleset@1",
+  "name": "Tech spike",
+  "entries": [
+    {
+      "categoryId": "requirements-to-gather",
+      "optionId": "confirm-what-is-unclear",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "existing-solutions",
+      "optionId": "follow-established-patterns",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "scope",
+      "optionId": "strict-scope",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "escalation",
+      "optionId": "decide-and-note",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "troubleshooting",
+      "optionId": "research-errors",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "billed-runs",
+      "optionId": "research-then-permission",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "response-format",
+      "optionId": "tldr",
+      "enabled": true,
+      "editedText": null
+    },
+    {
+      "categoryId": "source-of-truth",
+      "optionId": "official-researched-truths",
+      "enabled": false,
+      "editedText": null
+    }
+  ],
+  "customText": {
+    "text": "Tech spike: prove one thing works with the smallest, fastest throwaway code. State the question first, show the proof, and ask me to check anything you can't judge yourself. End with: works / doesn't / partly, the proof, and what the real build must know.\n\nQuestion: can a three.js scene render 10,000 animated sprites at 60 fps in a mobile browser?",
+    "placement": "end",
+    "enabled": true
+  }
+}

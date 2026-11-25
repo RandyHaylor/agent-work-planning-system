@@ -1,0 +1,10 @@
+user,name,alice
+user,token,abc123
+user,profile,bio,"loves synths, math, and ""quotes"""
+user,profile,secretNote,deep hidden note
+user,events,[0],type,login
+user,events,[0],status,ok
+user,events,[1],type,purchase
+user,events,[1],status,failed
+system,status,ok
+system,long,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
