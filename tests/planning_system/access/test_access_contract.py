@@ -7,10 +7,7 @@ from planning_system.server.domain.access.permission_policy import RulePermissio
 from planning_system.server.domain.access.types import (CredentialScope, KnowledgeBaseFacts,
                                                         NodeFacts, ReferenceFacts, TempEntryFacts)
 
-LEVEL7 = pytest.mark.xfail(strict=False, reason="level 7")
-
-
-@pytest.fixture(params=["fake", pytest.param("real", marks=LEVEL7)])
+@pytest.fixture(params=["fake", "real"])
 def policy(request):
     return TablePermissionPolicy() if request.param == "fake" else RulePermissionPolicy()
 
