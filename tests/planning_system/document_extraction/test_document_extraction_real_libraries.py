@@ -1,4 +1,4 @@
-"""Spec test 12: real-library smoke tests, one fixture per format. Real only; xfail until level 7."""
+"""Spec test 12: real-library smoke tests, one fixture per format. Real only."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -20,7 +20,6 @@ CASES = [
 ]
 
 
-@pytest.mark.xfail(strict=False, reason="level 7")
 @pytest.mark.parametrize("file_name,header,expected", CASES)
 def test_12_real_libraries_extract_fixture(file_name, header, expected):
     document = SourceDocument(raw_bytes=(FIXTURES / file_name).read_bytes(), locator=file_name,

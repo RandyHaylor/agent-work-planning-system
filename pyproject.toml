@@ -19,6 +19,7 @@ dependencies = [
     "pdfminer.six",
     "charset-normalizer>=3",
     "python-docx>=1.1",
+    "json-source-map>=1.0.5",
 ]
 
 [project.scripts]

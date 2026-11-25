@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Mapping, Sequence
 
 from planning_system.document_extraction.extraction_interface import StrategyCatalog
+from planning_system.document_extraction.extraction_types import UnknownStrategy
 from planning_system.document_extraction.strategies.strategy_interface import ExtractionStrategy
 
 HTML_ORDER = ("trafilatura_markdown", "readabilipy_markdownify", "whole_page_markdownify")
@@ -27,10 +28,18 @@ class StrategyRegistry(StrategyCatalog):
         self.default_orders = default_orders
 
     def get(self, name: str) -> ExtractionStrategy:
-        raise NotImplementedError("level 7")
+        for strategy in self.strategies:
+            if strategy.name == name:
+                return strategy
+        raise UnknownStrategy(name)
 
     def default_order(self, content_type: str) -> tuple[str, ...]:
-        raise NotImplementedError("level 7")
+        """Exact media type, else `major/*`, else `*`."""
+        orders = self.default_orders
+        for key in (content_type, content_type.split("/", 1)[0] + "/*", "*"):
+            if key in orders:
+                return tuple(orders[key])
+        return ()
 
     def names(self) -> tuple[str, ...]:
-        raise NotImplementedError("level 7")
+        return tuple(strategy.name for strategy in self.strategies)

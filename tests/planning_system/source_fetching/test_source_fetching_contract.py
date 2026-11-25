@@ -20,7 +20,6 @@ from planning_system.server.domain.references.source_fetcher_port import (
 )
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
-LEVEL_7 = pytest.mark.xfail(strict=False, reason="level 7")
 URL = "https://example.com/page"
 HTML = (FIXTURES / "article.html").read_bytes()
 
@@ -60,7 +59,7 @@ def make_real_http(responses, max_bytes=25 * 1024 * 1024):
     return HttpSourceFetcher(client, max_bytes), Calls(requested)
 
 
-HTTP = [pytest.param(make_fake_http, id="fake"), pytest.param(make_real_http, id="real", marks=LEVEL_7)]
+HTTP = [pytest.param(make_fake_http, id="fake"), pytest.param(make_real_http, id="real")]
 
 
 @pytest.mark.parametrize("make", HTTP)
@@ -122,7 +121,7 @@ def test_6_always_live(make):
 
 
 UPLOADS = [pytest.param(FakeUploadedFileSource, id="fake"),
-           pytest.param(UploadedFileSource, id="real", marks=LEVEL_7)]
+           pytest.param(UploadedFileSource, id="real")]
 
 
 @pytest.mark.parametrize("make", UPLOADS)
@@ -149,7 +148,7 @@ def make_real_search(responses):
     return WebSearchSource(make_real_http(responses)[0])
 
 
-SEARCHES = [pytest.param(make_fake_search, id="fake"), pytest.param(make_real_search, id="real", marks=LEVEL_7)]
+SEARCHES = [pytest.param(make_fake_search, id="fake"), pytest.param(make_real_search, id="real")]
 
 
 @pytest.mark.parametrize("make", SEARCHES)

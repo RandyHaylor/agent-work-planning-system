@@ -12,4 +12,11 @@ class JsonlLocator(JsonLineLocator):
         self.stored_text = stored_text
 
     def locate(self, address_steps: Sequence[int]) -> LineRange:
-        raise NotImplementedError("level 7")
+        if not address_steps or not 0 <= address_steps[0] < self._line_count:
+            raise KeyError(tuple(address_steps))
+        line = address_steps[0] + 1
+        return LineRange(line, line)
+
+    @property
+    def _line_count(self) -> int:
+        return len(self.stored_text.splitlines())

@@ -50,4 +50,14 @@ class FallbackRunner(FallbackRunnerInterface[I, O]):
         self.failure_type = failure_type
 
     def run(self, item: I, strategies: Sequence[Strategy]) -> FallbackOutcome[O]:
-        raise NotImplementedError("level 7")
+        attempts: list[Attempt] = []
+        for strategy in strategies:
+            name = strategy_name(strategy)
+            try:
+                output = strategy(item)
+            except self.failure_type as error:  # type: ignore[misc]
+                attempts.append(Attempt(name, str(error) or type(error).__name__))
+                continue
+            attempts.append(Attempt(name, None))
+            return FallbackOutcome(output, name, tuple(attempts))
+        raise AllStrategiesFailed(tuple(attempts))
