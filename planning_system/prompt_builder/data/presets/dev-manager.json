@@ -45,6 +45,12 @@
       "editedText": null
     },
     {
+      "categoryId": "planning-claims",
+      "optionId": "claim-tags-and-citations",
+      "enabled": true,
+      "editedText": null
+    },
+    {
       "categoryId": "adding-details",
       "optionId": "do-not-add-or-change-details",
       "enabled": true,

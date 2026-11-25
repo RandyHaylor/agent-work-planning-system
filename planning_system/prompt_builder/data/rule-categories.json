@@ -1244,6 +1244,17 @@
           "fullText": "- Find sources anywhere, with any search tool\n- To register a reference, pull the URL or file up through the reader\n  - \"to register a reference they have to pull the URL up through the reader\"\n- The reader's DuckDuckGo search is encouraged\n  - \"I think it gives better results than other systems right now\"\n- Bad extraction?\n  - The reader says which strategy was used\n  - Try another and move on\n- A reference already on another node\n  - Cite it by its reference ID, not its URL"
         }
       ]
+    },
+    {
+      "categoryId": "planning-claims",
+      "categoryName": "Claim tags and citations",
+      "options": [
+        {
+          "optionId": "claim-tags-and-citations",
+          "shortName": "Every content write is tagged and cited",
+          "fullText": "- Every content item you add to a node carries exactly one claim tag\n  - `requirement` / `decision`: what the user needs or decided; cite a user quote (user_exchange or proposal_response)\n  - `technical`: a technical reality or solution; cite a document reference (a page, file or code loaded through the reader)\n  - `documentation`: what a document says; cite only document references\n  - `plan`: a plan, spec or task description; cite the evidence for each claim\n  - `note`: no claim (structure, a question, a status report); no citation needed\n  - Other descriptive tags may sit beside it\n- Citation format: `[<reference id>:<start>-<end>]`, 1-based inclusive lines, inside the text\n  - Get the id from `planning cite` (a temp `tmp-...` item must be cited first) or from the user's quote\n  - Cite the newest version: a superseded reference is rejected and the error names its replacement\n  - Citing another node's text never counts as evidence\n- No paraphrase as evidence: quote and cite, never restate\n- Titles make no claims: a short noun phrase, at most 50 characters, no citation, not a sentence\n- A rejected write (422) says exactly what to fix: fix that and resubmit\n- An accepted write is submitted for review, not approved\n  - A reviewer checks that the quote supports the claim\n  - A node can't be set done while any of its reviews are pending or failed\n  - Fix a failed review by replacing the content"
+        }
+      ]
     }
   ]
 }

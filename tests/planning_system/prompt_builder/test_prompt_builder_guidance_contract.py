@@ -74,7 +74,7 @@ def test_2_planner_has_process_rules_and_dev_manager_rules(client):
     catalog = RuleCatalog(user_folder=SHIPPED_DATA_FOLDER / "_unused")
     for category_id in ("planning-process-levels", "planning-level-5", "planning-module-design",
                         "planning-asking-the-user", "planning-approval", "planning-running-tasks",
-                        "planning-references"):
+                        "planning-references", "planning-claims"):
         assert f"## {catalog.find_category(category_id)['categoryName']}" in body["text"]
     assert composed("Planner") in body["text"]
 

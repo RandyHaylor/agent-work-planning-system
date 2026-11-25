@@ -43,14 +43,28 @@ def test_every_role_maps_to_an_existing_preset(catalog):
         assert catalog.find_preset(preset_name) is not None, preset_name
 
 
-def test_worker_preset_is_careful_developer_plus_reader_rule_without_sample_task(catalog):
+PLANNING_RULES = [("planning-references", "through-the-reader"), ("planning-claims", "claim-tags-and-citations")]
+
+
+def test_worker_preset_is_careful_developer_plus_reader_and_claim_rules_without_sample_task(catalog):
     worker = catalog.find_preset("Worker")
     careful = catalog.find_preset("Careful developer")
     worker_rules = [(e["categoryId"], e["optionId"]) for e in worker["entries"]]
     careful_rules = [(e["categoryId"], e["optionId"]) for e in careful["entries"]]
-    assert [r for r in worker_rules if r != ("planning-references", "through-the-reader")] == careful_rules
-    assert ("planning-references", "through-the-reader") in worker_rules
+    assert [r for r in worker_rules if r not in PLANNING_RULES] == careful_rules
+    assert all(rule in worker_rules for rule in PLANNING_RULES)
     assert "CSV" not in ruleset.compose_prompt_text(catalog, ruleset.new_ruleset(catalog, worker))
+
+
+@pytest.mark.parametrize("name", ["Planner", "Dev manager", "Worker"])
+def test_planner_dev_manager_and_worker_get_the_claim_tag_rule(catalog, name):
+    """Build log #50: agents must know the claim tags and citation format or their writes 422."""
+    entries = [(e["categoryId"], e["optionId"], e["enabled"]) for e in catalog.find_preset(name)["entries"]]
+    assert ("planning-claims", "claim-tags-and-citations", True) in entries
+    text = ruleset.compose_prompt_text(catalog, ruleset.new_ruleset(catalog, catalog.find_preset(name)))
+    for tag in ("requirement", "decision", "technical", "documentation", "plan", "note"):
+        assert f"`{tag}`" in text
+    assert "[<reference id>:<start>-<end>]" in text
 
 
 def test_session_injections_are_the_repo_file_as_is():
