@@ -1,0 +1,76 @@
+{
+ "cond": "D",
+ "task": "novel_heat",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: compute our company's internal 'ticket heat score' (0.4*age_days + 0.35*priority_rank + 0.25*customer_tier_weight, tiers defined in our wiki) for our in-house helpdesk, in Python. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**PRIOR ART (MADR)**\n\n**Decision:** Compute a ticket heat score = 0.4\u00b7age_days + 0.35\u00b7priority_rank + 0.25\u00b7customer_tier_weight.\n\n**Considered options**\n\n1. **Existing MCDM library (pymcdm, Weighted Sum Model).** Source: [pymcdm user guide](https://pymcdm.readthedocs.io/en/v1.3.1/user_guide.html), which lists a WSM method. Reason: general decision-analysis package that would add a dependency for a fixed formula. Also [mcdm on PyPI](https://pypi.org/project/mcdm/) (SAW method), same tradeoff. The PyPI pages failed to load, so I confirmed these only through search results and the ReadTheDocs listing.\n2. **Built-in helpdesk priority/SLA.** Sources: [Frappe Helpdesk priority docs](https://docs.frappe.io/helpdesk/ticket-priority.md), [Deskpro prioritizing guide](https://support.deskpro.com/sr/guides/agent-guide-1/prioritizing-tickets-1). Reason: they set per-priority SLA targets, with no age-weighted score term.\n3. **Hand-written weighted sum (chosen).** Source: [Weighted sum model (Wikipedia)](https://en.wikipedia.org/wiki/Weighted_sum_model), described as the simplest MCDA approach. Reason: \"a fixed three-term weighted sum is about 20 lines with tests, so a dependency isn't justified.\"\n\n**Chosen:** Option 3.\n\n**Status:** No existing library implements this formula, so no ready-made package applies. Queries: \"python ticket priority scoring weighted age priority customer tier library\"; \"open source helpdesk ticket priority score formula age SLA escalation\"; \"pypi weighted scoring library multi-criteria decision python\"; \"pymcdm weighted sum model WSM github documentation\". Registries: web search over PyPI results only. I did not query npm or PyPI's own search.\n\n**Plan (stdlib only)**\n\n1. **Tiers:** Copy the tier\u2192weight table from the wiki into `tiers.yaml`. I could not check whether the wiki has an export or API.\n2. **Core function:** `heat_score(age_days, priority_rank, tier_weight) -> float` in `heat.py`, pure and with no I/O.\n3. **Lookups:** Map priority to rank and tier to weight. Raise an error on unknown values rather than defaulting silently.\n4. **Decisions for you:**\n   - Age is unbounded and would dominate the score. I recommend capping or normalizing it, e.g. `min(age_days, 30) / 30`.\n   - Confirm the direction of priority_rank (higher = more urgent?).\n   - Confirm a tie-break, e.g. oldest created first.\n5. **Ranking:** `sorted(tickets, key=heat, reverse=True)`. Use `heapq` only if the queue is live.\n6. **Tests (pytest):** Pass `now` explicitly for determinism. Cover zero age, each tier, unknown tier, and the cap boundary.\n7. **Validation:** Compare the top 20 ranked tickets against what an agent would pick by hand.\n\nPACKAGES: pypi:pymcdm, pypi:mcdm",
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 6806,
+   "cache_read_input_tokens": 29178,
+   "output_tokens": 4611,
+   "output_tokens_details": {
+    "thinking_tokens": 2763
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6806,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3327,
+     "cache_read_input_tokens": 10195,
+     "cache_creation_input_tokens": 1349,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1349
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.051713379999999996,
+  "is_error": false
+ },
+ "first_check": {
+  "urls": [
+   "https://docs.frappe.io/helpdesk/ticket-priority.md",
+   "https://en.wikipedia.org/wiki/Weighted_sum_model",
+   "https://pymcdm.readthedocs.io/en/v1.3.1/user_guide.html",
+   "https://pypi.org/project/mcdm/",
+   "https://support.deskpro.com/sr/guides/agent-guide-1/prioritizing-tickets-1"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:pymcdm",
+   "pypi:mcdm"
+  ],
+  "missing_packages": []
+ },
+ "final": "**PRIOR ART (MADR)**\n\n**Decision:** Compute a ticket heat score = 0.4\u00b7age_days + 0.35\u00b7priority_rank + 0.25\u00b7customer_tier_weight.\n\n**Considered options**\n\n1. **Existing MCDM library (pymcdm, Weighted Sum Model).** Source: [pymcdm user guide](https://pymcdm.readthedocs.io/en/v1.3.1/user_guide.html), which lists a WSM method. Reason: general decision-analysis package that would add a dependency for a fixed formula. Also [mcdm on PyPI](https://pypi.org/project/mcdm/) (SAW method), same tradeoff. The PyPI pages failed to load, so I confirmed these only through search results and the ReadTheDocs listing.\n2. **Built-in helpdesk priority/SLA.** Sources: [Frappe Helpdesk priority docs](https://docs.frappe.io/helpdesk/ticket-priority.md), [Deskpro prioritizing guide](https://support.deskpro.com/sr/guides/agent-guide-1/prioritizing-tickets-1). Reason: they set per-priority SLA targets, with no age-weighted score term.\n3. **Hand-written weighted sum (chosen).** Source: [Weighted sum model (Wikipedia)](https://en.wikipedia.org/wiki/Weighted_sum_model), described as the simplest MCDA approach. Reason: \"a fixed three-term weighted sum is about 20 lines with tests, so a dependency isn't justified.\"\n\n**Chosen:** Option 3.\n\n**Status:** No existing library implements this formula, so no ready-made package applies. Queries: \"python ticket priority scoring weighted age priority customer tier library\"; \"open source helpdesk ticket priority score formula age SLA escalation\"; \"pypi weighted scoring library multi-criteria decision python\"; \"pymcdm weighted sum model WSM github documentation\". Registries: web search over PyPI results only. I did not query npm or PyPI's own search.\n\n**Plan (stdlib only)**\n\n1. **Tiers:** Copy the tier\u2192weight table from the wiki into `tiers.yaml`. I could not check whether the wiki has an export or API.\n2. **Core function:** `heat_score(age_days, priority_rank, tier_weight) -> float` in `heat.py`, pure and with no I/O.\n3. **Lookups:** Map priority to rank and tier to weight. Raise an error on unknown values rather than defaulting silently.\n4. **Decisions for you:**\n   - Age is unbounded and would dominate the score. I recommend capping or normalizing it, e.g. `min(age_days, 30) / 30`.\n   - Confirm the direction of priority_rank (higher = more urgent?).\n   - Confirm a tie-break, e.g. oldest created first.\n5. **Ranking:** `sorted(tickets, key=heat, reverse=True)`. Use `heapq` only if the queue is live.\n6. **Tests (pytest):** Pass `now` explicitly for determinism. Cover zero age, each tier, unknown tier, and the cap boundary.\n7. **Validation:** Compare the top 20 ranked tickets against what an agent would pick by hand.\n\nPACKAGES: pypi:pymcdm, pypi:mcdm",
+ "final_check": {
+  "urls": [
+   "https://docs.frappe.io/helpdesk/ticket-priority.md",
+   "https://en.wikipedia.org/wiki/Weighted_sum_model",
+   "https://pymcdm.readthedocs.io/en/v1.3.1/user_guide.html",
+   "https://pypi.org/project/mcdm/",
+   "https://support.deskpro.com/sr/guides/agent-guide-1/prioritizing-tickets-1"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:pymcdm",
+   "pypi:mcdm"
+  ],
+  "missing_packages": []
+ }
+}

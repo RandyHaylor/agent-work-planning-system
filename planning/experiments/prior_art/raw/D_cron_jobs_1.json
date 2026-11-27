@@ -1,0 +1,76 @@
+{
+ "cond": "D",
+ "task": "cron_jobs",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: schedule cron-like recurring jobs inside a long-running Python process. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "# Prior art: recurring jobs in a long-running Python process\n\n**Status:** Proposed\n**Context:** Run cron-style recurring jobs inside an existing process. No persistence across restarts is required yet.\n\n**Considered options**\n\n1. **Use APScheduler 3.x (existing library).** [APScheduler 3.x cron trigger docs](https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html). Supports cron expressions, timezones, and in-process background threads. The [README](https://raw.githubusercontent.com/agronholm/apscheduler/HEAD/README.rst) warns the v4.0 series is a pre-release and \"do NOT use this release in production,\" so pin `<4`.\n2. **Use `schedule` (existing library).** [schedule docs](https://schedule.readthedocs.io/). Lightweight, but has no cron expressions, and `run_pending()` intentionally skips missed jobs.\n3. **Use `croniter` for next-fire times, with a hand-written loop.** [croniter on PyPI](https://pypi.org/project/croniter/). Parses cron well, but I could not confirm its maintenance status. Search snippets showed an unmaintained-fork notice, and my fetch of the PyPI page returned inconsistent content, so treat it as unverified.\n4. **Hand-roll cron parsing and scheduling.** Rejected: DST and weekday-numbering edge cases are exactly where libraries have already been debugged.\n\n**Decision:** Option 1. The deciding reason: \"existing, documented cron semantics; avoids hand-rolled parsing and DST handling.\"\n\n**Consequences:** In-memory only. Schedules are rebuilt on each start. Persistence would mean adding a job store, and multi-process use would need a leader lock.\n\n**Plan**\n\n1. Add `apscheduler>=3.10,<4` (confirm the exact latest 3.x patch before pinning).\n2. Create a `Scheduler` wrapper around `BackgroundScheduler(timezone=...)`.\n3. Register each job with `CronTrigger.from_crontab(expr, timezone=...)`, plus `id`, `max_instances=1`, `coalesce=True`, and `misfire_grace_time`.\n4. Load jobs from config and validate every cron expression at startup, failing fast.\n5. Wrap job bodies in try/except, and log failures via an APScheduler event listener.\n6. On SIGTERM, call `shutdown(wait=True)`.\n7. Test trigger times with fixed dates, including a DST transition in the chosen timezone. Verify `day_of_week` matches Unix cron (0 = Sunday), since APScheduler's numbering may differ.\n\n**Open decisions for you:** timezone (UTC is my recommendation), and whether jobs must survive restarts. If they must, I'd add a SQLAlchemy job store.\n\nPACKAGES: pypi:apscheduler, pypi:croniter, pypi:schedule",
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 5687,
+   "cache_read_input_tokens": 18607,
+   "output_tokens": 3260,
+   "output_tokens_details": {
+    "thinking_tokens": 1707
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5687,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2559,
+     "cache_read_input_tokens": 9237,
+     "cache_creation_input_tokens": 1135,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1135
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.043300670000000006,
+  "is_error": false
+ },
+ "first_check": {
+  "urls": [
+   "https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html",
+   "https://pypi.org/project/croniter/",
+   "https://raw.githubusercontent.com/agronholm/apscheduler/HEAD/README.rst",
+   "https://schedule.readthedocs.io/"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:apscheduler",
+   "pypi:croniter",
+   "pypi:schedule"
+  ],
+  "missing_packages": []
+ },
+ "final": "# Prior art: recurring jobs in a long-running Python process\n\n**Status:** Proposed\n**Context:** Run cron-style recurring jobs inside an existing process. No persistence across restarts is required yet.\n\n**Considered options**\n\n1. **Use APScheduler 3.x (existing library).** [APScheduler 3.x cron trigger docs](https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html). Supports cron expressions, timezones, and in-process background threads. The [README](https://raw.githubusercontent.com/agronholm/apscheduler/HEAD/README.rst) warns the v4.0 series is a pre-release and \"do NOT use this release in production,\" so pin `<4`.\n2. **Use `schedule` (existing library).** [schedule docs](https://schedule.readthedocs.io/). Lightweight, but has no cron expressions, and `run_pending()` intentionally skips missed jobs.\n3. **Use `croniter` for next-fire times, with a hand-written loop.** [croniter on PyPI](https://pypi.org/project/croniter/). Parses cron well, but I could not confirm its maintenance status. Search snippets showed an unmaintained-fork notice, and my fetch of the PyPI page returned inconsistent content, so treat it as unverified.\n4. **Hand-roll cron parsing and scheduling.** Rejected: DST and weekday-numbering edge cases are exactly where libraries have already been debugged.\n\n**Decision:** Option 1. The deciding reason: \"existing, documented cron semantics; avoids hand-rolled parsing and DST handling.\"\n\n**Consequences:** In-memory only. Schedules are rebuilt on each start. Persistence would mean adding a job store, and multi-process use would need a leader lock.\n\n**Plan**\n\n1. Add `apscheduler>=3.10,<4` (confirm the exact latest 3.x patch before pinning).\n2. Create a `Scheduler` wrapper around `BackgroundScheduler(timezone=...)`.\n3. Register each job with `CronTrigger.from_crontab(expr, timezone=...)`, plus `id`, `max_instances=1`, `coalesce=True`, and `misfire_grace_time`.\n4. Load jobs from config and validate every cron expression at startup, failing fast.\n5. Wrap job bodies in try/except, and log failures via an APScheduler event listener.\n6. On SIGTERM, call `shutdown(wait=True)`.\n7. Test trigger times with fixed dates, including a DST transition in the chosen timezone. Verify `day_of_week` matches Unix cron (0 = Sunday), since APScheduler's numbering may differ.\n\n**Open decisions for you:** timezone (UTC is my recommendation), and whether jobs must survive restarts. If they must, I'd add a SQLAlchemy job store.\n\nPACKAGES: pypi:apscheduler, pypi:croniter, pypi:schedule",
+ "final_check": {
+  "urls": [
+   "https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html",
+   "https://pypi.org/project/croniter/",
+   "https://raw.githubusercontent.com/agronholm/apscheduler/HEAD/README.rst",
+   "https://schedule.readthedocs.io/"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:apscheduler",
+   "pypi:croniter",
+   "pypi:schedule"
+  ],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "cond": "A",
+ "task": "rate_limit",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: rate-limit outgoing calls of a Node.js API client to 10 requests/second. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "## Implementation Plan: 10 Requests/Second Rate Limit\n\n**Goal:** Cap outgoing calls from the Node.js API client at 10 requests per second.\n\n1. **Find the single choke point.** Confirm that every outgoing call goes through one request method (for example, `request()` or the fetch wrapper). If calls bypass it, route them through it first.\n\n2. **Add a limiter.** Use `bottleneck` (npm:bottleneck) with `minTime: 100` so calls start at least 100 ms apart, or `reservoir: 10` with `reservoirRefreshInterval: 1000` for a burst-allowing 10-per-second window. Use `maxConcurrent` to bound in-flight requests. Wrap the existing request method so each call is scheduled through the limiter.\n\n3. **Make the rate configurable.** Expose `maxRequestsPerSecond` in the client options, defaulting to 10, so tests and deployments can change it.\n\n4. **Handle 429 responses.** Retry on HTTP 429 with exponential backoff and jitter, honoring the `Retry-After` header when present. Cap retries so a failing upstream cannot stall the queue indefinitely.\n\n5. **Test.** Use fake timers to verify that 25 queued calls finish in roughly 2.5 seconds and never exceed 10 starts in any one-second window. Add a test that a mocked 429 triggers a delayed retry.\n\n6. **Document the limit.** Note that the limiter is per process. If several instances share one upstream quota, a shared store (such as Redis) is needed, and that is out of scope here.\n\nPACKAGES: npm:bottleneck",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 649,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 808,
+   "output_tokens_details": {
+    "thinking_tokens": 261
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 649,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 808,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 649,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 649
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00055838,
+  "is_error": false
+ },
+ "final": "## Implementation Plan: 10 Requests/Second Rate Limit\n\n**Goal:** Cap outgoing calls from the Node.js API client at 10 requests per second.\n\n1. **Find the single choke point.** Confirm that every outgoing call goes through one request method (for example, `request()` or the fetch wrapper). If calls bypass it, route them through it first.\n\n2. **Add a limiter.** Use `bottleneck` (npm:bottleneck) with `minTime: 100` so calls start at least 100 ms apart, or `reservoir: 10` with `reservoirRefreshInterval: 1000` for a burst-allowing 10-per-second window. Use `maxConcurrent` to bound in-flight requests. Wrap the existing request method so each call is scheduled through the limiter.\n\n3. **Make the rate configurable.** Expose `maxRequestsPerSecond` in the client options, defaulting to 10, so tests and deployments can change it.\n\n4. **Handle 429 responses.** Retry on HTTP 429 with exponential backoff and jitter, honoring the `Retry-After` header when present. Cap retries so a failing upstream cannot stall the queue indefinitely.\n\n5. **Test.** Use fake timers to verify that 25 queued calls finish in roughly 2.5 seconds and never exceed 10 starts in any one-second window. Add a test that a mocked 429 triggers a delayed retry.\n\n6. **Document the limit.** Note that the limiter is per process. If several instances share one upstream quota, a shared store (such as Redis) is needed, and that is out of scope here.\n\nPACKAGES: npm:bottleneck",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "npm:bottleneck"
+  ],
+  "missing_packages": []
+ }
+}

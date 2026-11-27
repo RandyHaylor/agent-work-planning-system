@@ -1,0 +1,55 @@
+{
+ "cond": "A",
+ "task": "cron_jobs",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: schedule cron-like recurring jobs inside a long-running Python process. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Goal:** Run named jobs on cron schedules inside a long-running Python process, without OS cron.\n\n**Approach:** Use APScheduler for triggering and croniter for parsing expressions. Alternatively, write a small asyncio or thread loop if you want no dependencies.\n\n**Steps**\n\n1. **Job registry.** Each job has a name, a cron expression, a callable, a timezone, and a misfire policy. Reject duplicate names at registration.\n2. **Scheduling.** Use `CronTrigger` with an explicit `zoneinfo` timezone. Store all internal timestamps as UTC.\n3. **No overlap.** Set `max_instances=1` per job so a slow run doesn't stack up with the next one.\n4. **Misfires.** After a suspend or a long pause, coalesce missed runs into a single run, and set `misfire_grace_time` to a value you choose.\n5. **Error isolation.** Wrap each job so an exception is logged with the job name and does not kill the scheduler. Add optional retries with backoff.\n6. **Concurrency.** Use a thread pool for blocking jobs, or async callables on the event loop. Don't mix the two in one job.\n7. **Shutdown.** On SIGTERM, stop accepting new fires, wait up to a timeout for running jobs, then exit.\n8. **Observability.** Log start, end, duration, and outcome for each run. Expose last-run time and status for health checks.\n9. **Tests.** Inject a clock. Test next-fire computation, DST transitions (skipped and repeated hours), and overlap prevention.\n\n**Open choices:** Whether to persist job state across restarts (needs a job store), and whether to allow runtime add/remove of jobs.\n\nPACKAGES: pypi:apscheduler, pypi:croniter",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 644,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 1147,
+   "output_tokens_details": {
+    "thinking_tokens": 550
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 644,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 1147,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 644,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 644
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00072688,
+  "is_error": false
+ },
+ "final": "**Goal:** Run named jobs on cron schedules inside a long-running Python process, without OS cron.\n\n**Approach:** Use APScheduler for triggering and croniter for parsing expressions. Alternatively, write a small asyncio or thread loop if you want no dependencies.\n\n**Steps**\n\n1. **Job registry.** Each job has a name, a cron expression, a callable, a timezone, and a misfire policy. Reject duplicate names at registration.\n2. **Scheduling.** Use `CronTrigger` with an explicit `zoneinfo` timezone. Store all internal timestamps as UTC.\n3. **No overlap.** Set `max_instances=1` per job so a slow run doesn't stack up with the next one.\n4. **Misfires.** After a suspend or a long pause, coalesce missed runs into a single run, and set `misfire_grace_time` to a value you choose.\n5. **Error isolation.** Wrap each job so an exception is logged with the job name and does not kill the scheduler. Add optional retries with backoff.\n6. **Concurrency.** Use a thread pool for blocking jobs, or async callables on the event loop. Don't mix the two in one job.\n7. **Shutdown.** On SIGTERM, stop accepting new fires, wait up to a timeout for running jobs, then exit.\n8. **Observability.** Log start, end, duration, and outcome for each run. Expose last-run time and status for health checks.\n9. **Tests.** Inject a clock. Test next-fire computation, DST transitions (skipped and repeated hours), and overlap prevention.\n\n**Open choices:** Whether to persist job state across restarts (needs a job store), and whether to allow runtime add/remove of jobs.\n\nPACKAGES: pypi:apscheduler, pypi:croniter",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:apscheduler",
+   "pypi:croniter"
+  ],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,55 @@
+{
+ "cond": "A",
+ "task": "json_schema",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: validate incoming JSON payloads against a JSON Schema in a Node.js server. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "## Plan: JSON Schema validation for incoming payloads (Node.js)\n\n1. **Choose the validator.** Use `ajv` (JSON Schema draft 2020-12 by default) with `ajv-formats` for `format` keywords like `email` and `date-time`.\n\n2. **Define schemas.** Store one JSON Schema file per endpoint or payload type in a `schemas/` directory. Set `additionalProperties: false` on objects so unexpected fields are rejected.\n\n3. **Compile once at startup.** Create a single `Ajv` instance with `strict: true` and `allErrors: true`, add the formats plugin, and compile each schema into a validator function. Compiling per request is slow and unnecessary.\n\n4. **Add middleware.** Write a function that takes a schema ID and returns a request handler. It runs the compiled validator on `req.body`. On failure, it responds with `400` and a JSON body listing the field path and message for each error. On success, it calls `next()`.\n\n5. **Enforce limits before parsing.** Set a body size limit in the JSON parser (for example, 100 KB) so oversized payloads are rejected before validation.\n\n6. **Test.** Cover valid payloads, missing required fields, wrong types, extra fields, malformed JSON, and oversized bodies. Each case should return the expected status code.\n\n7. **Document.** Note the error response format and which schema each route uses.\n\nPACKAGES: npm:ajv, npm:ajv-formats",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 648,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 699,
+   "output_tokens_details": {
+    "thinking_tokens": 214
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 648,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 699,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 648,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 648
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.0005036800000000001,
+  "is_error": false
+ },
+ "final": "## Plan: JSON Schema validation for incoming payloads (Node.js)\n\n1. **Choose the validator.** Use `ajv` (JSON Schema draft 2020-12 by default) with `ajv-formats` for `format` keywords like `email` and `date-time`.\n\n2. **Define schemas.** Store one JSON Schema file per endpoint or payload type in a `schemas/` directory. Set `additionalProperties: false` on objects so unexpected fields are rejected.\n\n3. **Compile once at startup.** Create a single `Ajv` instance with `strict: true` and `allErrors: true`, add the formats plugin, and compile each schema into a validator function. Compiling per request is slow and unnecessary.\n\n4. **Add middleware.** Write a function that takes a schema ID and returns a request handler. It runs the compiled validator on `req.body`. On failure, it responds with `400` and a JSON body listing the field path and message for each error. On success, it calls `next()`.\n\n5. **Enforce limits before parsing.** Set a body size limit in the JSON parser (for example, 100 KB) so oversized payloads are rejected before validation.\n\n6. **Test.** Cover valid payloads, missing required fields, wrong types, extra fields, malformed JSON, and oversized bodies. Each case should return the expected status code.\n\n7. **Document.** Note the error response format and which schema each route uses.\n\nPACKAGES: npm:ajv, npm:ajv-formats",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "npm:ajv",
+   "npm:ajv-formats"
+  ],
+  "missing_packages": []
+ }
+}

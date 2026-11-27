@@ -1,0 +1,983 @@
+[
+ {
+  "cond": "A",
+  "task": "cron_jobs",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:apscheduler",
+   "pypi:croniter"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 247,
+  "out_tokens": 1147,
+  "cost": 0.00072688
+ },
+ {
+  "cond": "A",
+  "task": "dotenv",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:python-dotenv"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 228,
+  "out_tokens": 643,
+  "cost": 0.00047308000000000007
+ },
+ {
+  "cond": "A",
+  "task": "fuzzy_match",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:rapidfuzz"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 253,
+  "out_tokens": 977,
+  "cost": 0.00064308
+ },
+ {
+  "cond": "A",
+  "task": "iso_duration",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": false,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 220,
+  "out_tokens": 931,
+  "cost": 0.00062128
+ },
+ {
+  "cond": "A",
+  "task": "json_schema",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:ajv",
+   "npm:ajv-formats"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 205,
+  "out_tokens": 699,
+  "cost": 0.0005036800000000001
+ },
+ {
+  "cond": "A",
+  "task": "novel_heat",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": false,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 210,
+  "out_tokens": 811,
+  "cost": 0.00056948
+ },
+ {
+  "cond": "A",
+  "task": "novel_qrx",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 273,
+  "out_tokens": 930,
+  "cost": 0.00062838
+ },
+ {
+  "cond": "A",
+  "task": "rate_limit",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:bottleneck"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 223,
+  "out_tokens": 808,
+  "cost": 0.00055838
+ },
+ {
+  "cond": "A",
+  "task": "retry_backoff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:tenacity"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 266,
+  "out_tokens": 900,
+  "cost": 0.00060438
+ },
+ {
+  "cond": "A",
+  "task": "text_diff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 223,
+  "out_tokens": 642,
+  "cost": 0.00035199
+ },
+ {
+  "cond": "B",
+  "task": "cron_jobs",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:apscheduler",
+   "pypi:croniter",
+   "pypi:schedule",
+   "pypi:aiocron",
+   "pypi:celery"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 238,
+  "out_tokens": 2150,
+  "cost": 0.00124618
+ },
+ {
+  "cond": "B",
+  "task": "dotenv",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:python-dotenv",
+   "pypi:pydantic-settings",
+   "pypi:environs",
+   "pypi:django-environ",
+   "pypi:dynaconf"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 208,
+  "out_tokens": 1628,
+  "cost": 0.00098338
+ },
+ {
+  "cond": "B",
+  "task": "fuzzy_match",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:rapidfuzz",
+   "pypi:thefuzz",
+   "pypi:jellyfish"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 240,
+  "out_tokens": 2055,
+  "cost": 0.00119988
+ },
+ {
+  "cond": "B",
+  "task": "iso_duration",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:isodate",
+   "pypi:django",
+   "pypi:pydantic"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 240,
+  "out_tokens": 2430,
+  "cost": 0.00138858
+ },
+ {
+  "cond": "B",
+  "task": "json_schema",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:ajv",
+   "npm:ajv-formats",
+   "npm:fastify",
+   "npm:zod",
+   "npm:joi",
+   "npm:express-validator"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 248,
+  "out_tokens": 2134,
+  "cost": 0.00123898
+ },
+ {
+  "cond": "B",
+  "task": "novel_heat",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": false,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:pymcdm",
+   "pypi:scikit-criteria",
+   "pypi:pydantic"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 228,
+  "out_tokens": 1738,
+  "cost": 0.0010507799999999999
+ },
+ {
+  "cond": "B",
+  "task": "novel_qrx",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:construct",
+   "pypi:numpy",
+   "pypi:kaitaistruct"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 221,
+  "out_tokens": 1848,
+  "cost": 0.0011051799999999999
+ },
+ {
+  "cond": "B",
+  "task": "rate_limit",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:bottleneck",
+   "npm:p-throttle",
+   "npm:limiter",
+   "npm:rate-limiter-flexible"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 219,
+  "out_tokens": 2055,
+  "cost": 0.0011996799999999998
+ },
+ {
+  "cond": "B",
+  "task": "retry_backoff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:urllib3",
+   "pypi:tenacity",
+   "pypi:backoff",
+   "pypi:stamina"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 228,
+  "out_tokens": 2117,
+  "cost": 0.00123068
+ },
+ {
+  "cond": "B",
+  "task": "text_diff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:rich",
+   "pypi:pygments",
+   "pypi:unidiff"
+  ],
+  "missing": [],
+  "urls": 0,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 210,
+  "out_tokens": 2149,
+  "cost": 0.00124508
+ },
+ {
+  "cond": "C",
+  "task": "cron_jobs",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:APScheduler",
+   "pypi:schedule",
+   "pypi:croniter"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 289,
+  "out_tokens": 2995,
+  "cost": 0.05632671
+ },
+ {
+  "cond": "C",
+  "task": "dotenv",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:python-dotenv",
+   "pypi:pydantic-settings",
+   "pypi:environs"
+  ],
+  "missing": [],
+  "urls": 3,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 267,
+  "out_tokens": 2780,
+  "cost": 0.0457551
+ },
+ {
+  "cond": "C",
+  "task": "fuzzy_match",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:rapidfuzz",
+   "pypi:thefuzz"
+  ],
+  "missing": [],
+  "urls": 5,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 248,
+  "out_tokens": 3937,
+  "cost": 0.041391800000000006
+ },
+ {
+  "cond": "C",
+  "task": "iso_duration",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:aniso8601",
+   "pypi:isodate"
+  ],
+  "missing": [],
+  "urls": 2,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 367,
+  "out_tokens": 2766,
+  "cost": 0.04364545
+ },
+ {
+  "cond": "C",
+  "task": "json_schema",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:ajv",
+   "npm:ajv-formats",
+   "npm:fastify",
+   "npm:zod",
+   "npm:joi"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 324,
+  "out_tokens": 4568,
+  "cost": 0.04660669
+ },
+ {
+  "cond": "C",
+  "task": "novel_heat",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": false,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:pymcdm",
+   "pypi:scikit-criteria"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 329,
+  "out_tokens": 4281,
+  "cost": 0.043136049999999995
+ },
+ {
+  "cond": "C",
+  "task": "novel_qrx",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:construct",
+   "pypi:numpy"
+  ],
+  "missing": [],
+  "urls": 3,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 326,
+  "out_tokens": 3244,
+  "cost": 0.04459572
+ },
+ {
+  "cond": "C",
+  "task": "rate_limit",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:p-throttle",
+   "npm:bottleneck"
+  ],
+  "missing": [],
+  "urls": 2,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 300,
+  "out_tokens": 3147,
+  "cost": 0.043258000000000005
+ },
+ {
+  "cond": "C",
+  "task": "retry_backoff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:tenacity",
+   "pypi:stamina",
+   "pypi:backon",
+   "pypi:urllib3",
+   "pypi:requests"
+  ],
+  "missing": [],
+  "urls": 5,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 340,
+  "out_tokens": 3462,
+  "cost": 0.03897171
+ },
+ {
+  "cond": "C",
+  "task": "text_diff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:unidiff",
+   "pypi:ydiff"
+  ],
+  "missing": [],
+  "urls": 3,
+  "dead": [],
+  "first_missing": null,
+  "first_dead": null,
+  "revised": false,
+  "words": 306,
+  "out_tokens": 2083,
+  "cost": 0.029195930000000002
+ },
+ {
+  "cond": "D",
+  "task": "cron_jobs",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:apscheduler",
+   "pypi:croniter",
+   "pypi:schedule"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 314,
+  "out_tokens": 3260,
+  "cost": 0.043300670000000006
+ },
+ {
+  "cond": "D",
+  "task": "dotenv",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:python-dotenv",
+   "pypi:pydantic-settings",
+   "pypi:environs"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 309,
+  "out_tokens": 2597,
+  "cost": 0.04381702
+ },
+ {
+  "cond": "D",
+  "task": "fuzzy_match",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:rapidfuzz",
+   "pypi:symspellpy",
+   "pypi:thefuzz"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 315,
+  "out_tokens": 3660,
+  "cost": 0.05407783999999999
+ },
+ {
+  "cond": "D",
+  "task": "iso_duration",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:isodate",
+   "pypi:aniso8601",
+   "pypi:pytimeparse"
+  ],
+  "missing": [],
+  "urls": 5,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 294,
+  "out_tokens": 4132,
+  "cost": 0.04415891
+ },
+ {
+  "cond": "D",
+  "task": "json_schema",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:ajv",
+   "npm:ajv-formats",
+   "npm:express-json-validator-middleware",
+   "npm:fastify",
+   "npm:express"
+  ],
+  "missing": [],
+  "urls": 3,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 336,
+  "out_tokens": 3377,
+  "cost": 0.043547510000000005
+ },
+ {
+  "cond": "D",
+  "task": "novel_heat",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": false,
+   "says_none_found": true,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:pymcdm",
+   "pypi:mcdm"
+  ],
+  "missing": [],
+  "urls": 5,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 349,
+  "out_tokens": 4611,
+  "cost": 0.051713379999999996
+ },
+ {
+  "cond": "D",
+  "task": "novel_qrx",
+  "rep": 1,
+  "novel": true,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:numpy",
+   "pypi:kaitaistruct",
+   "pypi:construct"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 313,
+  "out_tokens": 4602,
+  "cost": 0.04433582
+ },
+ {
+  "cond": "D",
+  "task": "rate_limit",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "npm:bottleneck",
+   "npm:p-queue",
+   "npm:limiter"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 297,
+  "out_tokens": 3437,
+  "cost": 0.04376034
+ },
+ {
+  "cond": "D",
+  "task": "retry_backoff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:tenacity",
+   "pypi:urllib3",
+   "pypi:httpx-retries"
+  ],
+  "missing": [],
+  "urls": 4,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 333,
+  "out_tokens": 4918,
+  "cost": 0.05825658000000001
+ },
+ {
+  "cond": "D",
+  "task": "text_diff",
+  "rep": 1,
+  "novel": false,
+  "judge": {
+   "reuses_existing": true,
+   "says_none_found": false,
+   "invents_lib": false
+  },
+  "pkgs": [
+   "pypi:unidiff",
+   "pypi:ydiff"
+  ],
+  "missing": [],
+  "urls": 5,
+  "dead": [],
+  "first_missing": [],
+  "first_dead": [],
+  "revised": false,
+  "words": 363,
+  "out_tokens": 2769,
+  "cost": 0.049936259999999996
+ }
+]

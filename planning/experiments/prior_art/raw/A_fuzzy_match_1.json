@@ -1,0 +1,54 @@
+{
+ "cond": "A",
+ "task": "fuzzy_match",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: fuzzy-match user-typed product names against a catalog of 5,000 names in Python. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Goal:** Map free-text product names to the closest of 5,000 catalog entries.\n\n**Plan**\n\n1. **Normalize.** Write one `normalize()` function: casefold, strip accents (`unicodedata.normalize(\"NFKD\", ...)`), replace punctuation with spaces, collapse whitespace. Apply it to both catalog entries and queries. Precompute the normalized catalog once at startup.\n\n2. **Exact and alias lookup first.** Check a dict of normalized names and known aliases. Most queries should resolve here without fuzzy scoring.\n\n3. **Fuzzy match on the rest.** Use `rapidfuzz.process.extract(query, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=T)`. WRatio handles word reordering and partial matches reasonably well. At 5,000 entries, a linear scan per query is fast enough, so skip indexing.\n\n4. **Choose a threshold from data.** Label 200\u2013300 real queries with their correct catalog entry, including misses. Sweep T and pick the value that balances false matches against missed matches. Store T in config.\n\n5. **Handle ambiguity.** If the top two scores are within a small margin, return both candidates for the user to pick instead of guessing. If nothing clears T, return \"no match\" along with the top few suggestions.\n\n6. **Test.** Cover typos, word order, extra tokens (sizes, colors), accents, and near-duplicate catalog names. Add a regression test for each false match found during tuning.\n\n7. **Benchmark.** Time 1,000 random queries against the full catalog. Expect well under 100 ms per query. If it is slower, add a pre-filter on token overlap.\n\n**Choices I made:** rapidfuzz over `difflib` for speed and scorer options; the threshold is tuned on labeled data rather than fixed at a default.\n\nPACKAGES: pypi:rapidfuzz",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 650,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 977,
+   "output_tokens_details": {
+    "thinking_tokens": 341
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 650,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 977,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 650,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 650
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00064308,
+  "is_error": false
+ },
+ "final": "**Goal:** Map free-text product names to the closest of 5,000 catalog entries.\n\n**Plan**\n\n1. **Normalize.** Write one `normalize()` function: casefold, strip accents (`unicodedata.normalize(\"NFKD\", ...)`), replace punctuation with spaces, collapse whitespace. Apply it to both catalog entries and queries. Precompute the normalized catalog once at startup.\n\n2. **Exact and alias lookup first.** Check a dict of normalized names and known aliases. Most queries should resolve here without fuzzy scoring.\n\n3. **Fuzzy match on the rest.** Use `rapidfuzz.process.extract(query, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=T)`. WRatio handles word reordering and partial matches reasonably well. At 5,000 entries, a linear scan per query is fast enough, so skip indexing.\n\n4. **Choose a threshold from data.** Label 200\u2013300 real queries with their correct catalog entry, including misses. Sweep T and pick the value that balances false matches against missed matches. Store T in config.\n\n5. **Handle ambiguity.** If the top two scores are within a small margin, return both candidates for the user to pick instead of guessing. If nothing clears T, return \"no match\" along with the top few suggestions.\n\n6. **Test.** Cover typos, word order, extra tokens (sizes, colors), accents, and near-duplicate catalog names. Add a regression test for each false match found during tuning.\n\n7. **Benchmark.** Time 1,000 random queries against the full catalog. Expect well under 100 ms per query. If it is slower, add a pre-filter on token overlap.\n\n**Choices I made:** rapidfuzz over `difflib` for speed and scorer options; the threshold is tuned on labeled data rather than fixed at a default.\n\nPACKAGES: pypi:rapidfuzz",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:rapidfuzz"
+  ],
+  "missing_packages": []
+ }
+}

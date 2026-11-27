@@ -1,0 +1,54 @@
+{
+ "cond": "A",
+ "task": "retry_backoff",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: retry flaky HTTP calls with exponential backoff and jitter in a Python client. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "## Implementation Plan: Retries with Exponential Backoff and Jitter\n\n**1. Define what counts as retryable**\n- Retry on connection errors, timeouts, HTTP 429, and 5xx responses.\n- Do not retry other 4xx responses. They signal a request problem that a retry won't fix.\n- Honor a `Retry-After` header when the server sends one.\n\n**2. Choose the mechanism**\n- Use `tenacity` for declarative retries, or a small hand-rolled loop if you want zero dependencies.\n- Wrap the client's single request method so every call site gets retries without changes.\n\n**3. Backoff schedule**\n- Delay = `min(cap, base * 2**attempt)`, with base around 0.5s and cap around 30s.\n- Apply full jitter: sleep a random value between 0 and the computed delay. This spreads out retries from many clients so they don't synchronize.\n- Limit total attempts (for example, 4) and also enforce an overall deadline.\n\n**4. Configuration**\n- Expose max attempts, base, cap, and the retryable status set as constructor arguments with sensible defaults.\n- Keep the sleep function injectable so tests run instantly.\n\n**5. Safety**\n- Retry non-idempotent methods (POST, PATCH) only when the caller opts in or an idempotency key is present.\n- Log each retry with attempt number and delay, but not request bodies or auth headers.\n\n**6. Tests**\n- Mock the transport to return a sequence of failures followed by success.\n- Assert the attempt count, that delays fall within the jitter bounds, that `Retry-After` is honored, and that non-retryable errors fail immediately.\n\n**7. Rollout**\n- Ship behind a config flag, watch retry rate and latency metrics, then enable by default.\n\nPACKAGES: pypi:tenacity",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 649,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 900,
+   "output_tokens_details": {
+    "thinking_tokens": 293
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 649,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 900,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 649,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 649
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00060438,
+  "is_error": false
+ },
+ "final": "## Implementation Plan: Retries with Exponential Backoff and Jitter\n\n**1. Define what counts as retryable**\n- Retry on connection errors, timeouts, HTTP 429, and 5xx responses.\n- Do not retry other 4xx responses. They signal a request problem that a retry won't fix.\n- Honor a `Retry-After` header when the server sends one.\n\n**2. Choose the mechanism**\n- Use `tenacity` for declarative retries, or a small hand-rolled loop if you want zero dependencies.\n- Wrap the client's single request method so every call site gets retries without changes.\n\n**3. Backoff schedule**\n- Delay = `min(cap, base * 2**attempt)`, with base around 0.5s and cap around 30s.\n- Apply full jitter: sleep a random value between 0 and the computed delay. This spreads out retries from many clients so they don't synchronize.\n- Limit total attempts (for example, 4) and also enforce an overall deadline.\n\n**4. Configuration**\n- Expose max attempts, base, cap, and the retryable status set as constructor arguments with sensible defaults.\n- Keep the sleep function injectable so tests run instantly.\n\n**5. Safety**\n- Retry non-idempotent methods (POST, PATCH) only when the caller opts in or an idempotency key is present.\n- Log each retry with attempt number and delay, but not request bodies or auth headers.\n\n**6. Tests**\n- Mock the transport to return a sequence of failures followed by success.\n- Assert the attempt count, that delays fall within the jitter bounds, that `Retry-After` is honored, and that non-retryable errors fail immediately.\n\n**7. Rollout**\n- Ship behind a config flag, watch retry rate and latency metrics, then enable by default.\n\nPACKAGES: pypi:tenacity",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:tenacity"
+  ],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,56 @@
+{
+ "cond": "B",
+ "task": "fuzzy_match",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: fuzzy-match user-typed product names against a catalog of 5,000 names in Python. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\" Before proposing, list existing libraries/patterns you know of and decide build vs reuse. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Existing solutions checked**\n- **rapidfuzz** (pypi): fast string matching (Levenshtein, `token_set_ratio`, `WRatio`). `process.extract` handles 5,000 names in milliseconds. This is the current standard.\n- **thefuzz** (pypi, formerly fuzzywuzzy): same API but slower and largely superseded by rapidfuzz.\n- **jellyfish** (pypi): phonetic and edit distances. Helps with spoken-name errors, weak on product codes.\n- **Search engines** (Elasticsearch/OpenSearch fuzzy queries, Postgres pg_trgm): overkill at 5,000 rows unless you already run one.\n- **Embeddings**: catch synonyms (\"sneakers\" vs \"running shoes\") but add model cost and threshold tuning. Defer to a later phase.\n\n**Lessons learned**\n- Don't silently auto-correct. Show the top 3 suggestions with scores.\n- Normalize first: casefold, strip accents and punctuation, unify units (\"500ml\" vs \"500 ml\").\n- Token-based scorers handle reordered words better than raw Levenshtein.\n- Tune cutoffs on real typo queries, not by guesswork.\n\n**Decision: reuse rapidfuzz, build a thin wrapper.** The wrapper is about 100 lines covering normalization, an alias table, and result mapping. Nothing here justifies a custom matcher.\n\n**Plan**\n1. Load the catalog; precompute normalized names and an alias table (abbreviations, brand synonyms).\n2. Exact normalized match returns immediately.\n3. Otherwise run `process.extract(query, names, scorer=WRatio, limit=3, score_cutoff=T)`.\n4. Map hits back to catalog IDs and return ranked suggestions.\n5. Collect about 200 real typo queries with expected answers. Tune `T` and the scorer for top-3 recall.\n6. Add tests for normalization edge cases and a latency check (<50 ms per query).\n\nPACKAGES: pypi:rapidfuzz, pypi:thefuzz, pypi:jellyfish",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 739,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 2055,
+   "output_tokens_details": {
+    "thinking_tokens": 1334
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 739,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2055,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 739,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 739
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00119988,
+  "is_error": false
+ },
+ "final": "**Existing solutions checked**\n- **rapidfuzz** (pypi): fast string matching (Levenshtein, `token_set_ratio`, `WRatio`). `process.extract` handles 5,000 names in milliseconds. This is the current standard.\n- **thefuzz** (pypi, formerly fuzzywuzzy): same API but slower and largely superseded by rapidfuzz.\n- **jellyfish** (pypi): phonetic and edit distances. Helps with spoken-name errors, weak on product codes.\n- **Search engines** (Elasticsearch/OpenSearch fuzzy queries, Postgres pg_trgm): overkill at 5,000 rows unless you already run one.\n- **Embeddings**: catch synonyms (\"sneakers\" vs \"running shoes\") but add model cost and threshold tuning. Defer to a later phase.\n\n**Lessons learned**\n- Don't silently auto-correct. Show the top 3 suggestions with scores.\n- Normalize first: casefold, strip accents and punctuation, unify units (\"500ml\" vs \"500 ml\").\n- Token-based scorers handle reordered words better than raw Levenshtein.\n- Tune cutoffs on real typo queries, not by guesswork.\n\n**Decision: reuse rapidfuzz, build a thin wrapper.** The wrapper is about 100 lines covering normalization, an alias table, and result mapping. Nothing here justifies a custom matcher.\n\n**Plan**\n1. Load the catalog; precompute normalized names and an alias table (abbreviations, brand synonyms).\n2. Exact normalized match returns immediately.\n3. Otherwise run `process.extract(query, names, scorer=WRatio, limit=3, score_cutoff=T)`.\n4. Map hits back to catalog IDs and return ranked suggestions.\n5. Collect about 200 real typo queries with expected answers. Tune `T` and the scorer for top-3 recall.\n6. Add tests for normalization edge cases and a latency check (<50 ms per query).\n\nPACKAGES: pypi:rapidfuzz, pypi:thefuzz, pypi:jellyfish",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:rapidfuzz",
+   "pypi:thefuzz",
+   "pypi:jellyfish"
+  ],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,78 @@
+{
+ "cond": "D",
+ "task": "iso_duration",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: parse ISO-8601 durations (e.g. 'P3DT4H') into seconds in a Python service. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**PRIOR ART (MADR)**\n\n**Context:** Convert ISO-8601 durations (e.g. `P3DT4H`) to seconds in a Python service.\n\n**Considered options**\n\n1. **Use `isodate`** (pypi:isodate). Source: [github.com/gweis/isodate](https://github.com/gweis/isodate). Parses durations to `timedelta`, but cannot map years or months to `timedelta`.\n2. **Use `aniso8601`** (pypi:aniso8601). Source: [pypi.python.org/pypi/aniso8601](https://pypi.python.org/pypi/aniso8601). Pure Python, but maps `P1Y` to 365 days, which is lossy.\n3. **Use `pytimeparse`** (pypi:pytimeparse). Source: [pypi.python.org/pypi/pytimeparse](https://pypi.python.org/pypi/pytimeparse). Converts to seconds, but its syntax is `2h32m`-style, not ISO 8601.\n4. **Hand-rolled regex.** Source: [docs.python.org datetime](https://docs.python.org/3/library/datetime.html). Zero dependencies, but it re-implements grammar edge cases.\n\n**Standard library:** NONE FOUND. The `datetime` docs cover `fromisoformat` only for dates, times and datetimes, and `timedelta` has no ISO string constructor. Searches: \"isodate python ISO 8601 duration parse timedelta\", \"pytimeparse python parse duration string seconds\", \"python standard library parse ISO 8601 duration P3DT4H\". Registry: PyPI, via search results only. Direct PyPI fetches failed, so versions are unverified.\n\n**Chosen:** Option 1, `isodate`. Deciding reason: \"it already implements the ISO 8601 duration grammar, so we don't re-learn its edge cases.\"\n\n**Plan**\n\n1. Add `isodate` to dependencies and pin a version after checking PyPI directly.\n2. Add `iso_duration_to_seconds(s: str) -> float`:\n   - Call `isodate.parse_duration(s)`.\n   - If the result is a `Duration` (years or months present), raise `ValueError`. This is a deliberate decision: calendar units have no fixed length.\n   - Return `td.total_seconds()`.\n3. Wrap library parse errors in our own `ValueError` so callers handle one exception type.\n4. Tests:\n   - `P3DT4H` \u2192 `273600`\n   - `PT0.5S` \u2192 `0.5`\n   - `P1W` \u2192 `604800`\n   - `P1Y` \u2192 `ValueError`\n   - `garbage` \u2192 `ValueError`\n\n**Questioned:** Is a library needed for `P3DT4H` alone? No. A regex would be shorter, but the grammar edge cases are what the library already handles, so it is the cheaper option.\n\nSources: [isodate README (Debian mirror)](https://sources.debian.org/src/isodate/0.7.2-2/README.rst), [aniso8601](https://pypi.python.org/pypi/aniso8601), [pytimeparse](https://pypi.python.org/pypi/pytimeparse), [Python datetime docs](https://docs.python.org/3/library/datetime.html)\n\nPACKAGES: pypi:isodate, pypi:aniso8601, pypi:pytimeparse",
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 5632,
+   "cache_read_input_tokens": 18371,
+   "output_tokens": 4132,
+   "output_tokens_details": {
+    "thinking_tokens": 2358
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 5632,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3274,
+     "cache_read_input_tokens": 8977,
+     "cache_creation_input_tokens": 1352,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1352
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.04415891,
+  "is_error": false
+ },
+ "first_check": {
+  "urls": [
+   "https://docs.python.org/3/library/datetime.html",
+   "https://github.com/gweis/isodate",
+   "https://pypi.python.org/pypi/aniso8601",
+   "https://pypi.python.org/pypi/pytimeparse",
+   "https://sources.debian.org/src/isodate/0.7.2-2/README.rst"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:isodate",
+   "pypi:aniso8601",
+   "pypi:pytimeparse"
+  ],
+  "missing_packages": []
+ },
+ "final": "**PRIOR ART (MADR)**\n\n**Context:** Convert ISO-8601 durations (e.g. `P3DT4H`) to seconds in a Python service.\n\n**Considered options**\n\n1. **Use `isodate`** (pypi:isodate). Source: [github.com/gweis/isodate](https://github.com/gweis/isodate). Parses durations to `timedelta`, but cannot map years or months to `timedelta`.\n2. **Use `aniso8601`** (pypi:aniso8601). Source: [pypi.python.org/pypi/aniso8601](https://pypi.python.org/pypi/aniso8601). Pure Python, but maps `P1Y` to 365 days, which is lossy.\n3. **Use `pytimeparse`** (pypi:pytimeparse). Source: [pypi.python.org/pypi/pytimeparse](https://pypi.python.org/pypi/pytimeparse). Converts to seconds, but its syntax is `2h32m`-style, not ISO 8601.\n4. **Hand-rolled regex.** Source: [docs.python.org datetime](https://docs.python.org/3/library/datetime.html). Zero dependencies, but it re-implements grammar edge cases.\n\n**Standard library:** NONE FOUND. The `datetime` docs cover `fromisoformat` only for dates, times and datetimes, and `timedelta` has no ISO string constructor. Searches: \"isodate python ISO 8601 duration parse timedelta\", \"pytimeparse python parse duration string seconds\", \"python standard library parse ISO 8601 duration P3DT4H\". Registry: PyPI, via search results only. Direct PyPI fetches failed, so versions are unverified.\n\n**Chosen:** Option 1, `isodate`. Deciding reason: \"it already implements the ISO 8601 duration grammar, so we don't re-learn its edge cases.\"\n\n**Plan**\n\n1. Add `isodate` to dependencies and pin a version after checking PyPI directly.\n2. Add `iso_duration_to_seconds(s: str) -> float`:\n   - Call `isodate.parse_duration(s)`.\n   - If the result is a `Duration` (years or months present), raise `ValueError`. This is a deliberate decision: calendar units have no fixed length.\n   - Return `td.total_seconds()`.\n3. Wrap library parse errors in our own `ValueError` so callers handle one exception type.\n4. Tests:\n   - `P3DT4H` \u2192 `273600`\n   - `PT0.5S` \u2192 `0.5`\n   - `P1W` \u2192 `604800`\n   - `P1Y` \u2192 `ValueError`\n   - `garbage` \u2192 `ValueError`\n\n**Questioned:** Is a library needed for `P3DT4H` alone? No. A regex would be shorter, but the grammar edge cases are what the library already handles, so it is the cheaper option.\n\nSources: [isodate README (Debian mirror)](https://sources.debian.org/src/isodate/0.7.2-2/README.rst), [aniso8601](https://pypi.python.org/pypi/aniso8601), [pytimeparse](https://pypi.python.org/pypi/pytimeparse), [Python datetime docs](https://docs.python.org/3/library/datetime.html)\n\nPACKAGES: pypi:isodate, pypi:aniso8601, pypi:pytimeparse",
+ "final_check": {
+  "urls": [
+   "https://docs.python.org/3/library/datetime.html",
+   "https://github.com/gweis/isodate",
+   "https://pypi.python.org/pypi/aniso8601",
+   "https://pypi.python.org/pypi/pytimeparse",
+   "https://sources.debian.org/src/isodate/0.7.2-2/README.rst"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:isodate",
+   "pypi:aniso8601",
+   "pypi:pytimeparse"
+  ],
+  "missing_packages": []
+ }
+}

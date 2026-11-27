@@ -1,0 +1,52 @@
+{
+ "cond": "A",
+ "task": "novel_heat",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: compute our company's internal 'ticket heat score' (0.4*age_days + 0.35*priority_rank + 0.25*customer_tier_weight, tiers defined in our wiki) for our in-house helpdesk, in Python. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Plan: Ticket Heat Score (Python, stdlib only)**\n\n1. **Confirm inputs.** Before coding, get from the wiki the exact customer tier names and their `customer_tier_weight` values, and the priority scale (for example, whether `priority_rank` is 1 = highest or 1 = lowest). I have not read the wiki, so the values below are placeholders.\n\n2. **Data model.** Define a `Ticket` dataclass with `created_at` (datetime), `priority_rank` (int), and `customer_tier` (str). Store the tier weights in a dict such as `TIER_WEIGHTS = {\"enterprise\": ..., \"standard\": ..., ...}`, copied from the wiki.\n\n3. **Score function.**\n   - `age_days = (now - created_at).total_seconds() / 86400`\n   - `heat = 0.4*age_days + 0.35*priority_rank + 0.25*TIER_WEIGHTS[tier]`\n   - Use an injected `now` parameter so results are deterministic in tests.\n   - Raise a clear error for unknown tiers instead of silently defaulting.\n\n4. **Input source.** Read open tickets from the helpdesk's export (CSV or JSON). Parse timestamps as timezone-aware UTC.\n\n5. **Output.** Sort tickets by score, descending, and print or write a CSV with ticket ID, score, and components.\n\n6. **Tests.** Use `unittest` (stdlib). Cover a known example for each term, an unknown tier, and ordering.\n\n**Decisions I'm making:** the weights are constants at module level, not config. Scores are not clamped, so the formula stays exactly as specified.\n\nPACKAGES: none",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 697,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 811,
+   "output_tokens_details": {
+    "thinking_tokens": 248
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 697,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 811,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 697,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 697
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00056948,
+  "is_error": false
+ },
+ "final": "**Plan: Ticket Heat Score (Python, stdlib only)**\n\n1. **Confirm inputs.** Before coding, get from the wiki the exact customer tier names and their `customer_tier_weight` values, and the priority scale (for example, whether `priority_rank` is 1 = highest or 1 = lowest). I have not read the wiki, so the values below are placeholders.\n\n2. **Data model.** Define a `Ticket` dataclass with `created_at` (datetime), `priority_rank` (int), and `customer_tier` (str). Store the tier weights in a dict such as `TIER_WEIGHTS = {\"enterprise\": ..., \"standard\": ..., ...}`, copied from the wiki.\n\n3. **Score function.**\n   - `age_days = (now - created_at).total_seconds() / 86400`\n   - `heat = 0.4*age_days + 0.35*priority_rank + 0.25*TIER_WEIGHTS[tier]`\n   - Use an injected `now` parameter so results are deterministic in tests.\n   - Raise a clear error for unknown tiers instead of silently defaulting.\n\n4. **Input source.** Read open tickets from the helpdesk's export (CSV or JSON). Parse timestamps as timezone-aware UTC.\n\n5. **Output.** Sort tickets by score, descending, and print or write a CSV with ticket ID, score, and components.\n\n6. **Tests.** Use `unittest` (stdlib). Cover a known example for each term, an unknown tier, and ordering.\n\n**Decisions I'm making:** the weights are constants at module level, not config. Scores are not clamped, so the formula stays exactly as specified.\n\nPACKAGES: none",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [],
+  "missing_packages": []
+ }
+}

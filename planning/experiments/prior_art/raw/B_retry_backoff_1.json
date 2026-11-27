@@ -1,0 +1,57 @@
+{
+ "cond": "B",
+ "task": "retry_backoff",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: retry flaky HTTP calls with exponential backoff and jitter in a Python client. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\" Before proposing, list existing libraries/patterns you know of and decide build vs reuse. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Existing solutions checked**\n- **urllib3 `Retry`** (used by `requests` via `HTTPAdapter`): handles status codes, methods, and `Retry-After`. Limited for custom logic.\n- **tenacity**: general retry decorator with exponential and random wait strategies and stop conditions. Widely used.\n- **backoff**: smaller decorator API with jitter helpers.\n- **stamina**: opinionated wrapper over tenacity with sane defaults.\n- **Reference pattern**: AWS, \"Exponential Backoff And Jitter\" (2015). Full jitter: `sleep = random(0, min(cap, base * 2**attempt))`.\n\n**Decision: reuse, don't build.** Use tenacity (or stamina for defaults). Build only the thin policy layer: retryable errors, `Retry-After` handling, and idempotency gating.\n\n**Plan**\n1. Define `RetryPolicy`: max attempts (e.g., 5), base 0.5s, cap 30s, overall deadline.\n2. Retry on connection errors, timeouts, 429, 502, 503, 504. Don't retry other 4xx.\n3. Retry only idempotent methods (GET, HEAD, PUT, DELETE). POST only with an idempotency key.\n4. Use full-jitter exponential waits. If `Retry-After` is present, wait at least that long, capped.\n5. Wrap the single low-level request method so all client calls share the policy.\n6. Log each retry with attempt number, delay, and status.\n7. Test with a mock transport that returns scripted 503/200 sequences. Inject sleep and random to assert attempt counts and delay bounds.\n\n**Lessons**\n- Always cap attempts and total time. Unbounded retries amplify outages.\n- Jitter prevents synchronized retry storms.\n- Don't blindly retry non-idempotent writes.\n\nPACKAGES: pypi:urllib3, pypi:tenacity, pypi:backoff, pypi:stamina",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 738,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 2117,
+   "output_tokens_details": {
+    "thinking_tokens": 1450
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 738,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2117,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 738,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 738
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00123068,
+  "is_error": false
+ },
+ "final": "**Existing solutions checked**\n- **urllib3 `Retry`** (used by `requests` via `HTTPAdapter`): handles status codes, methods, and `Retry-After`. Limited for custom logic.\n- **tenacity**: general retry decorator with exponential and random wait strategies and stop conditions. Widely used.\n- **backoff**: smaller decorator API with jitter helpers.\n- **stamina**: opinionated wrapper over tenacity with sane defaults.\n- **Reference pattern**: AWS, \"Exponential Backoff And Jitter\" (2015). Full jitter: `sleep = random(0, min(cap, base * 2**attempt))`.\n\n**Decision: reuse, don't build.** Use tenacity (or stamina for defaults). Build only the thin policy layer: retryable errors, `Retry-After` handling, and idempotency gating.\n\n**Plan**\n1. Define `RetryPolicy`: max attempts (e.g., 5), base 0.5s, cap 30s, overall deadline.\n2. Retry on connection errors, timeouts, 429, 502, 503, 504. Don't retry other 4xx.\n3. Retry only idempotent methods (GET, HEAD, PUT, DELETE). POST only with an idempotency key.\n4. Use full-jitter exponential waits. If `Retry-After` is present, wait at least that long, capped.\n5. Wrap the single low-level request method so all client calls share the policy.\n6. Log each retry with attempt number, delay, and status.\n7. Test with a mock transport that returns scripted 503/200 sequences. Inject sleep and random to assert attempt counts and delay bounds.\n\n**Lessons**\n- Always cap attempts and total time. Unbounded retries amplify outages.\n- Jitter prevents synchronized retry storms.\n- Don't blindly retry non-idempotent writes.\n\nPACKAGES: pypi:urllib3, pypi:tenacity, pypi:backoff, pypi:stamina",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:urllib3",
+   "pypi:tenacity",
+   "pypi:backoff",
+   "pypi:stamina"
+  ],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,76 @@
+{
+ "cond": "D",
+ "task": "retry_backoff",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: retry flaky HTTP calls with exponential backoff and jitter in a Python client. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "# PRIOR ART (MADR)\n\n**Decision:** Retry policy for flaky HTTP calls in the Python client (exponential backoff with jitter).\n\n**Considered options**\n\n1. **tenacity (existing library).** [tenacity.readthedocs.io](https://tenacity.readthedocs.io/). Provides `wait_random_exponential`, `stop_after_attempt`, and `retry_if_exception_type`, and works with any HTTP library.\n2. **urllib3 `Retry` (existing, if the client uses requests/urllib3).** [urllib3 util docs](https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html). Has `backoff_jitter`, which defaults to 0.0 and so must be set explicitly. Honors Retry-After.\n3. **httpx-retries (existing, if the client uses httpx).** [pypi.org/project/httpx-retries/0.4.3](https://pypi.org/project/httpx-retries/0.4.3/). A transport wrapper. Can't retry errors raised while reading the body. Jitter not confirmed.\n4. **Hand-roll.** Reference: [AWS blog, \"Exponential Backoff And Jitter\"](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/). I only saw this in search results; the page body didn't load. Reject unless no library fits.\n\n**Chosen:** Option 1, tenacity. Reason: \"it covers jittered exponential backoff and doesn't depend on which HTTP library the client uses, so the retry policy can be tested without a transport.\" If the client is already requests-only, option 2 is the lighter alternative.\n\n**Lessons to carry over:** Jitter is what prevents synchronized retry storms. Cap both attempts and total time. Honor Retry-After.\n\n# PLAN\n\n1. **Confirm the HTTP stack** (requests, httpx, or aiohttp). This decides whether option 2 is simpler.\n2. **Add `tenacity` as a pinned dependency.**\n3. **Wrap only the low-level request function**, not each call site:\n   `wait_random_exponential(multiplier=0.5, max=30)`, `stop_after_attempt(5) | stop_after_delay(60)`, `retry_if_exception_type(TransientHTTPError)`.\n4. **Classify errors.** Retry on 429, 502, 503, 504, and connection/timeout errors. Don't retry other 4xx. Don't retry POST unless an idempotency key is sent.\n5. **Honor Retry-After.** Tenacity doesn't read this header by default, so add a custom wait that uses the header when present and falls back to the jittered wait otherwise.\n6. **Test with injected sleep and a seeded RNG.** Assert delays stay within bounds and that the attempt cap holds.\n7. **Log each retry** with attempt number, delay, and exception type.\n\nChoices I made that you can redirect: tenacity over urllib3 (the stack is unknown), the multiplier/max values (placeholders to tune), and retrying only on the status codes listed above.\n\nPACKAGES: pypi:tenacity, pypi:urllib3, pypi:httpx-retries",
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 9000,
+   "cache_read_input_tokens": 33458,
+   "output_tokens": 4918,
+   "output_tokens_details": {
+    "thinking_tokens": 2764
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 9000,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3370,
+     "cache_read_input_tokens": 12740,
+     "cache_creation_input_tokens": 950,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 950
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.05825658000000001,
+  "is_error": false
+ },
+ "first_check": {
+  "urls": [
+   "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+   "https://pypi.org/project/httpx-retries/0.4.3/",
+   "https://tenacity.readthedocs.io/",
+   "https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:tenacity",
+   "pypi:urllib3",
+   "pypi:httpx-retries"
+  ],
+  "missing_packages": []
+ },
+ "final": "# PRIOR ART (MADR)\n\n**Decision:** Retry policy for flaky HTTP calls in the Python client (exponential backoff with jitter).\n\n**Considered options**\n\n1. **tenacity (existing library).** [tenacity.readthedocs.io](https://tenacity.readthedocs.io/). Provides `wait_random_exponential`, `stop_after_attempt`, and `retry_if_exception_type`, and works with any HTTP library.\n2. **urllib3 `Retry` (existing, if the client uses requests/urllib3).** [urllib3 util docs](https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html). Has `backoff_jitter`, which defaults to 0.0 and so must be set explicitly. Honors Retry-After.\n3. **httpx-retries (existing, if the client uses httpx).** [pypi.org/project/httpx-retries/0.4.3](https://pypi.org/project/httpx-retries/0.4.3/). A transport wrapper. Can't retry errors raised while reading the body. Jitter not confirmed.\n4. **Hand-roll.** Reference: [AWS blog, \"Exponential Backoff And Jitter\"](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/). I only saw this in search results; the page body didn't load. Reject unless no library fits.\n\n**Chosen:** Option 1, tenacity. Reason: \"it covers jittered exponential backoff and doesn't depend on which HTTP library the client uses, so the retry policy can be tested without a transport.\" If the client is already requests-only, option 2 is the lighter alternative.\n\n**Lessons to carry over:** Jitter is what prevents synchronized retry storms. Cap both attempts and total time. Honor Retry-After.\n\n# PLAN\n\n1. **Confirm the HTTP stack** (requests, httpx, or aiohttp). This decides whether option 2 is simpler.\n2. **Add `tenacity` as a pinned dependency.**\n3. **Wrap only the low-level request function**, not each call site:\n   `wait_random_exponential(multiplier=0.5, max=30)`, `stop_after_attempt(5) | stop_after_delay(60)`, `retry_if_exception_type(TransientHTTPError)`.\n4. **Classify errors.** Retry on 429, 502, 503, 504, and connection/timeout errors. Don't retry other 4xx. Don't retry POST unless an idempotency key is sent.\n5. **Honor Retry-After.** Tenacity doesn't read this header by default, so add a custom wait that uses the header when present and falls back to the jittered wait otherwise.\n6. **Test with injected sleep and a seeded RNG.** Assert delays stay within bounds and that the attempt cap holds.\n7. **Log each retry** with attempt number, delay, and exception type.\n\nChoices I made that you can redirect: tenacity over urllib3 (the stack is unknown), the multiplier/max values (placeholders to tune), and retrying only on the status codes listed above.\n\nPACKAGES: pypi:tenacity, pypi:urllib3, pypi:httpx-retries",
+ "final_check": {
+  "urls": [
+   "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+   "https://pypi.org/project/httpx-retries/0.4.3/",
+   "https://tenacity.readthedocs.io/",
+   "https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:tenacity",
+   "pypi:urllib3",
+   "pypi:httpx-retries"
+  ],
+  "missing_packages": []
+ }
+}

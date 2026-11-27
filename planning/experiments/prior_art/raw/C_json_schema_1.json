@@ -1,0 +1,63 @@
+{
+ "cond": "C",
+ "task": "json_schema",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: validate incoming JSON payloads against a JSON Schema in a Node.js server. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**PRIOR ART (MADR)**\n\n**Context:** Validate incoming JSON request bodies against JSON Schema in a Node.js server.\n\n**Considered options**\n1. **Ajv (`npm:ajv`)**: JSON Schema validator for Node and browsers, supporting drafts 04, 06, 07, 2019-09 and 2020-12. Source: [ajv.js.org](https://ajv.js.org/). Reason: the standard JSON Schema engine, not tied to one framework.\n2. **Fastify built-in route schemas (`npm:fastify`, uses Ajv v8)**: Source: [Fastify docs](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/). Reason: validation is built in, but only applies if you already use Fastify.\n3. **Zod / Joi (`npm:zod`, `npm:joi`)**: Source: [Bitovi comparison](https://bitovi.com/blog/comparing-schema-validation-libraries-ajv-joi-yup-and-zod). Reason: code-first schemas, not JSON Schema, so they can't be shared as schema documents.\n\nAlso found an Express-specific middleware, but its npm page returned 403 and I couldn't verify it, so I excluded it.\n\n**Chosen:** Ajv, used directly, or through Fastify if you already run it. Deciding reason: Ajv describes its schemas as \"declarative schemas for your JSON data, without writing code,\" and Fastify uses the same engine internally.\n\n**Lessons learned**\n- Ajv's README advises against the `format` keyword on untrusted data because some format regexes are ReDoS-prone (see [Ajv README mirror](https://chromium.googlesource.com/devtools/devtools-frontend/+/283f73d2df2b550a212de66dfd46fea4567f6284/node_modules/ajv/README.md)). Its companion package `ajv-formats` (`npm:ajv-formats`) is needed for format checks.\n- Fastify validates only `application/json` bodies and returns 400 with the validator output on failure.\n\n**PLAN**\n1. Confirm the framework. If Fastify, put schemas in route `schema.body`. Otherwise, use Ajv directly.\n2. Keep schemas as JSON Schema files, draft 2020-12. Compile once at startup, not per request.\n3. Middleware steps: check `Content-Type: application/json`, enforce a body size limit, parse, validate. On failure, return 400 with a sanitized error list.\n4. Configure Ajv strict mode. Enable `removeAdditional` only if you want unknown fields stripped.\n5. Add `ajv-formats` only for fields that need format checks, and review any custom regex for ReDoS.\n6. Tests: valid and invalid fixtures, malformed JSON, oversized body, wrong content type.\n7. JSON Schema covers shape only. Business rules stay in code.\n\nSources: [ajv.js.org](https://ajv.js.org/), [Fastify docs](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/), [Bitovi comparison](https://bitovi.com/blog/comparing-schema-validation-libraries-ajv-joi-yup-and-zod), [Ajv README mirror](https://chromium.googlesource.com/devtools/devtools-frontend/+/283f73d2df2b550a212de66dfd46fea4567f6284/node_modules/ajv/README.md)\n\nPACKAGES: npm:ajv, npm:ajv-formats, npm:fastify, npm:zod, npm:joi",
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7913,
+   "cache_read_input_tokens": 18829,
+   "output_tokens": 4568,
+   "output_tokens_details": {
+    "thinking_tokens": 2585
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7913,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3577,
+     "cache_read_input_tokens": 10409,
+     "cache_creation_input_tokens": 1235,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1235
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.04660669,
+  "is_error": false
+ },
+ "final": "**PRIOR ART (MADR)**\n\n**Context:** Validate incoming JSON request bodies against JSON Schema in a Node.js server.\n\n**Considered options**\n1. **Ajv (`npm:ajv`)**: JSON Schema validator for Node and browsers, supporting drafts 04, 06, 07, 2019-09 and 2020-12. Source: [ajv.js.org](https://ajv.js.org/). Reason: the standard JSON Schema engine, not tied to one framework.\n2. **Fastify built-in route schemas (`npm:fastify`, uses Ajv v8)**: Source: [Fastify docs](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/). Reason: validation is built in, but only applies if you already use Fastify.\n3. **Zod / Joi (`npm:zod`, `npm:joi`)**: Source: [Bitovi comparison](https://bitovi.com/blog/comparing-schema-validation-libraries-ajv-joi-yup-and-zod). Reason: code-first schemas, not JSON Schema, so they can't be shared as schema documents.\n\nAlso found an Express-specific middleware, but its npm page returned 403 and I couldn't verify it, so I excluded it.\n\n**Chosen:** Ajv, used directly, or through Fastify if you already run it. Deciding reason: Ajv describes its schemas as \"declarative schemas for your JSON data, without writing code,\" and Fastify uses the same engine internally.\n\n**Lessons learned**\n- Ajv's README advises against the `format` keyword on untrusted data because some format regexes are ReDoS-prone (see [Ajv README mirror](https://chromium.googlesource.com/devtools/devtools-frontend/+/283f73d2df2b550a212de66dfd46fea4567f6284/node_modules/ajv/README.md)). Its companion package `ajv-formats` (`npm:ajv-formats`) is needed for format checks.\n- Fastify validates only `application/json` bodies and returns 400 with the validator output on failure.\n\n**PLAN**\n1. Confirm the framework. If Fastify, put schemas in route `schema.body`. Otherwise, use Ajv directly.\n2. Keep schemas as JSON Schema files, draft 2020-12. Compile once at startup, not per request.\n3. Middleware steps: check `Content-Type: application/json`, enforce a body size limit, parse, validate. On failure, return 400 with a sanitized error list.\n4. Configure Ajv strict mode. Enable `removeAdditional` only if you want unknown fields stripped.\n5. Add `ajv-formats` only for fields that need format checks, and review any custom regex for ReDoS.\n6. Tests: valid and invalid fixtures, malformed JSON, oversized body, wrong content type.\n7. JSON Schema covers shape only. Business rules stay in code.\n\nSources: [ajv.js.org](https://ajv.js.org/), [Fastify docs](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/), [Bitovi comparison](https://bitovi.com/blog/comparing-schema-validation-libraries-ajv-joi-yup-and-zod), [Ajv README mirror](https://chromium.googlesource.com/devtools/devtools-frontend/+/283f73d2df2b550a212de66dfd46fea4567f6284/node_modules/ajv/README.md)\n\nPACKAGES: npm:ajv, npm:ajv-formats, npm:fastify, npm:zod, npm:joi",
+ "final_check": {
+  "urls": [
+   "https://ajv.js.org/",
+   "https://bitovi.com/blog/comparing-schema-validation-libraries-ajv-joi-yup-and-zod",
+   "https://chromium.googlesource.com/devtools/devtools-frontend/+/283f73d2df2b550a212de66dfd46fea4567f6284/node_modules/ajv/README.md",
+   "https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "npm:ajv",
+   "npm:ajv-formats",
+   "npm:fastify",
+   "npm:zod",
+   "npm:joi"
+  ],
+  "missing_packages": []
+ }
+}

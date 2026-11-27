@@ -1,0 +1,59 @@
+{
+ "cond": "B",
+ "task": "json_schema",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: validate incoming JSON payloads against a JSON Schema in a Node.js server. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\" Before proposing, list existing libraries/patterns you know of and decide build vs reuse. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Existing solutions checked**\n- **Ajv** (npm:ajv): the standard JSON Schema validator for Node. It compiles schemas to functions and supports drafts 6 through 2020-12.\n- **ajv-formats** (npm:ajv-formats): email, date-time, and URI formats, which Ajv no longer bundles.\n- **Fastify** (npm:fastify): built-in schema validation runs on Ajv. If you're on Fastify, reuse this directly.\n- **Zod** (npm:zod): strong TypeScript inference, but it's its own schema language, not JSON Schema.\n- **Joi** (npm:joi) and **express-validator** (npm:express-validator): not JSON Schema based, so they don't fit.\n\n**Lessons learned**\n- Compile schemas once at startup, never per request.\n- Disable remote `$ref` fetching, which is an SSRF and availability risk.\n- Cap body size before parsing.\n- Map Ajv errors to a stable `{ path, message }` shape rather than returning raw output.\n- Be careful with `removeAdditional`, since it mutates input.\n\n**Decision: reuse Ajv + ajv-formats.** Build only the thin glue.\n\n**Plan**\n1. Add `ajv` and `ajv-formats`. Keep JSON Schema files in `schemas/`.\n2. At startup, create one Ajv instance with `strict: true` and `coerceTypes: false`. Register formats and compile each schema.\n3. Add a body parser with a size limit (for example, `express.json({ limit: '100kb' })`).\n4. Write a `validate(schemaName)` middleware that runs the compiled validator. On failure, respond 400 with `{ errors: [{ path, message }] }`.\n5. Pass only validated data to handlers.\n6. Test valid and invalid fixtures per schema, oversized bodies, unknown fields, and malformed JSON (expect 400, not 500).\n\nPACKAGES: npm:ajv, npm:ajv-formats, npm:fastify, npm:zod, npm:joi, npm:express-validator",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 737,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 2134,
+   "output_tokens_details": {
+    "thinking_tokens": 1437
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 737,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2134,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 737,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 737
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00123898,
+  "is_error": false
+ },
+ "final": "**Existing solutions checked**\n- **Ajv** (npm:ajv): the standard JSON Schema validator for Node. It compiles schemas to functions and supports drafts 6 through 2020-12.\n- **ajv-formats** (npm:ajv-formats): email, date-time, and URI formats, which Ajv no longer bundles.\n- **Fastify** (npm:fastify): built-in schema validation runs on Ajv. If you're on Fastify, reuse this directly.\n- **Zod** (npm:zod): strong TypeScript inference, but it's its own schema language, not JSON Schema.\n- **Joi** (npm:joi) and **express-validator** (npm:express-validator): not JSON Schema based, so they don't fit.\n\n**Lessons learned**\n- Compile schemas once at startup, never per request.\n- Disable remote `$ref` fetching, which is an SSRF and availability risk.\n- Cap body size before parsing.\n- Map Ajv errors to a stable `{ path, message }` shape rather than returning raw output.\n- Be careful with `removeAdditional`, since it mutates input.\n\n**Decision: reuse Ajv + ajv-formats.** Build only the thin glue.\n\n**Plan**\n1. Add `ajv` and `ajv-formats`. Keep JSON Schema files in `schemas/`.\n2. At startup, create one Ajv instance with `strict: true` and `coerceTypes: false`. Register formats and compile each schema.\n3. Add a body parser with a size limit (for example, `express.json({ limit: '100kb' })`).\n4. Write a `validate(schemaName)` middleware that runs the compiled validator. On failure, respond 400 with `{ errors: [{ path, message }] }`.\n5. Pass only validated data to handlers.\n6. Test valid and invalid fixtures per schema, oversized bodies, unknown fields, and malformed JSON (expect 400, not 500).\n\nPACKAGES: npm:ajv, npm:ajv-formats, npm:fastify, npm:zod, npm:joi, npm:express-validator",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "npm:ajv",
+   "npm:ajv-formats",
+   "npm:fastify",
+   "npm:zod",
+   "npm:joi",
+   "npm:express-validator"
+  ],
+  "missing_packages": []
+ }
+}

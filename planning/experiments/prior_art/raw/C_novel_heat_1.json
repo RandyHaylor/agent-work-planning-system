@@ -1,0 +1,60 @@
+{
+ "cond": "C",
+ "task": "novel_heat",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: compute our company's internal 'ticket heat score' (0.4*age_days + 0.35*priority_rank + 0.25*customer_tier_weight, tiers defined in our wiki) for our in-house helpdesk, in Python. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**PRIOR ART (MADR)**\n\n**Decision:** Compute the ticket heat score as a hand-written weighted sum in Python.\n\n**Searches run:** WebSearch: \"python library weighted multi-criteria scoring ticket priority\"; \"scikit-criteria pypi multi-criteria decision analysis python\"; \"helpdesk ticket queue aging priority score formula open source osTicket Zammad\". Registry checked: PyPI. npm was not searched.\n\n**Composite aging-priority formula:** NONE FOUND. The helpdesk results show only manual priority or time-based bumps.\n\n**Considered options**\n\n1. **Use pymcdm** (PyPI, MIT, v1.4.0). Source: https://pypi.org/project/pymcdm/. Provides a Weighted Sum Model. Rejected: \"general MCDM library; adds normalization and method machinery we don't need.\"\n2. **Use scikit-criteria** (PyPI, BSD-3, v0.10). Source: https://pypi.org/project/scikit-criteria/. Rejected: a broader MCDA toolkit, heavier than a three-term sum.\n3. **Use helpdesk built-ins.** Zammad priority docs (https://user-docs.zammad.org/en/6.1/basics/service-ticket/settings/priority.html) and Znuny AutoPriorityIncrease (https://znuny.org/en/blog/AutoPriorityIncrease). Rejected: time-based bumps only, with no composite score.\n4. **Hand-written weighted sum (chosen).** Deciding reason: \"fixed three-term formula with fixed weights; a library adds a dependency for one line of arithmetic.\"\n\n**Risks found while questioning the plan**\n\n- **Scale mismatch:** raw `age_days` (0 to hundreds) would swamp the 1\u20133 priority rank, so the 0.4/0.35/0.25 weights would not mean what they say. Each term must be normalized to 0\u20131 first.\n- **Tier weights** live in the wiki. I could not access it, so I need a machine-readable copy.\n- **Priority direction** (is 1 the most or least urgent?) is unconfirmed.\n\n**Plan**\n\n1. Export the tier table to `config/tiers.json`.\n2. Write `heat.py` with `heat_score(age_days, priority_rank, tier_weight) -> float`. Normalize inputs, then apply the weights as named constants.\n3. Look up tiers explicitly. Raise on an unknown tier rather than guessing a default.\n4. Add unit tests: each term alone, the age cap, and the unknown-tier error.\n5. Batch-score open tickets, sort descending, and make no database writes in v1.\n6. Check about 20 tickets against agents' judgment before relying on the ranking.\n\n**My choices (redirect if wrong):** age capped at 30 days; priority 1\u20133 scaled linearly to 0\u20131.\n\nSources: https://pypi.org/project/pymcdm/ \u00b7 https://pypi.org/project/scikit-criteria/ \u00b7 https://user-docs.zammad.org/en/6.1/basics/service-ticket/settings/priority.html \u00b7 https://znuny.org/en/blog/AutoPriorityIncrease\n\nPACKAGES: pypi:pymcdm, pypi:scikit-criteria",
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 7224,
+   "cache_read_input_tokens": 18315,
+   "output_tokens": 4281,
+   "output_tokens_details": {
+    "thinking_tokens": 2481
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 7224,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 3169,
+     "cache_read_input_tokens": 9846,
+     "cache_creation_input_tokens": 1109,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1109
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.043136049999999995,
+  "is_error": false
+ },
+ "final": "**PRIOR ART (MADR)**\n\n**Decision:** Compute the ticket heat score as a hand-written weighted sum in Python.\n\n**Searches run:** WebSearch: \"python library weighted multi-criteria scoring ticket priority\"; \"scikit-criteria pypi multi-criteria decision analysis python\"; \"helpdesk ticket queue aging priority score formula open source osTicket Zammad\". Registry checked: PyPI. npm was not searched.\n\n**Composite aging-priority formula:** NONE FOUND. The helpdesk results show only manual priority or time-based bumps.\n\n**Considered options**\n\n1. **Use pymcdm** (PyPI, MIT, v1.4.0). Source: https://pypi.org/project/pymcdm/. Provides a Weighted Sum Model. Rejected: \"general MCDM library; adds normalization and method machinery we don't need.\"\n2. **Use scikit-criteria** (PyPI, BSD-3, v0.10). Source: https://pypi.org/project/scikit-criteria/. Rejected: a broader MCDA toolkit, heavier than a three-term sum.\n3. **Use helpdesk built-ins.** Zammad priority docs (https://user-docs.zammad.org/en/6.1/basics/service-ticket/settings/priority.html) and Znuny AutoPriorityIncrease (https://znuny.org/en/blog/AutoPriorityIncrease). Rejected: time-based bumps only, with no composite score.\n4. **Hand-written weighted sum (chosen).** Deciding reason: \"fixed three-term formula with fixed weights; a library adds a dependency for one line of arithmetic.\"\n\n**Risks found while questioning the plan**\n\n- **Scale mismatch:** raw `age_days` (0 to hundreds) would swamp the 1\u20133 priority rank, so the 0.4/0.35/0.25 weights would not mean what they say. Each term must be normalized to 0\u20131 first.\n- **Tier weights** live in the wiki. I could not access it, so I need a machine-readable copy.\n- **Priority direction** (is 1 the most or least urgent?) is unconfirmed.\n\n**Plan**\n\n1. Export the tier table to `config/tiers.json`.\n2. Write `heat.py` with `heat_score(age_days, priority_rank, tier_weight) -> float`. Normalize inputs, then apply the weights as named constants.\n3. Look up tiers explicitly. Raise on an unknown tier rather than guessing a default.\n4. Add unit tests: each term alone, the age cap, and the unknown-tier error.\n5. Batch-score open tickets, sort descending, and make no database writes in v1.\n6. Check about 20 tickets against agents' judgment before relying on the ranking.\n\n**My choices (redirect if wrong):** age capped at 30 days; priority 1\u20133 scaled linearly to 0\u20131.\n\nSources: https://pypi.org/project/pymcdm/ \u00b7 https://pypi.org/project/scikit-criteria/ \u00b7 https://user-docs.zammad.org/en/6.1/basics/service-ticket/settings/priority.html \u00b7 https://znuny.org/en/blog/AutoPriorityIncrease\n\nPACKAGES: pypi:pymcdm, pypi:scikit-criteria",
+ "final_check": {
+  "urls": [
+   "https://pypi.org/project/pymcdm/",
+   "https://pypi.org/project/scikit-criteria/",
+   "https://user-docs.zammad.org/en/6.1/basics/service-ticket/settings/priority.html",
+   "https://znuny.org/en/blog/AutoPriorityIncrease"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "pypi:pymcdm",
+   "pypi:scikit-criteria"
+  ],
+  "missing_packages": []
+ }
+}

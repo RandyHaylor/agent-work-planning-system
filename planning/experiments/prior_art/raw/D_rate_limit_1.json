@@ -1,0 +1,76 @@
+{
+ "cond": "D",
+ "task": "rate_limit",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: rate-limit outgoing calls of a Node.js API client to 10 requests/second. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\"\nFirst, research with WebSearch/WebFetch and write a PRIOR ART record (MADR style):\n- Considered options: at least 2, one of which must be 'use an existing library' (if any exists).\n- For each option: a source URL you actually visited/found, and a one-line reason.\n- Chosen option, with the deciding reason in quotes.\n- If your search finds no existing library/standard, say 'NONE FOUND' and list the queries and registries you searched.\nDo not cite any package or URL you have not confirmed exists.\nThen the plan. Keep the whole answer under 350 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "# Prior art record\n\n**Status:** Proposed\n**Context:** Throttle outgoing Node.js API-client calls to 10 requests/second.\n\n**Considered options**\n\n1. **Use `bottleneck` (npm), existing library.** Source: [github.com/sgrondin/bottleneck](https://github.com/sgrondin/bottleneck). Offers `minTime`, `maxConcurrent`, and `reservoir`, and can share limits across processes via Redis.\n2. **Use `p-queue` (npm), existing library.** Source: [github.com/sindresorhus/p-queue](https://github.com/sindresorhus/p-queue). Offers `intervalCap`/`interval` and a `strict` sliding window. It is ESM-only, so it fits poorly in a CommonJS project.\n3. **Use `limiter` (npm), token bucket.** Source: [npmjs.com/package/limiter](https://npmjs.com/package/limiter). Seen in search results only, not fetched.\n4. **Hand-rolled token bucket or timer.** Source: [redis.io Node.js rate-limiter guide](https://redis.io/docs/latest/develop/use-cases/rate-limiter/nodejs/). A pattern reference for the distributed case. Only worth it if no library fits.\n\n**Chosen:** Option 1, `bottleneck`. Deciding reason: \"a lightweight and zero-dependency Task Scheduler and Rate Limiter\", with spacing and concurrency controls built in. I did not confirm the current version, so check npm at install time.\n\n# Plan\n\n1. `npm install bottleneck`, pinning the version you verify on npm.\n2. Create one limiter per API client instance: `new Bottleneck({ maxConcurrent: 10, minTime: 100 })`. The 100 ms spacing gives 10 starts/second with no burst at a window boundary. A `reservoir` of 10 per 1000 ms would allow up to 20 calls in a straddled second.\n3. Route every outgoing call through `limiter.schedule(() => apiCall(...))`. Lint or review for direct `fetch`/HTTP calls that bypass it.\n4. Attach an `\"error\"` listener to the limiter, as the docs advise.\n5. Handle 429 responses separately with `Retry-After`-aware backoff. A client-side limit does not stop server-side throttling.\n6. Test by asserting N calls take at least (N\u22121)\u00d7100 ms, using fake timers where practical. Call `disconnect()` in teardown.\n7. If several processes share one API key, the per-process limit multiplies across them. Use bottleneck's Clustering mode, which needs Redis and `ioredis`, or accept the multiplied rate.\n\nPACKAGES: npm:bottleneck, npm:p-queue, npm:limiter",
+  "usage": {
+   "input_tokens": 6,
+   "cache_creation_input_tokens": 6038,
+   "cache_read_input_tokens": 18944,
+   "output_tokens": 3437,
+   "output_tokens_details": {
+    "thinking_tokens": 1889
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 6038,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2560,
+     "cache_read_input_tokens": 9564,
+     "cache_creation_input_tokens": 1164,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 1164
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.04376034,
+  "is_error": false
+ },
+ "first_check": {
+  "urls": [
+   "https://github.com/sgrondin/bottleneck",
+   "https://github.com/sindresorhus/p-queue",
+   "https://npmjs.com/package/limiter",
+   "https://redis.io/docs/latest/develop/use-cases/rate-limiter/nodejs/"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "npm:bottleneck",
+   "npm:p-queue",
+   "npm:limiter"
+  ],
+  "missing_packages": []
+ },
+ "final": "# Prior art record\n\n**Status:** Proposed\n**Context:** Throttle outgoing Node.js API-client calls to 10 requests/second.\n\n**Considered options**\n\n1. **Use `bottleneck` (npm), existing library.** Source: [github.com/sgrondin/bottleneck](https://github.com/sgrondin/bottleneck). Offers `minTime`, `maxConcurrent`, and `reservoir`, and can share limits across processes via Redis.\n2. **Use `p-queue` (npm), existing library.** Source: [github.com/sindresorhus/p-queue](https://github.com/sindresorhus/p-queue). Offers `intervalCap`/`interval` and a `strict` sliding window. It is ESM-only, so it fits poorly in a CommonJS project.\n3. **Use `limiter` (npm), token bucket.** Source: [npmjs.com/package/limiter](https://npmjs.com/package/limiter). Seen in search results only, not fetched.\n4. **Hand-rolled token bucket or timer.** Source: [redis.io Node.js rate-limiter guide](https://redis.io/docs/latest/develop/use-cases/rate-limiter/nodejs/). A pattern reference for the distributed case. Only worth it if no library fits.\n\n**Chosen:** Option 1, `bottleneck`. Deciding reason: \"a lightweight and zero-dependency Task Scheduler and Rate Limiter\", with spacing and concurrency controls built in. I did not confirm the current version, so check npm at install time.\n\n# Plan\n\n1. `npm install bottleneck`, pinning the version you verify on npm.\n2. Create one limiter per API client instance: `new Bottleneck({ maxConcurrent: 10, minTime: 100 })`. The 100 ms spacing gives 10 starts/second with no burst at a window boundary. A `reservoir` of 10 per 1000 ms would allow up to 20 calls in a straddled second.\n3. Route every outgoing call through `limiter.schedule(() => apiCall(...))`. Lint or review for direct `fetch`/HTTP calls that bypass it.\n4. Attach an `\"error\"` listener to the limiter, as the docs advise.\n5. Handle 429 responses separately with `Retry-After`-aware backoff. A client-side limit does not stop server-side throttling.\n6. Test by asserting N calls take at least (N\u22121)\u00d7100 ms, using fake timers where practical. Call `disconnect()` in teardown.\n7. If several processes share one API key, the per-process limit multiplies across them. Use bottleneck's Clustering mode, which needs Redis and `ioredis`, or accept the multiplied rate.\n\nPACKAGES: npm:bottleneck, npm:p-queue, npm:limiter",
+ "final_check": {
+  "urls": [
+   "https://github.com/sgrondin/bottleneck",
+   "https://github.com/sindresorhus/p-queue",
+   "https://npmjs.com/package/limiter",
+   "https://redis.io/docs/latest/develop/use-cases/rate-limiter/nodejs/"
+  ],
+  "dead_urls": [],
+  "packages": [
+   "npm:bottleneck",
+   "npm:p-queue",
+   "npm:limiter"
+  ],
+  "missing_packages": []
+ }
+}

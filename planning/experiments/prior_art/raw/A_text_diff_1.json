@@ -1,0 +1,52 @@
+{
+ "cond": "A",
+ "task": "text_diff",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: show a unified diff of two text files in a Python CLI tool. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "## Implementation Plan: Unified Diff for Two Text Files\n\n**1. CLI interface (`argparse`)**\n- Accept two positional arguments: `old_file` and `new_file`.\n- Optional flags: `--context N` (default 3), `--output PATH` (default stdout), `--color` (auto-detect TTY).\n\n**2. Input handling**\n- Read both files as UTF-8 with `errors=\"replace\"`, or accept an `--encoding` flag.\n- Split into lines with `keepends=True` so the diff preserves trailing newlines.\n- Exit with code 2 and a clear message if a file is missing or unreadable.\n\n**3. Diff generation (`difflib`)**\n- Call `difflib.unified_diff(old_lines, new_lines, fromfile=old_path, tofile=new_path, n=context)`.\n- Pass file modification times as `fromfiledate`/`tofiledate` for a header that matches `diff -u`.\n- Add a `lineterm` argument only if needed. The default `\"\\n\"` works for most inputs.\n\n**4. Output**\n- Write the diff lines to stdout or the output file.\n- If `--color` is set, colour `+` lines green, `-` lines red, and `@@` hunk headers cyan, using ANSI codes.\n- Exit with 0 if the files are identical, 1 if they differ, and 2 on error. This matches `diff(1)`.\n\n**5. Testing**\n- Identical files produce no output and exit 0.\n- Added, removed, and changed lines produce correct hunks.\n- A file without a trailing newline is handled.\n- Missing file returns exit 2.\n\n**6. Packaging**\n- Use only the standard library, so there are no runtime dependencies.\n\nPACKAGES: none",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 3079,
+   "output_tokens": 642,
+   "output_tokens_details": {
+    "thinking_tokens": 66
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 642,
+     "cache_read_input_tokens": 3079,
+     "cache_creation_input_tokens": 0,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00035199,
+  "is_error": false
+ },
+ "final": "## Implementation Plan: Unified Diff for Two Text Files\n\n**1. CLI interface (`argparse`)**\n- Accept two positional arguments: `old_file` and `new_file`.\n- Optional flags: `--context N` (default 3), `--output PATH` (default stdout), `--color` (auto-detect TTY).\n\n**2. Input handling**\n- Read both files as UTF-8 with `errors=\"replace\"`, or accept an `--encoding` flag.\n- Split into lines with `keepends=True` so the diff preserves trailing newlines.\n- Exit with code 2 and a clear message if a file is missing or unreadable.\n\n**3. Diff generation (`difflib`)**\n- Call `difflib.unified_diff(old_lines, new_lines, fromfile=old_path, tofile=new_path, n=context)`.\n- Pass file modification times as `fromfiledate`/`tofiledate` for a header that matches `diff -u`.\n- Add a `lineterm` argument only if needed. The default `\"\\n\"` works for most inputs.\n\n**4. Output**\n- Write the diff lines to stdout or the output file.\n- If `--color` is set, colour `+` lines green, `-` lines red, and `@@` hunk headers cyan, using ANSI codes.\n- Exit with 0 if the files are identical, 1 if they differ, and 2 on error. This matches `diff(1)`.\n\n**5. Testing**\n- Identical files produce no output and exit 0.\n- Added, removed, and changed lines produce correct hunks.\n- A file without a trailing newline is handled.\n- Missing file returns exit 2.\n\n**6. Packaging**\n- Use only the standard library, so there are no runtime dependencies.\n\nPACKAGES: none",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [],
+  "missing_packages": []
+ }
+}

@@ -1,0 +1,57 @@
+{
+ "cond": "B",
+ "task": "rate_limit",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: rate-limit outgoing calls of a Node.js API client to 10 requests/second. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\" Before proposing, list existing libraries/patterns you know of and decide build vs reuse. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Existing solutions (checked first)**\n- `bottleneck` (npm): queue-based limiter with `minTime`, `reservoir`, and `maxConcurrent`. Widely used for API clients.\n- `p-throttle` (npm): tiny function wrapper for rate limits. Simpler, but no queueing or concurrency controls.\n- `limiter` (npm): token-bucket implementation, lightweight.\n- `rate-limiter-flexible` (npm): Redis-backed limiting for multiple processes.\n- Patterns: token bucket (allows bursts), fixed-interval spacing (smooth output), sliding window (strictest).\n\n**Lessons:** A per-process limit doesn't coordinate across replicas. Also, the provider may enforce per-minute or per-key limits, so 10/s can still return 429s. Plan for retries.\n\n**Decision: reuse `bottleneck`.** Hand-rolling a queue means reimplementing timers, concurrency, and retry edge cases. `p-throttle` is enough only if we never need concurrency caps.\n\n**Plan**\n1. Add `bottleneck` as a dependency.\n2. In the API client module, create one shared limiter: `new Bottleneck({ minTime: 100, maxConcurrent: 10 })`. `minTime: 100` gives 10 req/s with even spacing.\n3. Route every outgoing call through `limiter.schedule(() => request(...))`.\n4. On HTTP 429, honor `Retry-After` and retry, using the limiter's `failed`/`retry` hooks or `updateSettings`.\n5. Test by timing N calls and asserting elapsed \u2265 (N\u22121) \u00d7 100 ms, using fake timers where practical.\n6. If multiple instances share one API key, switch to a Redis-backed limiter (`rate-limiter-flexible` or Bottleneck's Redis mode). Confirm whether we run multiple instances before building this.\n\nPACKAGES: npm:bottleneck, npm:p-throttle, npm:limiter, npm:rate-limiter-flexible",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 738,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 2055,
+   "output_tokens_details": {
+    "thinking_tokens": 1366
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 738,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2055,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 738,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 738
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.0011996799999999998,
+  "is_error": false
+ },
+ "final": "**Existing solutions (checked first)**\n- `bottleneck` (npm): queue-based limiter with `minTime`, `reservoir`, and `maxConcurrent`. Widely used for API clients.\n- `p-throttle` (npm): tiny function wrapper for rate limits. Simpler, but no queueing or concurrency controls.\n- `limiter` (npm): token-bucket implementation, lightweight.\n- `rate-limiter-flexible` (npm): Redis-backed limiting for multiple processes.\n- Patterns: token bucket (allows bursts), fixed-interval spacing (smooth output), sliding window (strictest).\n\n**Lessons:** A per-process limit doesn't coordinate across replicas. Also, the provider may enforce per-minute or per-key limits, so 10/s can still return 429s. Plan for retries.\n\n**Decision: reuse `bottleneck`.** Hand-rolling a queue means reimplementing timers, concurrency, and retry edge cases. `p-throttle` is enough only if we never need concurrency caps.\n\n**Plan**\n1. Add `bottleneck` as a dependency.\n2. In the API client module, create one shared limiter: `new Bottleneck({ minTime: 100, maxConcurrent: 10 })`. `minTime: 100` gives 10 req/s with even spacing.\n3. Route every outgoing call through `limiter.schedule(() => request(...))`.\n4. On HTTP 429, honor `Retry-After` and retry, using the limiter's `failed`/`retry` hooks or `updateSettings`.\n5. Test by timing N calls and asserting elapsed \u2265 (N\u22121) \u00d7 100 ms, using fake timers where practical.\n6. If multiple instances share one API key, switch to a Redis-backed limiter (`rate-limiter-flexible` or Bottleneck's Redis mode). Confirm whether we run multiple instances before building this.\n\nPACKAGES: npm:bottleneck, npm:p-throttle, npm:limiter, npm:rate-limiter-flexible",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "npm:bottleneck",
+   "npm:p-throttle",
+   "npm:limiter",
+   "npm:rate-limiter-flexible"
+  ],
+  "missing_packages": []
+ }
+}

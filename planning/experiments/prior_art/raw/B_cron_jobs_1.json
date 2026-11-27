@@ -1,0 +1,58 @@
+{
+ "cond": "B",
+ "task": "cron_jobs",
+ "rep": 1,
+ "prompt": "Write a short implementation plan for: schedule cron-like recurring jobs inside a long-running Python process. The user's rule: \"every direction/suggestion/plan should be questioned 'do common patterns/examples/open source solutions exist already? are there lessons learned out there we can lean on?'\" Before proposing, list existing libraries/patterns you know of and decide build vs reuse. Keep it under 250 words. End with one line exactly like: PACKAGES: pypi:name1, npm:name2  (every third-party package you cite, with its registry; write PACKAGES: none if none).",
+ "first": {
+  "result": "**Existing options checked**\n- **APScheduler** (pypi:apscheduler): cron and interval triggers, thread and asyncio executors, misfire and overlap controls. Use the 3.x line unless you've verified that 4.x is released and stable.\n- **croniter** (pypi:croniter): parses cron expressions and computes next fire times. A useful primitive, but not a scheduler.\n- **schedule** (pypi:schedule): friendly API, but no cron syntax, no threading, and no missed-run handling. Fine for toys only.\n- **aiocron** (pypi:aiocron): asyncio-only cron decorator. Small, less battle-tested.\n- **Celery beat** (pypi:celery): distributed and needs a broker. Overkill for one process.\n\n**Decision: reuse APScheduler and write a thin wrapper.**\n\n**Plan**\n1. Choose the executor: `BackgroundScheduler` if the process is threaded, `AsyncIOScheduler` if it runs an event loop.\n2. Declare jobs in one registry module: name, cron expression, timezone, callable.\n3. Set defaults on every job: `max_instances=1` to prevent overlap, `coalesce=True`, and an explicit `misfire_grace_time`.\n4. Register a listener for `EVENT_JOB_ERROR` that logs tracebacks. Otherwise job exceptions disappear quietly.\n5. Use timezone-aware triggers and test across DST transitions.\n6. Call `scheduler.shutdown(wait=...)` on SIGTERM and SIGINT.\n7. Keep the in-memory job store unless jobs must survive restarts. Persistence adds pickling and migration pitfalls.\n8. The wrapper contributes only the registry, logging, shutdown hook, and tests that drive jobs with a fake clock.\n\n**Lessons learned:** most scheduler bugs come from overlapping runs, silent exceptions, and DST or timezone surprises. The defaults above address each of these.\n\nPACKAGES: pypi:apscheduler, pypi:croniter, pypi:schedule, pypi:aiocron, pypi:celery",
+  "usage": {
+   "input_tokens": 2,
+   "cache_creation_input_tokens": 733,
+   "cache_read_input_tokens": 2438,
+   "output_tokens": 2150,
+   "output_tokens_details": {
+    "thinking_tokens": 1434
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 733,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "global",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 2150,
+     "cache_read_input_tokens": 2438,
+     "cache_creation_input_tokens": 733,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 733
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "cost": 0.00124618,
+  "is_error": false
+ },
+ "final": "**Existing options checked**\n- **APScheduler** (pypi:apscheduler): cron and interval triggers, thread and asyncio executors, misfire and overlap controls. Use the 3.x line unless you've verified that 4.x is released and stable.\n- **croniter** (pypi:croniter): parses cron expressions and computes next fire times. A useful primitive, but not a scheduler.\n- **schedule** (pypi:schedule): friendly API, but no cron syntax, no threading, and no missed-run handling. Fine for toys only.\n- **aiocron** (pypi:aiocron): asyncio-only cron decorator. Small, less battle-tested.\n- **Celery beat** (pypi:celery): distributed and needs a broker. Overkill for one process.\n\n**Decision: reuse APScheduler and write a thin wrapper.**\n\n**Plan**\n1. Choose the executor: `BackgroundScheduler` if the process is threaded, `AsyncIOScheduler` if it runs an event loop.\n2. Declare jobs in one registry module: name, cron expression, timezone, callable.\n3. Set defaults on every job: `max_instances=1` to prevent overlap, `coalesce=True`, and an explicit `misfire_grace_time`.\n4. Register a listener for `EVENT_JOB_ERROR` that logs tracebacks. Otherwise job exceptions disappear quietly.\n5. Use timezone-aware triggers and test across DST transitions.\n6. Call `scheduler.shutdown(wait=...)` on SIGTERM and SIGINT.\n7. Keep the in-memory job store unless jobs must survive restarts. Persistence adds pickling and migration pitfalls.\n8. The wrapper contributes only the registry, logging, shutdown hook, and tests that drive jobs with a fake clock.\n\n**Lessons learned:** most scheduler bugs come from overlapping runs, silent exceptions, and DST or timezone surprises. The defaults above address each of these.\n\nPACKAGES: pypi:apscheduler, pypi:croniter, pypi:schedule, pypi:aiocron, pypi:celery",
+ "final_check": {
+  "urls": [],
+  "dead_urls": [],
+  "packages": [
+   "pypi:apscheduler",
+   "pypi:croniter",
+   "pypi:schedule",
+   "pypi:aiocron",
+   "pypi:celery"
+  ],
+  "missing_packages": []
+ }
+}
