@@ -7,7 +7,7 @@ from typing import Mapping, Optional
 
 from planning_system.contract import Invalid
 
-from .config_file_reader import read_config_folder
+from .config_file_reader import read_config_file, read_config_folder
 from .environment_substitution import EnvironmentSubstitution, read_dotenv
 from .section import ConfigSection
 
@@ -37,3 +37,10 @@ def load_configuration(folder: Path, environ: Optional[Mapping[str, str]] = None
     substitution = EnvironmentSubstitution(os.environ if environ is None else environ,
                                            read_dotenv(dotenv_path))
     return Configuration(substitution.apply(read_config_folder(folder)), folder)
+
+
+def load_config_file(path: Path, environ: Optional[Mapping[str, str]] = None) -> Configuration:
+    """One config file on its own (e.g. a client-side override file); ${NAME}s from the environment only."""
+    path = Path(path)
+    substitution = EnvironmentSubstitution(os.environ if environ is None else environ, {})
+    return Configuration(substitution.apply(read_config_file(path)), path)

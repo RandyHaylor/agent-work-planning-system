@@ -17,14 +17,21 @@ def read_config_folder(folder: Path) -> dict:
     tree: dict = {}
     owner: dict[str, str] = {}
     for path in sorted(folder.glob("*.json")):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as error:
-            raise Invalid(f"{path}: not valid JSON ({error})") from error
-        if not isinstance(data, dict):
-            raise Invalid(f"{path}: top level must be an object of sections")
-        for key, value in data.items():
+        for key, value in read_config_file(path).items():
             if key in tree:
                 raise Invalid(f"config key {key!r} is in both {owner[key]} and {path.name}")
             tree[key], owner[key] = value, path.name
     return tree
+
+
+def read_config_file(path: Path) -> dict:
+    path = Path(path)
+    if not path.is_file():
+        raise Invalid(f"config file {path} does not exist")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise Invalid(f"{path}: not valid JSON ({error})") from error
+    if not isinstance(data, dict):
+        raise Invalid(f"{path}: top level must be an object of sections")
+    return data

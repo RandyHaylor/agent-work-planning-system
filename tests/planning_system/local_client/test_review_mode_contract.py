@@ -20,8 +20,8 @@ from planning_system.local_client.review_mode import (ReviewerBackendFactory, Re
                                                       ReviewPacket, UnparseableVerdict, Verdict)
 from planning_system.local_client.review_mode.fakes import FakeReviewModeLoop
 from planning_system.local_client.review_mode.review_prompt import build_review_prompt
-from planning_system.local_client.review_mode.reviewer_backends import (ClaudeCodeBackend, LocalLlmBackend,
-                                                                        PiBackend)
+from planning_system.local_client.review_mode.reviewer_backends import ClaudeCodeBackend, PiBackend
+from planning_system.model_calls import FakeOneShotModelCall, ModelCallFailed, load_model_endpoints
 from planning_system.local_client.review_mode.reviewer_backends.fakes import FakeReviewerBackend, verdict_json
 from planning_system.local_client.review_mode.verdict_parser import parse_verdict
 from planning_system.local_client.review_worker import ReviewWorker
@@ -175,6 +175,12 @@ def _fake_backend(reply, tmp_path):
     return backend, lambda: backend.prompts[0]
 
 
+def LocalLlmBackend(transport, model=None):
+    """local_llm as the CLI builds it: the factory, the shipped config/model_endpoints.json, a mock transport."""
+    endpoints = load_model_endpoints(environ={}, transport=transport)
+    return ReviewerBackendFactory(model_endpoints=endpoints).create("local_llm", model)
+
+
 def _local_llm_backend(reply, tmp_path):
     server = _LlmServer(reply)
     return LocalLlmBackend(transport=httpx.MockTransport(server)), lambda: server.bodies[0]["messages"][-1]["content"]
@@ -273,9 +279,24 @@ def test_pi_process_failure_is_reviewer_unavailable(mode):
         backend.review(PACKET)
 
 
-def test_19_factory_defaults_to_local_llm_and_rejects_unknown():
+def test_19_factory_defaults_to_local_llm_and_rejects_unknown_and_parked_pi():
     factory = ReviewerBackendFactory()
     assert factory.create().name == "local_llm"
-    assert factory.create("pi").name == "pi"
-    with pytest.raises(Invalid):
-        factory.create("nope")
+    for name in ("pi", "nope"):
+        with pytest.raises(Invalid):
+            factory.create(name)
+
+
+def test_local_llm_model_flag_overrides_endpoint_model():
+    server = _LlmServer(verdict_json(True))
+    LocalLlmBackend(httpx.MockTransport(server), model="other-model").review(PACKET)
+    assert server.bodies[0]["model"] == "other-model"
+    assert server.bodies[0]["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_one_shot_backend_maps_model_call_failure_to_reviewer_unavailable():
+    from planning_system.local_client.review_mode.reviewer_backends import OneShotReviewerBackend
+    model_call = FakeOneShotModelCall([ModelCallFailed("down")])
+    with pytest.raises(ReviewerUnavailable):
+        OneShotReviewerBackend(model_call).review(PACKET)
+    assert model_call.requests[0].json_output and model_call.requests[0].temperature == 0

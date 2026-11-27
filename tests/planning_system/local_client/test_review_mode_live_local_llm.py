@@ -8,7 +8,8 @@ import os
 import pytest
 
 from planning_system.local_client.review_mode import ReviewPacket, Verdict
-from planning_system.local_client.review_mode.reviewer_backends import LocalLlmBackend
+from planning_system.local_client.review_mode.reviewer_backends import OneShotReviewerBackend
+from planning_system.model_calls import load_model_endpoints
 
 pytestmark = pytest.mark.skipif(os.environ.get("PLANNING_RUN_LOCAL_LLM") != "1",
                                 reason="live local llm call; set PLANNING_RUN_LOCAL_LLM=1")
@@ -21,6 +22,7 @@ def test_live_local_llm_passes_a_clearly_supported_requirement():
         "citations": [{"citation": "[ref-1:1-1]", "origin": "user_exchange",
                        "quoted_text": "Write the reports as CSV files.", "pre_text": "What format for reports?",
                        "full_text": "Write the reports as CSV files."}]})
-    verdict = LocalLlmBackend(max_tokens=128, timeout_seconds=60).review(packet)
+    model_call = load_model_endpoints().create("local_gemma4")
+    verdict = OneShotReviewerBackend(model_call, max_tokens=128).review(packet)
     assert isinstance(verdict, Verdict)
     assert verdict.passed, verdict.reason

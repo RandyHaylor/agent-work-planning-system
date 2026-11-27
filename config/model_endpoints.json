@@ -1,0 +1,12 @@
+{
+  "model_endpoints": {
+    "local_gemma4": {
+      "kind": "openai_compatible_chat",
+      "base_url": "http://127.0.0.1:8898/v1",
+      "model": "gemma4-31b-jang-q3:latest",
+      "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},
+      "timeout_seconds": 120,
+      "max_concurrency": 1
+    }
+  }
+}

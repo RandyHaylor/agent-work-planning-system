@@ -1,4 +1,6 @@
-"""Private: one prompt over pi's RPC protocol (`pi --mode rpc`): a JSONL `prompt` command on stdin, then read
+"""PARKED (user 2026-11-26) with pi_backend: pinned, not wired.
+
+Private: one prompt over pi's RPC protocol (`pi --mode rpc`): a JSONL `prompt` command on stdin, then read
 the LF-delimited event stream until `agent_end`. The final text is the last `turn_end` message's text blocks
 (same reading as Unharness's PiOutputEventNormalizer). One process per exchange, always cleaned up."""
 from __future__ import annotations
