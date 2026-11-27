@@ -19,10 +19,11 @@ from planning_system.local_client.harness_adapters.fakes import FakeAiCliAdapter
 from planning_system.local_client.review_mode import (ReviewerBackendFactory, ReviewerUnavailable, ReviewModeLoop,
                                                       ReviewPacket, UnparseableVerdict, Verdict)
 from planning_system.local_client.review_mode.fakes import FakeReviewModeLoop
-from planning_system.local_client.review_mode.review_prompt import build_review_prompt
+from planning_system.local_client.review_mode.review_turns import opening_turn
 from planning_system.local_client.review_mode.reviewer_backends import ClaudeCodeBackend, PiBackend
 from planning_system.model_calls import FakeOneShotModelCall, ModelCallFailed, load_model_endpoints
-from planning_system.local_client.review_mode.reviewer_backends.fakes import FakeReviewerBackend, verdict_json
+from planning_system.local_client.review_mode.reviewer_backends.fakes import (FakeReviewerBackend, turn_reply,
+                                                                              verdict_json)
 from planning_system.local_client.review_mode.verdict_parser import parse_verdict
 from planning_system.local_client.review_worker import ReviewWorker
 
@@ -121,11 +122,12 @@ def test_serve_returns_promptly_when_stopped_while_idle(loop_class, reviewer_api
 
 # --------------------------------------------------------------------------- prompt + parser
 
-def test_prompt_inlines_quotes_and_json_contract():
-    prompt = build_review_prompt(PACKET)
-    for expected in ("EXACTLY one JSON object", "PRE-INPUT CONTEXT", "Shall vendors go on even floors?",
-                     "CITED SLICE", "Vendors go on even floors [ref-7:3-3].", "TITLE RULE", "vendor placement",
-                     "CLAIM TAG requirement", '"passed"', "suggested_title"):
+def test_opening_turn_inlines_quotes_and_the_sentence_question():
+    prompt = opening_turn(PACKET)
+    for expected in ("NEW REVIEW rev-1", "PRE-INPUT CONTEXT", "Shall vendors go on even floors?", "CITED TEXT",
+                     "Vendors go on even floors [ref-7:3-3].", "vendor placement", "CLAIM TAG: requirement",
+                     "Does this sentence make a claim not fully supported by an included user or document reference?",
+                     '"answer"'):
         assert expected in prompt
 
 
@@ -170,11 +172,6 @@ class _LlmServer:
                 self.in_flight -= 1
 
 
-def _fake_backend(reply, tmp_path):
-    backend = FakeReviewerBackend([reply])
-    return backend, lambda: backend.prompts[0]
-
-
 def LocalLlmBackend(transport, model=None):
     """local_llm as the CLI builds it: the factory, the shipped config/model_endpoints.json, a mock transport."""
     endpoints = load_model_endpoints(environ={}, transport=transport)
@@ -183,31 +180,49 @@ def LocalLlmBackend(transport, model=None):
 
 def _local_llm_backend(reply, tmp_path):
     server = _LlmServer(reply)
-    return LocalLlmBackend(transport=httpx.MockTransport(server)), lambda: server.bodies[0]["messages"][-1]["content"]
+    return (LocalLlmBackend(transport=httpx.MockTransport(server)),
+            lambda: [m["content"] for m in server.bodies[-1]["messages"] if m["role"] == "user"])
 
 
 def _claude_code_backend(reply, tmp_path):
     adapter = FakeAiCliAdapter(reply=lambda handle, prompt: reply)
     backend = ClaudeCodeBackend(ReviewWorker(adapter, reviewer_model_name="haiku", allowed_tool_names=[]))
-    return backend, lambda: adapter.sessions[0].prompts[-1]
+    return backend, lambda: adapter.sessions[0].prompts[1:]          # [0] is the priming prompt
 
 
 def _pi_backend(reply, tmp_path):
     record = tmp_path / "pi.json"
     backend = PiBackend(command=[sys.executable, str(FAKE_PI)], timeout_seconds=20,
                         extra_environment={"FAKE_PI_REPLY": reply, "FAKE_PI_RECORD": str(record)})
-    return backend, lambda: json.loads(record.read_text())["commands"][-1]["message"]
+    # one pi process per turn; the last one gets the title turn with every earlier turn replayed in it
+    return backend, lambda: [json.loads(record.read_text())["commands"][-1]["message"]]
 
 
-BACKENDS = [pytest.param(_fake_backend, id="fake"), pytest.param(_local_llm_backend, id="local_llm"),
+BACKENDS = [pytest.param(_local_llm_backend, id="local_llm"),
             pytest.param(_claude_code_backend, id="claude_code"), pytest.param(_pi_backend, id="pi")]
+
+TWO_SENTENCE_PACKET = ReviewPacket.from_json({
+    **{k: v for k, v in PACKET.__dict__.items() if k != "citations"}, "review_id": "rev-2",
+    "claim_text": "Vendors go on even floors [ref-7:3-3]. Stairs never get vendors.",
+    "citations": [c.__dict__ for c in PACKET.citations]})
 
 
 @pytest.mark.parametrize("make_backend", BACKENDS)
-def test_19_20_backend_sends_prompt_and_parses_verdict(make_backend, tmp_path):
-    backend, sent_prompt = make_backend(verdict_json(False, "slice is a question", "vendor placement"), tmp_path)
-    assert backend.review(PACKET) == Verdict(False, "slice is a question", "vendor placement")
-    assert "Shall vendors go on even floors?" in sent_prompt() and "EXACTLY one JSON object" in sent_prompt()
+def test_19_20_backend_asks_every_sentence_in_one_conversation(make_backend, tmp_path):
+    backend, sent_turns = make_backend(turn_reply(True, "stairs not mentioned", "vendor placement"), tmp_path)
+    verdict = backend.review(TWO_SENTENCE_PACKET)
+    assert verdict == Verdict(False, "sentence 1 unsupported: stairs not mentioned; "
+                                     "sentence 2 unsupported: stairs not mentioned", "vendor placement")
+    sent = "\n".join(sent_turns())
+    for expected in ("Shall vendors go on even floors?", 'Sentence 1 of 2: "Vendors go on even floors [ref-7:3-3]."',
+                     'Sentence 2 of 2: "Stairs never get vendors."', "suggested_title"):
+        assert expected in sent
+
+
+@pytest.mark.parametrize("make_backend", BACKENDS)
+def test_backend_passes_when_every_sentence_is_supported(make_backend, tmp_path):
+    backend, _ = make_backend(turn_reply(False), tmp_path)
+    assert backend.review(TWO_SENTENCE_PACKET) == Verdict(True, "all 2 sentences supported")
 
 
 @pytest.mark.parametrize("make_backend", BACKENDS)
@@ -218,7 +233,7 @@ def test_backend_unparseable_answer_raises(make_backend, tmp_path):
 
 
 def test_19_local_llm_request_shape_and_sequential():
-    server = _LlmServer(verdict_json(True), delay=0.05)
+    server = _LlmServer(turn_reply(False), delay=0.02)
     backend = LocalLlmBackend(transport=httpx.MockTransport(server))
     threads = [threading.Thread(target=backend.review, args=(PACKET,)) for _ in range(3)]
     for thread in threads:
@@ -233,6 +248,13 @@ def test_19_local_llm_request_shape_and_sequential():
     assert body["temperature"] == 0
     assert 0 < body["max_tokens"] <= 512
     assert body.get("stream") in (None, False)
+
+
+def test_local_llm_sends_the_growing_history_each_turn():
+    server = _LlmServer(turn_reply(False))
+    LocalLlmBackend(transport=httpx.MockTransport(server)).review(PACKET)   # opening, 1 sentence, title
+    roles = [[m["role"] for m in body["messages"]] for body in server.bodies]
+    assert roles == [["user"], ["user", "assistant", "user"], ["user", "assistant", "user", "assistant", "user"]]
 
 
 @pytest.mark.parametrize("response", [httpx.Response(503, text="busy"), httpx.Response(200, json={"choices": []})])
@@ -250,7 +272,7 @@ def test_local_llm_connection_error_is_reviewer_unavailable():
 
 
 def test_20_claude_code_uses_no_tools_and_given_model():
-    adapter = FakeAiCliAdapter(reply=lambda handle, prompt: verdict_json(True))
+    adapter = FakeAiCliAdapter(reply=lambda handle, prompt: turn_reply(False))
     factory = ReviewerBackendFactory(review_worker_factory=lambda model: ReviewWorker(
         adapter, reviewer_model_name=model, allowed_tool_names=[]))
     factory.create("claude_code", "haiku").review(PACKET)
@@ -288,7 +310,7 @@ def test_19_factory_defaults_to_local_llm_and_rejects_unknown_and_parked_pi():
 
 
 def test_local_llm_model_flag_overrides_endpoint_model():
-    server = _LlmServer(verdict_json(True))
+    server = _LlmServer(turn_reply(False))
     LocalLlmBackend(httpx.MockTransport(server), model="other-model").review(PACKET)
     assert server.bodies[0]["model"] == "other-model"
     assert server.bodies[0]["chat_template_kwargs"] == {"enable_thinking": False}

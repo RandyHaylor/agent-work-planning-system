@@ -1,37 +1,41 @@
-"""Private: strict JSON verdict; falls back to SoT's balanced-brace scan from the end of the answer
+"""Private: strict JSON answers (the verdict, and each review turn's answer); falls back to SoT's balanced-brace scan from the end of the answer
 (requirements_modification_reviewer._iter_balanced_brace_object_substrings_from_end, carried)."""
 from __future__ import annotations
 
 import json
-from typing import Iterator, Optional
+from typing import Callable, Iterator, Optional
 
 from .types import UnparseableVerdict, Verdict
 
 
-def parse_verdict(answer: str) -> Verdict:
+def find_json_object(answer: str, accept: Callable[[dict], bool]) -> Optional[dict]:
+    """The whole answer as a JSON object, else the last balanced {...} in it, that `accept` approves."""
     for candidate in _candidates(answer):
-        verdict = _verdict_from(candidate)
-        if verdict is not None:
-            return verdict
-    raise UnparseableVerdict(f"no JSON verdict in reviewer answer: {answer[:300]!r}")
+        try:
+            data = json.loads(candidate)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if isinstance(data, dict) and accept(data):
+            return data
+    return None
+
+
+def parse_verdict(answer: str) -> Verdict:
+    data = find_json_object(answer, _is_verdict)
+    if data is None:
+        raise UnparseableVerdict(f"no JSON verdict in reviewer answer: {answer[:300]!r}")
+    title = data.get("suggested_title")
+    return Verdict(data["passed"], data["reason"].strip(), title.strip() if isinstance(title, str) and title.strip()
+                   else None)
+
+
+def _is_verdict(data: dict) -> bool:
+    return isinstance(data.get("passed"), bool) and isinstance(data.get("reason"), str)
 
 
 def _candidates(answer: str) -> Iterator[str]:
     yield answer.strip()
     yield from _balanced_brace_objects_from_end(answer)
-
-
-def _verdict_from(text: str) -> Optional[Verdict]:
-    try:
-        data = json.loads(text)
-    except (json.JSONDecodeError, ValueError):
-        return None
-    if not isinstance(data, dict) or not isinstance(data.get("passed"), bool) \
-            or not isinstance(data.get("reason"), str):
-        return None
-    title = data.get("suggested_title")
-    return Verdict(data["passed"], data["reason"].strip(), title.strip() if isinstance(title, str) and title.strip()
-                   else None)
 
 
 def _balanced_brace_objects_from_end(text: str) -> Iterator[str]:

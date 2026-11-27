@@ -1,4 +1,4 @@
-"""ModelEndpointFactory: endpoint name (from the `model_endpoints` config section) -> OneShotModelCall.
+"""ModelEndpointFactory: endpoint name (from the `model_endpoints` config section) -> ChatModelCall.
 
 Each endpoint: {"kind": "openai_compatible_chat", "base_url", "model", "extra_body"?, "timeout_seconds"?,
 "max_concurrency"?}. load_model_endpoints() reads config/model_endpoints.json, or the file named by
@@ -14,7 +14,7 @@ import httpx
 from planning_system.configuration import ConfigSection, load_config_file
 from planning_system.contract import Invalid
 
-from .interface import OneShotModelCall
+from .interface import ChatModelCall
 from .openai_compatible_chat_call import OpenAiCompatibleChatCall
 
 SECTION = "model_endpoints"
@@ -27,14 +27,14 @@ class ModelEndpointFactory:
     def __init__(self, endpoints: ConfigSection, transport: Optional[httpx.BaseTransport] = None):
         self._endpoints = endpoints
         self._transport = transport
-        self._builders: dict[str, Callable[[ConfigSection, Optional[str]], OneShotModelCall]] = {
+        self._builders: dict[str, Callable[[ConfigSection, Optional[str]], ChatModelCall]] = {
             "openai_compatible_chat": self._openai_compatible_chat,
         }
 
     def names(self) -> list[str]:
         return sorted(self._endpoints.as_dict())
 
-    def create(self, name: str, model: Optional[str] = None) -> OneShotModelCall:
+    def create(self, name: str, model: Optional[str] = None) -> ChatModelCall:
         """model overrides the endpoint's configured model."""
         if not self._endpoints.has(name):
             raise Invalid(f"unknown model endpoint {name!r}; configured: {', '.join(self.names()) or 'none'}")
@@ -45,7 +45,7 @@ class ModelEndpointFactory:
             raise Invalid(f"model endpoint {name!r} has unknown kind {kind!r}")
         return builder(endpoint, model)
 
-    def _openai_compatible_chat(self, endpoint: ConfigSection, model: Optional[str]) -> OneShotModelCall:
+    def _openai_compatible_chat(self, endpoint: ConfigSection, model: Optional[str]) -> ChatModelCall:
         return OpenAiCompatibleChatCall(
             base_url=endpoint.get("base_url"), model=model or endpoint.get("model"),
             extra_body=endpoint.get("extra_body", {}), timeout_seconds=float(endpoint.get("timeout_seconds", 120)),

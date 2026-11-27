@@ -1,11 +1,15 @@
-"""FakeReviewerBackend: scripted model answers (text, or an exception to raise), prompts recorded."""
+"""FakeReviewerBackend: one scripted reply per review (text parsed as a verdict, a Verdict, or an exception to
+raise); records the opening turn each review would send. For review-loop tests; backends' turn-by-turn behaviour
+is tested against the real backends with fake transports."""
 from __future__ import annotations
 
 import json
 from typing import Iterable, Union
 
-from ..types import ReviewerUnavailable, Verdict
-from .prompted_backend import PromptedReviewerBackend
+from ..review_turns import opening_turn
+from ..types import ReviewerUnavailable, ReviewPacket, Verdict
+from ..verdict_parser import parse_verdict
+from .interface import ReviewerBackend
 
 Script = Union[str, Verdict, Exception]
 
@@ -14,20 +18,28 @@ def verdict_json(passed: bool, reason: str = "ok", suggested_title=None) -> str:
     return json.dumps({"passed": passed, "reason": reason, "suggested_title": suggested_title})
 
 
-class FakeReviewerBackend(PromptedReviewerBackend):
+def turn_reply(unsupported_claim: bool = False, reason: str = "", suggested_title=None) -> str:
+    """One JSON object every review turn accepts (opening, each sentence, title): handy for fake transports."""
+    return json.dumps({"ready": True, "answer": "yes" if unsupported_claim else "no", "reason": reason,
+                       "suggested_title": suggested_title})
+
+
+class FakeReviewerBackend(ReviewerBackend):
     name = "fake"
 
     def __init__(self, replies: Iterable[Script] = ()):
         self.replies = list(replies)
         self.prompts: list[str] = []
 
-    def _ask(self, prompt: str) -> str:
+    def review(self, packet: ReviewPacket) -> Verdict:
+        reply = self._ask(opening_turn(packet))
+        return reply if isinstance(reply, Verdict) else parse_verdict(reply)
+
+    def _ask(self, prompt: str):
         self.prompts.append(prompt)
         if not self.replies:
             raise ReviewerUnavailable("fake backend has no scripted reply left")
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply
-        if isinstance(reply, Verdict):
-            return verdict_json(reply.passed, reply.reason, reply.suggested_title)
         return reply

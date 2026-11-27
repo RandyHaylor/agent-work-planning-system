@@ -9,8 +9,8 @@ from typing import Mapping, Optional
 
 import httpx
 
-from .interface import OneShotModelCall
-from .types import ModelCallFailed, OneShotRequest, OneShotResponse
+from .interface import ChatModelCall
+from .types import ChatRequest, ModelCallFailed, OneShotResponse
 
 _LIMITS: dict[tuple[str, int], threading.Semaphore] = {}
 _LIMITS_LOCK = threading.Lock()
@@ -24,7 +24,7 @@ def _limit_for(base_url: str, max_concurrency: int) -> threading.Semaphore:
         return _LIMITS[key]
 
 
-class OpenAiCompatibleChatCall(OneShotModelCall):
+class OpenAiCompatibleChatCall(ChatModelCall):
 
     def __init__(self, base_url: str, model: str, extra_body: Optional[Mapping] = None,
                  timeout_seconds: float = 120.0, max_concurrency: int = 1,
@@ -41,7 +41,7 @@ class OpenAiCompatibleChatCall(OneShotModelCall):
     def url(self) -> str:
         return f"{self.base_url}/chat/completions"
 
-    def complete(self, request: OneShotRequest) -> OneShotResponse:
+    def chat(self, request: ChatRequest) -> OneShotResponse:
         with self._limit:
             try:
                 with httpx.Client(transport=self._transport, timeout=self._timeout) as client:
@@ -60,11 +60,8 @@ class OpenAiCompatibleChatCall(OneShotModelCall):
                                model=str(payload.get("model") or self.model),
                                usage={k: v for k, v in usage.items() if isinstance(v, int)})
 
-    def _body(self, request: OneShotRequest) -> dict:
-        messages = []
-        if request.system_text:
-            messages.append({"role": "system", "content": request.system_text})
-        messages.append({"role": "user", "content": request.user_text})
+    def _body(self, request: ChatRequest) -> dict:
+        messages = [{"role": message.role, "content": message.content} for message in request.messages]
         body = {**self._extra_body, "model": self.model, "messages": messages,
                 "temperature": request.temperature, "max_tokens": request.max_tokens, "stream": False}
         if request.json_output:

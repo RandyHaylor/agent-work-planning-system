@@ -12,8 +12,10 @@ import os
 from pathlib import Path
 from typing import Mapping, Optional, Sequence
 
+from ..review_conversation import ReviewConversation
+from .conversational_backend import ConversationalReviewerBackend
+from .conversations import TranscriptReplayConversation
 from .pi_rpc_exchange import run_pi_prompt
-from .prompted_backend import PromptedReviewerBackend
 
 DEFAULT_PI_MODEL = "gemma4-31b-jang-q3:latest"
 PI_PROVIDER = "local-llamacpp"
@@ -28,7 +30,7 @@ def default_pi_directory() -> Path:
     return Path(configured) if configured else Path(__file__).resolve().parents[4] / "tools" / "pi"
 
 
-class PiBackend(PromptedReviewerBackend):
+class PiBackend(ConversationalReviewerBackend):
     name = "pi"
 
     def __init__(self, model: str = DEFAULT_PI_MODEL, pi_directory: Optional[Path] = None,
@@ -55,6 +57,9 @@ class PiBackend(PromptedReviewerBackend):
                 "PI_CODING_AGENT_DIR": str(self._pi_directory / "agent"),
                 "PI_REQUEST_PAYLOAD_INJECTION_JSON": json.dumps(THINKING_OFF_PAYLOAD),
                 **self._extra_environment}
+
+    def _open_conversation(self) -> ReviewConversation:
+        return TranscriptReplayConversation(self._ask)    # one pi process per turn (--no-session)
 
     def _ask(self, prompt: str) -> str:
         return run_pi_prompt(self.launch_command, self.launch_environment, prompt, self._timeout)

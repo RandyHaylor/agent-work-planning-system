@@ -36,3 +36,7 @@ It outputs strict JSON: `sentences[]`, `tag_ok`, `passed`, `reason`. The existin
 - Adopt option B (the classifier prompt) and option C (summary review). The classifier closed every miss of the current prompt on both backends and added no meaningful false fails.
 - Use local Gemma as the default backend. It was perfect on this set, the fastest (about 5 s vs 8 s), and free. Keep Haiku as the second opinion (option E). Haiku's per-sentence reasons are good evidence for a reviewer.
 - Caveats: the set is small and synthetic, and I wrote the cases. Run it against real review packets before relying on it. Keep `max_tokens` around 1200, because the per-sentence JSON is longer than today's 256.
+
+## Sentence-by-sentence reviewer (2026-11-27, build log #55)
+
+`run_sentence_review.py` runs the 31 claim cases through the real `SentenceBySentenceReview` on local gemma4 (`results_sentence_gemma.jsonl`). Defects caught 20/20. Good items passed 8/11: g06, g07, h06 failed. All three are uncited notes (a to-do, a work status, an open question with options). Gemma calls them unsupported claims. Arguably right under the 2026-11-27 goal of catching agent guesses (g07 reports work with no evidence; h06 offers options the agent made up). A rule saying "status/to-do/question makes no claim" did not change the result and was removed. About 3-6 s per review (3-5 turns).
