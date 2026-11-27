@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "d02",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "raw": "{\"sentences\": [{\"text\": \"Plans export to Markdown and PDF.\", \"kind\": \"user_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"adds_detail\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "adds_detail"
+ }
+}

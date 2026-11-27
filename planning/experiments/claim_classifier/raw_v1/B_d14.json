@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "d14",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "Compared queue libraries.",
+    "label": "none"
+   },
+   {
+    "text": "We will use Celery with RabbitMQ for background jobs.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "Tagged note, but the second sentence states a decision (use Celery with RabbitMQ) and has no citation. A note may make no requirement or technical claim, so it should be tagged requirement or decision with a user_exchange citation, or the sentence removed."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Compared queue libraries.\", \"label\": \"none\"}, {\"text\": \"We will use Celery with RabbitMQ for background jobs.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"Tagged note, but the second sentence states a decision (use Celery with RabbitMQ) and has no citation. A note may make no requirement or technical claim, so it should be tagged requirement or decision with a user_exchange citation, or the sentence removed.\"}"
+}

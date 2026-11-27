@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "s01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth (user chose option A).",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The 'A' reply is a proposal_response to a question whose text is shown (GitHub OAuth or email+password?), so it supports the choice of GitHub OAuth and the 'user chose option A' parenthetical. Generic 'Users' scope is a reasonable reading of an auth-method question, not added detail."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth (user chose option A).\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The 'A' reply is a proposal_response to a question whose text is shown (GitHub OAuth or email+password?), so it supports the choice of GitHub OAuth and the 'user chose option A' parenthetical. Generic 'Users' scope is a reasonable reading of an auth-method question, not added detail.\"}"
+}

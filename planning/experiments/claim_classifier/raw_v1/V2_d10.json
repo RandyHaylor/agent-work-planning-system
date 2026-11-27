@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "d10",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "raw": "{\"sentences\": [{\"text\": \"httpx provides sync and async APIs.\", \"kind\": \"technical_claim\", \"supported\": true}, {\"text\": \"It is the fastest Python HTTP client available.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

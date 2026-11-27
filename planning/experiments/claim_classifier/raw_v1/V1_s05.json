@@ -1,0 +1,11 @@
+{
+ "variant": "V1",
+ "id": "s05",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"summary_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "summary_uncited"
+ }
+}

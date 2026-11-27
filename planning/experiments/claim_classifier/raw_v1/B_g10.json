@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g10",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Agents ask the user one question at a time.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The quote 'one at a time please' answers the pre_text question about batching versus asking one at a time, so it supports the user-wanted requirement that agents ask one question at a time. The claim tag is requirement and matches."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Agents ask the user one question at a time.\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The quote 'one at a time please' answers the pre_text question about batching versus asking one at a time, so it supports the user-wanted requirement that agents ask one question at a time. The claim tag is requirement and matches.\"}"
+}

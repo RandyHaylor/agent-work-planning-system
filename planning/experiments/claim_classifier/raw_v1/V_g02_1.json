@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g02",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user's quote 'everything goes in postgres' directly supports the requirement that planning data is stored in Postgres, and the claim adds no detail beyond the quote.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user's quote 'everything goes in postgres' directly supports the requirement that planning data is stored in Postgres, and the claim adds no detail beyond the quote."
+ },
+ "cost": 0.005273390000000001
+}

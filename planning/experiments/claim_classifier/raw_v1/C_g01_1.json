@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "g01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single requirement sentence is supported by the user's bare answer \\\"A\\\", which the pre_text shows answers the question about how users should sign in, and option A is GitHub OAuth.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth.",
+    "kind": "user_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single requirement sentence is supported by the user's bare answer \"A\", which the pre_text shows answers the question about how users should sign in, and option A is GitHub OAuth."
+ },
+ "cost": 0.00479169
+}

@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d16",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"wrong_origin\", \"reason\": \"The second sentence, that httpx supports HTTP/2 with no extra install, is a technical claim, but its only citation is a user_exchange quote that says just \\\"it does http2 fine\\\" and needs a document-origin citation.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "wrong_origin",
+  "reason": "The second sentence, that httpx supports HTTP/2 with no extra install, is a technical claim, but its only citation is a user_exchange quote that says just \"it does http2 fine\" and needs a document-origin citation."
+ },
+ "cost": 0.00479189
+}

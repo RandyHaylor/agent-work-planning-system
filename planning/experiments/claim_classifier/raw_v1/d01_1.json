@@ -1,0 +1,17 @@
+{
+ "id": "d01",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "adds_detail",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth, and sessions expire after 24 hours.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail"
+ }
+}

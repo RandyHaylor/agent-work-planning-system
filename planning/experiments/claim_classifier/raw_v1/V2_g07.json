@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g07",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"Looked at three queue libraries so far; comparison continues in the next node.\", \"kind\": \"none\", \"supported\": false}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "g04",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"httpx supports both synchronous and asynchronous clients.\", \"kind\": \"technical_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single technical claim is supported by the document quote 'provides sync and async APIs' and adds no detail beyond it.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "httpx supports both synchronous and asynchronous clients.",
+    "kind": "technical_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single technical claim is supported by the document quote 'provides sync and async APIs' and adds no detail beyond it."
+ },
+ "cost": 0.0047555900000000005
+}

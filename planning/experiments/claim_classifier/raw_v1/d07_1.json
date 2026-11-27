@@ -1,0 +1,22 @@
+{
+ "id": "d07",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "The web UI holds no business logic.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "It must load in under one second on a phone.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail"
+ }
+}

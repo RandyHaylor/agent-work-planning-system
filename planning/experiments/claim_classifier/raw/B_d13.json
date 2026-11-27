@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d13",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "Postgres advisory locks are released automatically when the session ends.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "The node is tagged 'note', which must make no technical claim, but the sentence states a fact about Postgres and has no citation. A technical claim needs a document citation that says it."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Postgres advisory locks are released automatically when the session ends.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"The node is tagged 'note', which must make no technical claim, but the sentence states a fact about Postgres and has no citation. A technical claim needs a document citation that says it.\"}"
+}

@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "h03",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "result": {
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The quote says to use Postgres for the queue with no Redis. The claim says Celery with RabbitMQ, which is a different queue system. It also adds Celery and RabbitMQ, which the quote does not mention."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The quote says to use Postgres for the queue with no Redis. The claim says Celery with RabbitMQ, which is a different queue system. It also adds Celery and RabbitMQ, which the quote does not mention.\"}"
+}

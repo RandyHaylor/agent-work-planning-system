@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d15",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "result": {
+  "sentences": [
+   {
+    "text": "SKIP LOCKED lets multiple workers dequeue rows without blocking each other.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "wrong_origin",
+  "reason": "The claim is a technical fact about Postgres SKIP LOCKED, so it needs a document citation. The only citation is a user_exchange quote, and it is a question ('right?') rather than a source that says the fact."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"SKIP LOCKED lets multiple workers dequeue rows without blocking each other.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"wrong_origin\", \"reason\": \"The claim is a technical fact about Postgres SKIP LOCKED, so it needs a document citation. The only citation is a user_exchange quote, and it is a question ('right?') rather than a source that says the fact.\"}"
+}

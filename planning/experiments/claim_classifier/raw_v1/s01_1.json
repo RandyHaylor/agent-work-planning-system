@@ -1,0 +1,22 @@
+{
+ "id": "s01",
+ "rep": 1,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "(user chose option A).",
+    "class": "USER",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

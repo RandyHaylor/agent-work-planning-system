@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g05",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "The jsonb type stores JSON in a decomposed binary format and supports indexing.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The document quote states that jsonb data is stored in a decomposed binary format and that jsonb supports indexing. The claim adds no detail beyond that, and the document origin matches the documentation tag."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"The jsonb type stores JSON in a decomposed binary format and supports indexing.\", \"label\": \"technical_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The document quote states that jsonb data is stored in a decomposed binary format and that jsonb supports indexing. The claim adds no detail beyond that, and the document origin matches the documentation tag.\"}"
+}

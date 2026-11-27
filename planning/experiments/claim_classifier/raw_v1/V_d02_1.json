@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d02",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The cited quote supports export to Markdown only, so the claim's addition of PDF is not in the cited text.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The cited quote supports export to Markdown only, so the claim's addition of PDF is not in the cited text."
+ },
+ "cost": 0.00491259
+}

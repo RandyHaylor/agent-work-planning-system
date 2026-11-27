@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d07",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The first sentence is supported by the user quote, but the second sentence (the one-second load time on a phone) has no citation.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The first sentence is supported by the user quote, but the second sentence (the one-second load time on a phone) has no citation."
+ },
+ "cost": 0.004834690000000001
+}

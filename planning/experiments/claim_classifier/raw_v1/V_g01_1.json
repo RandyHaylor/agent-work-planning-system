@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The requirement is a single sentence backed by a user_exchange citation, and the brief answer \\\"A\\\" is supported by the pre_text question listing (A) GitHub OAuth, so the claim adds nothing beyond what the exchange says.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The requirement is a single sentence backed by a user_exchange citation, and the brief answer \"A\" is supported by the pre_text question listing (A) GitHub OAuth, so the claim adds nothing beyond what the exchange says."
+ },
+ "cost": 0.00524959
+}

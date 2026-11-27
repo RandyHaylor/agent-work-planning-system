@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "s04",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "raw": "```json\n{\"sentences\": [{\"text\": \"All planning data lives in Postgres 16 on a managed AWS RDS instance with daily backups.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"adds_detail\"}\n```",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "adds_detail"
+ }
+}

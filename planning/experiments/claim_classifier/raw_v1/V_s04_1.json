@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "s04",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"summary_uncited\", \"reason\": \"The summary makes claims (Postgres 16, managed AWS RDS, daily backups) with no citations, and the only cited text says only that planning data is stored in Postgres.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "summary_uncited",
+  "reason": "The summary makes claims (Postgres 16, managed AWS RDS, daily backups) with no citations, and the only cited text says only that planning data is stored in Postgres."
+ },
+ "cost": 0.004767990000000001
+}

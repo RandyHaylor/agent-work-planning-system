@@ -1,0 +1,22 @@
+{
+ "A": {
+  "n": 32,
+  "verdict_correct": 30,
+  "missed_defects(false pass)": [],
+  "false_fails": [
+   "s02",
+   "s06"
+  ],
+  "unparsed": []
+ },
+ "B": {
+  "n": 32,
+  "verdict_correct": 30,
+  "missed_defects(false pass)": [],
+  "false_fails": [
+   "g03",
+   "s02"
+  ],
+  "unparsed": []
+ }
+}

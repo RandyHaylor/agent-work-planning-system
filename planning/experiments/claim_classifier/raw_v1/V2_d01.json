@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "d01",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth.\", \"kind\": \"user_claim\", \"supported\": true}, {\"text\": \"Sessions expire after 24 hours.\", \"kind\": \"user_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

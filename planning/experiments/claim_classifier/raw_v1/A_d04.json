@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d04",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "result": {
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The quote says everything goes in postgres and explicitly excludes sqlite. The claim says planning data is stored in SQLite, which is the opposite."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The quote says everything goes in postgres and explicitly excludes sqlite. The claim says planning data is stored in SQLite, which is the opposite.\"}"
+}

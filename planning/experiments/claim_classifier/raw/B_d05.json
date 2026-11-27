@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d05",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "result": {
+  "sentences": [
+   {
+    "text": "Reviews run on Haiku by default, with local Gemma as fallback.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The cited proposal says the default reviewer is local gemma4 with Haiku as fallback. The claim reverses this, making Haiku the default and Gemma the fallback. The bare 'yes' approves the proposal as written, not the reversed version."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Reviews run on Haiku by default, with local Gemma as fallback.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The cited proposal says the default reviewer is local gemma4 with Haiku as fallback. The claim reverses this, making Haiku the default and Gemma the fallback. The bare 'yes' approves the proposal as written, not the reversed version.\"}"
+}

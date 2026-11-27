@@ -1,0 +1,22 @@
+{
+ "id": "g09",
+ "rep": 2,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Use Postgres as the job queue, as the user asked.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "SKIP LOCKED lets several workers take rows without blocking each other.",
+    "class": "TECH",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

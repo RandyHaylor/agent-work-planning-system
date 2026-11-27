@@ -1,0 +1,17 @@
+{
+ "id": "g06",
+ "rep": 2,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Still need to ask the user about backup retention.",
+    "class": "NONE",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d15",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"wrong_origin\", \"reason\": \"The claim is tagged technical, which needs a loaded document citation, but its only citation is a user_exchange quote that is the user's unverified question, not a document.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "wrong_origin",
+  "reason": "The claim is tagged technical, which needs a loaded document citation, but its only citation is a user_exchange quote that is the user's unverified question, not a document."
+ },
+ "cost": 0.0047076900000000005
+}

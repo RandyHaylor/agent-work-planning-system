@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "h05",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "Planning data lives in Postgres.",
+    "label": "user_claim"
+   },
+   {
+    "text": "The user chose Postgres over MySQL.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The cited user quote ('everything goes in postgres, no sqlite, no files') supports that planning data lives in Postgres. It says nothing about MySQL, so 'the user chose Postgres over MySQL' adds a decision the quote does not contain."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Planning data lives in Postgres.\", \"label\": \"user_claim\"}, {\"text\": \"The user chose Postgres over MySQL.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The cited user quote ('everything goes in postgres, no sqlite, no files') supports that planning data lives in Postgres. It says nothing about MySQL, so 'the user chose Postgres over MySQL' adds a decision the quote does not contain.\"}"
+}

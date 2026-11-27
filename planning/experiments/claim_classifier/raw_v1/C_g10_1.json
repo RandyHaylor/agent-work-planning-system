@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "g10",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Agents ask the user one question at a time.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single requirement sentence is supported by the user_exchange citation, where the brief confirmation 'one at a time please' answers the pre_text question about batching versus asking one at a time, and it adds no detail beyond that.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Agents ask the user one question at a time.",
+    "kind": "user_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single requirement sentence is supported by the user_exchange citation, where the brief confirmation 'one at a time please' answers the pre_text question about batching versus asking one at a time, and it adds no detail beyond that."
+ },
+ "cost": 0.00478719
+}

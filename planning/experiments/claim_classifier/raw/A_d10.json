@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d10",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The first sentence (sync and async APIs) is supported by the quote. The second sentence, 'It is the fastest Python HTTP client available', makes a performance claim the quote does not contain."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The first sentence (sync and async APIs) is supported by the quote. The second sentence, 'It is the fastest Python HTTP client available', makes a performance claim the quote does not contain.\"}"
+}

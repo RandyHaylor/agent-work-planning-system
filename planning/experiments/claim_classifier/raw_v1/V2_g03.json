@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g03",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"Reviews run on the local Gemma model by default.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

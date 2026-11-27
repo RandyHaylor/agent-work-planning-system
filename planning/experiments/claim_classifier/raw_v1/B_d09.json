@@ -1,0 +1,26 @@
+{
+ "cond": "B",
+ "id": "d09",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "Agents ask one question at a time.",
+    "label": "user_claim"
+   },
+   {
+    "text": "Each question offers multiple-choice options.",
+    "label": "user_claim"
+   },
+   {
+    "text": "Unanswered questions time out after ten minutes.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "Only the first sentence is covered by the user's 'yes', which answers 'one at a time, with multiple-choice options where possible'. The second sentence drops 'where possible' and says every question has options, which adds detail the quote does not say. The third sentence (ten-minute timeout) has no citation at all."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Agents ask one question at a time.\", \"label\": \"user_claim\"}, {\"text\": \"Each question offers multiple-choice options.\", \"label\": \"user_claim\"}, {\"text\": \"Unanswered questions time out after ten minutes.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"Only the first sentence is covered by the user's 'yes', which answers 'one at a time, with multiple-choice options where possible'. The second sentence drops 'where possible' and says every question has options, which adds detail the quote does not say. The third sentence (ten-minute timeout) has no citation at all.\"}"
+}

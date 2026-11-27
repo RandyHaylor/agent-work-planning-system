@@ -1,0 +1,11 @@
+{
+ "variant": "V1",
+ "id": "g07",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"mislabelled_note\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "mislabelled_note"
+ }
+}

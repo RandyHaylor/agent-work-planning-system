@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d11",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The second sentence, \\\"Jobs are retried three times with exponential backoff,\\\" is a claim with no citation, and the only citation supports only the first sentence.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The second sentence, \"Jobs are retried three times with exponential backoff,\" is a claim with no citation, and the only citation supports only the first sentence."
+ },
+ "cost": 0.004552789999999999
+}

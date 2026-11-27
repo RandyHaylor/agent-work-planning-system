@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "d10",
+ "rep": 1,
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The first sentence is supported by the citation, but the second sentence, \"It is the fastest Python HTTP client available,\" has no citation and the cited text does not say it."
+ },
+ "raw_tail": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The first sentence is supported by the citation, but the second sentence, \\\"It is the fastest Python HTTP client available,\\\" has no citation and the cited text does not say it.\"}\n"
+}

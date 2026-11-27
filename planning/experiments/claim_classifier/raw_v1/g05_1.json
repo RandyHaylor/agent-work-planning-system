@@ -1,0 +1,17 @@
+{
+ "id": "g05",
+ "rep": 1,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "The jsonb type stores JSON in a decomposed binary format and supports indexing.",
+    "class": "TECH",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

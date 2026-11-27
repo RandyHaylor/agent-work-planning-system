@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g02",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"All planning data is stored in Postgres.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

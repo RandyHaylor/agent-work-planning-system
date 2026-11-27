@@ -1,0 +1,17 @@
+{
+ "id": "g04",
+ "rep": 1,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "httpx supports both synchronous and asynchronous clients.",
+    "class": "TECH",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "s01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The node summary's claim that users sign in with GitHub OAuth is supported by the user's brief 'A' answer to the question 'GitHub OAuth or email+password?' in cited_content, and the summary adds nothing beyond that.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The node summary's claim that users sign in with GitHub OAuth is supported by the user's brief 'A' answer to the question 'GitHub OAuth or email+password?' in cited_content, and the summary adds nothing beyond that."
+ },
+ "cost": 0.004992090000000001
+}

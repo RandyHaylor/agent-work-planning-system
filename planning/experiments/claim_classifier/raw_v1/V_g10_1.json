@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g10",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user_exchange pre_text asks whether the agent should batch questions or ask one at a time, and the quoted reply \\\"one at a time please\\\" answers that question, so the claim that agents ask one question at a time is supported without added detail.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user_exchange pre_text asks whether the agent should batch questions or ask one at a time, and the quoted reply \"one at a time please\" answers that question, so the claim that agents ask one question at a time is supported without added detail."
+ },
+ "cost": 0.00498749
+}

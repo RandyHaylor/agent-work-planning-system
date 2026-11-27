@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "g08",
+ "rep": 1,
+ "expected": "pass",
+ "defect_expected": "none",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user quote states there is no business logic in the UI and that the Gradio app is just an HTTPS client, which supports both claim sentences without adding detail."
+ },
+ "raw_tail": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user quote states there is no business logic in the UI and that the Gradio app is just an HTTPS client, which supports both claim sentences without adding detail.\"}\n"
+}

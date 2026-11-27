@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "h01",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "result": {
+  "sentences": [
+   {
+    "text": "Sessions expire after 12 hours.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The only citation says sessions should expire after 24 hours, which contradicts the claim's 12 hours."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Sessions expire after 12 hours.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The only citation says sessions should expire after 24 hours, which contradicts the claim's 12 hours.\"}"
+}

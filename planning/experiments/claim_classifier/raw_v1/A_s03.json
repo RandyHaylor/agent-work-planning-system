@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "s03",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "summary_uncited",
+  "reason": "The first sentence (users sign in with GitHub OAuth) is supported by the cited requirement. The second sentence, that admins also need hardware security keys, has no support in the cited content or the ancestor summary."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"summary_uncited\", \"reason\": \"The first sentence (users sign in with GitHub OAuth) is supported by the cited requirement. The second sentence, that admins also need hardware security keys, has no support in the cited content or the ancestor summary.\"}"
+}

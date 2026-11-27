@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d10",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The cited document supports only the first sentence (sync and async APIs); the second sentence, 'It is the fastest Python HTTP client available', has no citation and the document does not say it.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The cited document supports only the first sentence (sync and async APIs); the second sentence, 'It is the fastest Python HTTP client available', has no citation and the document does not say it."
+ },
+ "cost": 0.00480159
+}

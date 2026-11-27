@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "g09",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Use Postgres as the job queue, as the user asked.",
+    "label": "user_claim"
+   },
+   {
+    "text": "SKIP LOCKED lets several workers take rows without blocking each other.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "Sentence 1 is supported by the user_exchange quote 'use postgres for the queue too, no redis'. Sentence 2 is supported by the document quote that SKIP LOCKED skips unlockable rows, which avoids lock contention for multiple consumers of a queue-like table."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Use Postgres as the job queue, as the user asked.\", \"label\": \"user_claim\"}, {\"text\": \"SKIP LOCKED lets several workers take rows without blocking each other.\", \"label\": \"technical_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"Sentence 1 is supported by the user_exchange quote 'use postgres for the queue too, no redis'. Sentence 2 is supported by the document quote that SKIP LOCKED skips unlockable rows, which avoids lock contention for multiple consumers of a queue-like table.\"}"
+}

@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d12",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"The item is tagged note, but its claim_text is a requirement (\\\"The system must require two-factor authentication for all admin accounts\\\"), and note content must make no claims.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "The item is tagged note, but its claim_text is a requirement (\"The system must require two-factor authentication for all admin accounts\"), and note content must make no claims."
+ },
+ "cost": 0.004903790000000001
+}

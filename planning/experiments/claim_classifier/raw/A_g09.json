@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "g09",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "Sentence 1 is supported by the user quote 'use postgres for the queue too, no redis'. Sentence 2 is supported by the document's description of SKIP LOCKED skipping locked rows to avoid contention among consumers of a queue-like table. Each sentence has its own support, and the origins match the tag."
+ },
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"Sentence 1 is supported by the user quote 'use postgres for the queue too, no redis'. Sentence 2 is supported by the document's description of SKIP LOCKED skipping locked rows to avoid contention among consumers of a queue-like table. Each sentence has its own support, and the origins match the tag.\"}"
+}

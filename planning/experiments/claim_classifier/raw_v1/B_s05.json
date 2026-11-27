@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "s05",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "httpx is used for model calls because it is the fastest Python client and supports HTTP/3.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "summary_uncited",
+  "reason": "The sentence claims httpx is the fastest Python client and supports HTTP/3. The cited httpx docs say only that it provides sync and async APIs, and the user quote only says 'Use httpx for model calls' with no reason. Neither the citations nor the ancestor summary ('One-shot model calls') support the speed or HTTP/3 rationale."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"httpx is used for model calls because it is the fastest Python client and supports HTTP/3.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"summary_uncited\", \"reason\": \"The sentence claims httpx is the fastest Python client and supports HTTP/3. The cited httpx docs say only that it provides sync and async APIs, and the user quote only says 'Use httpx for model calls' with no reason. Neither the citations nor the ancestor summary ('One-shot model calls') support the speed or HTTP/3 rationale.\"}"
+}

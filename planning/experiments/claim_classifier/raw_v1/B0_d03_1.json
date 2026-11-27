@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "d03",
+ "rep": 1,
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The cited text supports sync and async APIs but says nothing about HTTP/3; it names only HTTP/1.1 and HTTP/2, so the HTTP/3 claim adds detail the citation does not say."
+ },
+ "raw_tail": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The cited text supports sync and async APIs but says nothing about HTTP/3; it names only HTTP/1.1 and HTTP/2, so the HTTP/3 claim adds detail the citation does not say.\"}\n"
+}

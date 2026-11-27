@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d13",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"The item is tagged note, but its claim_text is a technical claim about Postgres advisory locks, which note items may not contain.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "The item is tagged note, but its claim_text is a technical claim about Postgres advisory locks, which note items may not contain."
+ },
+ "cost": 0.00448689
+}

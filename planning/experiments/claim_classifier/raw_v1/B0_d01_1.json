@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "d01",
+ "rep": 1,
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The brief reply \"A\" supports GitHub OAuth sign-in, but nothing in the cited question mentions sessions expiring after 24 hours, so that detail is unsupported."
+ },
+ "raw_tail": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The brief reply \\\"A\\\" supports GitHub OAuth sign-in, but nothing in the cited question mentions sessions expiring after 24 hours, so that detail is unsupported.\"}\n"
+}

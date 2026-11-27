@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "g09",
+ "rep": 1,
+ "expected": "pass",
+ "defect_expected": "none",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user's quote supports using Postgres as the queue, and the document's SKIP LOCKED text covers the non-blocking claim about multiple consumers, so every claim sentence is cited and the plan tag needs only some evidence."
+ },
+ "raw_tail": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user's quote supports using Postgres as the queue, and the document's SKIP LOCKED text covers the non-blocking claim about multiple consumers, so every claim sentence is cited and the plan tag needs only some evidence.\"}\n"
+}

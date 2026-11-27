@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d09",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The claim has three sentences, but the single citation (the user's 'yes' to 'ask one at a time, with multiple-choice options where possible?') supports at most the first two, and even those drop 'where possible'. Nothing supports 'Unanswered questions time out after ten minutes.'"
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The claim has three sentences, but the single citation (the user's 'yes' to 'ask one at a time, with multiple-choice options where possible?') supports at most the first two, and even those drop 'where possible'. Nothing supports 'Unanswered questions time out after ten minutes.'\"}"
+}

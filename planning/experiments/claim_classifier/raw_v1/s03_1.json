@@ -1,0 +1,22 @@
+{
+ "id": "s03",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "summary_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "admins also need hardware security keys.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "s06",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The summary's scope claim that the node 'covers how questions are worded' is not supported. The cited quote 'one at a time please' concerns pacing, not wording, and the ancestor summary is generic. The quote also does not show it refers to questions, since no pre_text is given."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The summary's scope claim that the node 'covers how questions are worded' is not supported. The cited quote 'one at a time please' concerns pacing, not wording, and the ancestor summary is generic. The quote also does not show it refers to questions, since no pre_text is given.\"}"
+}

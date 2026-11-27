@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "d04",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Planning data is stored in SQLite for simplicity.\", \"kind\": \"user_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The only citation says \\\"everything goes in postgres, no sqlite, no files\\\", which rules out SQLite rather than supporting it, and the claim's \\\"for simplicity\\\" rationale appears nowhere in the quote.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Planning data is stored in SQLite for simplicity.",
+    "kind": "user_claim",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The only citation says \"everything goes in postgres, no sqlite, no files\", which rules out SQLite rather than supporting it, and the claim's \"for simplicity\" rationale appears nowhere in the quote."
+ },
+ "cost": 0.00491749
+}

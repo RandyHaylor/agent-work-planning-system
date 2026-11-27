@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "g08",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "The web UI holds no business logic.",
+    "label": "user_claim"
+   },
+   {
+    "text": "It only calls the HTTPS interface.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "Both sentences state what the user decided, and the user_exchange quote supports each: 'no business logic in the UI' and 'the gradio app is just an https client, the https interface does everything'. The quote says 'the UI' rather than 'the web UI', but the Gradio app is the web UI, so this is not added detail."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"The web UI holds no business logic.\", \"label\": \"user_claim\"}, {\"text\": \"It only calls the HTTPS interface.\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"Both sentences state what the user decided, and the user_exchange quote supports each: 'no business logic in the UI' and 'the gradio app is just an https client, the https interface does everything'. The quote says 'the UI' rather than 'the web UI', but the Gradio app is the web UI, so this is not added detail.\"}"
+}

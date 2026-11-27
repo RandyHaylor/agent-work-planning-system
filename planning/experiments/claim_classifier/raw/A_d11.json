@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d11",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The first sentence (Postgres as the job queue) is supported by the user quote. The second sentence, 'Jobs are retried three times with exponential backoff', has no citation, and the quote does not mention retries or backoff."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The first sentence (Postgres as the job queue) is supported by the user quote. The second sentence, 'Jobs are retried three times with exponential backoff', has no citation, and the quote does not mention retries or backoff.\"}"
+}

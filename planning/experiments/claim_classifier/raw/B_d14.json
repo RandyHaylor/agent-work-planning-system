@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "d14",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "Compared queue libraries.",
+    "label": "none"
+   },
+   {
+    "text": "We will use Celery with RabbitMQ for background jobs.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "The second sentence states a decision (use Celery with RabbitMQ) but the node is tagged note, which must make no requirement or technical claim. It also has no citations, so it is uncited even under a correct tag."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Compared queue libraries.\", \"label\": \"none\"}, {\"text\": \"We will use Celery with RabbitMQ for background jobs.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"The second sentence states a decision (use Celery with RabbitMQ) but the node is tagged note, which must make no requirement or technical claim. It also has no citations, so it is uncited even under a correct tag.\"}"
+}

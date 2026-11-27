@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g06",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"Still need to ask the user about backup retention.\", \"kind\": \"none\", \"supported\": false}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

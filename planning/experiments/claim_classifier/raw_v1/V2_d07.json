@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "d07",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "raw": "{\"sentences\": [{\"text\": \"The web UI holds no business logic.\", \"kind\": \"user_claim\", \"supported\": true}, {\"text\": \"It must load in under one second on a phone.\", \"kind\": \"user_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

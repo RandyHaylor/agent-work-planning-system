@@ -1,0 +1,26 @@
+{
+ "cond": "C",
+ "id": "g09",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Use Postgres as the job queue, as the user asked.\", \"kind\": \"user_claim\", \"supported\": true}, {\"text\": \"SKIP LOCKED lets several workers take rows without blocking each other.\", \"kind\": \"technical_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user's quote supports the decision to use Postgres for the queue, and the document's SKIP LOCKED passage supports the claim that workers skip locked rows instead of blocking, with no added detail.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Use Postgres as the job queue, as the user asked.",
+    "kind": "user_claim",
+    "supported": true
+   },
+   {
+    "text": "SKIP LOCKED lets several workers take rows without blocking each other.",
+    "kind": "technical_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user's quote supports the decision to use Postgres for the queue, and the document's SKIP LOCKED passage supports the claim that workers skip locked rows instead of blocking, with no added detail."
+ },
+ "cost": 0.005056290000000001
+}

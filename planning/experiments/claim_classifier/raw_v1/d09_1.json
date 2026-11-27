@@ -1,0 +1,27 @@
+{
+ "id": "d09",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "Agents ask one question at a time.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "Each question offers multiple-choice options.",
+    "class": "USER",
+    "supported": false
+   },
+   {
+    "text": "Unanswered questions time out after ten minutes.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

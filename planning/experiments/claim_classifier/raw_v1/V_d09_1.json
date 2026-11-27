@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d09",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The cited confirmation supports only the one-question-at-a-time and multiple-choice-where-possible sentences, and the ten-minute timeout sentence has no citation at all.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The cited confirmation supports only the one-question-at-a-time and multiple-choice-where-possible sentences, and the ten-minute timeout sentence has no citation at all."
+ },
+ "cost": 0.00504779
+}

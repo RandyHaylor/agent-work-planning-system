@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d04",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The claim says planning data is stored in SQLite, but the cited user quote says everything goes in Postgres with no SQLite and no files, so the citation contradicts the claim rather than supporting it.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The claim says planning data is stored in SQLite, but the cited user quote says everything goes in Postgres with no SQLite and no files, so the citation contradicts the claim rather than supporting it."
+ },
+ "cost": 0.0049160900000000006
+}

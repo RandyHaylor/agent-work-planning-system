@@ -1,0 +1,11 @@
+{
+ "variant": "V1",
+ "id": "d07",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g02",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "All planning data is stored in Postgres.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user_exchange quote 'everything goes in postgres, no sqlite, no files' directly supports the claim that planning data is stored in Postgres. 'Everything' is read as planning data, which matches the node context, and the quote's 'no sqlite, no files' does not contradict the claim."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"All planning data is stored in Postgres.\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user_exchange quote 'everything goes in postgres, no sqlite, no files' directly supports the claim that planning data is stored in Postgres. 'Everything' is read as planning data, which matches the node context, and the quote's 'no sqlite, no files' does not contradict the claim.\"}"
+}

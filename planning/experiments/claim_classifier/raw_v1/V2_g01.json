@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

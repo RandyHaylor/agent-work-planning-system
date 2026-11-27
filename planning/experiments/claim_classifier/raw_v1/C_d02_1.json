@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "d02",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Plans export to Markdown and PDF.\", \"kind\": \"user_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The cited user quote supports only export of a plan as Markdown, so the PDF format is added detail the citation does not say.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Plans export to Markdown and PDF.",
+    "kind": "user_claim",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The cited user quote supports only export of a plan as Markdown, so the PDF format is added detail the citation does not say."
+ },
+ "cost": 0.00490899
+}

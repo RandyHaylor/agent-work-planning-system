@@ -1,0 +1,17 @@
+{
+ "id": "d04",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "contradicts",
+ "result": {
+  "sentences": [
+   {
+    "text": "Planning data is stored in SQLite for simplicity.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "contradicts"
+ }
+}

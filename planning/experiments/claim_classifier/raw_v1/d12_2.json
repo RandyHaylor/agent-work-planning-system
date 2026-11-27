@@ -1,0 +1,17 @@
+{
+ "id": "d12",
+ "rep": 2,
+ "expected": "fail",
+ "defect": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "The system must require two-factor authentication for all admin accounts.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note"
+ }
+}

@@ -1,0 +1,31 @@
+{
+ "cond": "C",
+ "id": "s04",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"[requirement] All planning data is stored in Postgres.\", \"kind\": \"user_claim\", \"supported\": true}, {\"text\": \"(cites user: 'everything goes in postgres')\", \"kind\": \"none\", \"supported\": true}, {\"text\": \"All planning data lives in Postgres 16 on a managed AWS RDS instance with daily backups.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"summary_uncited\", \"reason\": \"The node_context_summary makes technical claims (Postgres 16, managed AWS RDS, daily backups) with no citation, while the structured citations array is empty; the cited_content requirement line is supported by the user quote but does not cover those details.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "[requirement] All planning data is stored in Postgres.",
+    "kind": "user_claim",
+    "supported": true
+   },
+   {
+    "text": "(cites user: 'everything goes in postgres')",
+    "kind": "none",
+    "supported": true
+   },
+   {
+    "text": "All planning data lives in Postgres 16 on a managed AWS RDS instance with daily backups.",
+    "kind": "technical_claim",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "summary_uncited",
+  "reason": "The node_context_summary makes technical claims (Postgres 16, managed AWS RDS, daily backups) with no citation, while the structured citations array is empty; the cited_content requirement line is supported by the user quote but does not cover those details."
+ },
+ "cost": 0.0051713900000000005
+}

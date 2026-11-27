@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "d05",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "rep": 1,
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"contradicts\", \"reason\": \"The cited pre_text proposes local gemma4 as the default reviewer with Haiku as fallback, and the bare \\\"yes\\\" approves that, so the claim that Haiku is the default with Gemma as fallback reverses what was approved.\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "contradicts",
+  "reason": "The cited pre_text proposes local gemma4 as the default reviewer with Haiku as fallback, and the bare \"yes\" approves that, so the claim that Haiku is the default with Gemma as fallback reverses what was approved."
+ },
+ "cost": 0.00485629
+}

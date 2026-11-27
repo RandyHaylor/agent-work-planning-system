@@ -1,0 +1,22 @@
+{
+ "id": "d14",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "Compared queue libraries.",
+    "class": "NONE",
+    "supported": true
+   },
+   {
+    "text": "We will use Celery with RabbitMQ for background jobs.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note"
+ }
+}

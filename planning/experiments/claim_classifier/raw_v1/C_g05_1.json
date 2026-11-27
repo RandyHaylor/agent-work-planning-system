@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "g05",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"The jsonb type stores JSON in a decomposed binary format and supports indexing.\", \"kind\": \"technical_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single claim sentence is a documentation fact fully supported by the document-origin citation, which states that jsonb is stored in a decomposed binary format and supports indexing, with no added detail.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "The jsonb type stores JSON in a decomposed binary format and supports indexing.",
+    "kind": "technical_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single claim sentence is a documentation fact fully supported by the document-origin citation, which states that jsonb is stored in a decomposed binary format and supports indexing, with no added detail."
+ },
+ "cost": 0.00499909
+}

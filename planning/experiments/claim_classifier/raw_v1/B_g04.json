@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g04",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "httpx supports both synchronous and asynchronous clients.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The document quote states HTTPX 'provides sync and async APIs', which supports the single technical claim. 'Clients' for 'APIs' is a close paraphrase, not added detail. The citation is a document origin and matches the technical claim tag."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"httpx supports both synchronous and asynchronous clients.\", \"label\": \"technical_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The document quote states HTTPX 'provides sync and async APIs', which supports the single technical claim. 'Clients' for 'APIs' is a close paraphrase, not added detail. The citation is a document origin and matches the technical claim tag.\"}"
+}

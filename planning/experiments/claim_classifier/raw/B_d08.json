@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "d08",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "All planning data is stored in Postgres.",
+    "label": "user_claim"
+   },
+   {
+    "text": "Postgres 16 logical replication keeps a hot standby in sync.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "Sentence 1 is supported by the user_exchange quote 'everything goes in postgres'. Sentence 2 is a technical claim about Postgres 16 replication and hot standbys, with no document citation. Its only citation is the user quote, which says nothing about replication, so the claim adds detail the quote does not say."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"All planning data is stored in Postgres.\", \"label\": \"user_claim\"}, {\"text\": \"Postgres 16 logical replication keeps a hot standby in sync.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"Sentence 1 is supported by the user_exchange quote 'everything goes in postgres'. Sentence 2 is a technical claim about Postgres 16 replication and hot standbys, with no document citation. Its only citation is the user quote, which says nothing about replication, so the claim adds detail the quote does not say.\"}"
+}

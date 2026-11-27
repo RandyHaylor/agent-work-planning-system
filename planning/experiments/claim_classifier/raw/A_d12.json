@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d12",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "Tagged as a note, but the claim states a requirement (\"The system must require two-factor authentication for all admin accounts\"). A note may make no requirement or technical claim, so it should be relabelled as a requirement and cited to a user quote."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"Tagged as a note, but the claim states a requirement (\\\"The system must require two-factor authentication for all admin accounts\\\"). A note may make no requirement or technical claim, so it should be relabelled as a requirement and cited to a user quote.\"}"
+}

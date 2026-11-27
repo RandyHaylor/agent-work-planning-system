@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "d06",
+ "expected": "fail",
+ "defect_expected": "contradicts",
+ "raw": "{\"sentences\": [{\"text\": \"The json type is faster to process than jsonb.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"contradicts\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "contradicts"
+ }
+}

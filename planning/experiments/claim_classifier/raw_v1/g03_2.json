@@ -1,0 +1,17 @@
+{
+ "id": "g03",
+ "rep": 2,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Reviews run on the local Gemma model by default.",
+    "class": "USER",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

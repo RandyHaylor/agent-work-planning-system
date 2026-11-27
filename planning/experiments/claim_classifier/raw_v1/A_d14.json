@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d14",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "Tagged as a note, but the second sentence states a decision (\"We will use Celery with RabbitMQ for background jobs\"), which is a requirement/technical claim. Notes may make no such claim. It also has no citations, so it would fail as uncited even if relabelled."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"Tagged as a note, but the second sentence states a decision (\\\"We will use Celery with RabbitMQ for background jobs\\\"), which is a requirement/technical claim. Notes may make no such claim. It also has no citations, so it would fail as uncited even if relabelled.\"}"
+}

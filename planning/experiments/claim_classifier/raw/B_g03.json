@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g03",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Reviews run on the local Gemma model by default.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The 'yes' is an approval whose pre_text shows the proposal it answers (default reviewer = local gemma4). The claim says 'local Gemma model', which matches gemma4 without adding detail. It leaves out the Haiku fallback, which is an omission, not an added claim."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Reviews run on the local Gemma model by default.\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The 'yes' is an approval whose pre_text shows the proposal it answers (default reviewer = local gemma4). The claim says 'local Gemma model', which matches gemma4 without adding detail. It leaves out the Haiku fallback, which is an omission, not an added claim.\"}"
+}

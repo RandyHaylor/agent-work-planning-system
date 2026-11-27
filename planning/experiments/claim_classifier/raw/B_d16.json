@@ -1,0 +1,22 @@
+{
+ "cond": "B",
+ "id": "d16",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "result": {
+  "sentences": [
+   {
+    "text": "Use httpx for model calls.",
+    "label": "user_claim"
+   },
+   {
+    "text": "httpx supports HTTP/2 out of the box with no extra install.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "wrong_origin",
+  "reason": "The first sentence is supported by the user quote. The second is a technical claim cited only to user_exchange, and the quote only says the user thinks httpx does HTTP/2 fine. It has no document citation, and 'out of the box with no extra install' goes beyond the quote."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Use httpx for model calls.\", \"label\": \"user_claim\"}, {\"text\": \"httpx supports HTTP/2 out of the box with no extra install.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"wrong_origin\", \"reason\": \"The first sentence is supported by the user quote. The second is a technical claim cited only to user_exchange, and the quote only says the user thinks httpx does HTTP/2 fine. It has no document citation, and 'out of the box with no extra install' goes beyond the quote.\"}"
+}

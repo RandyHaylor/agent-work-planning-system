@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g09",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The plan-tagged claim is fully supported: the user quote backs the Postgres-as-queue sentence, and the document backs the SKIP LOCKED sentence, since skipping locked rows is what avoids blocking under contention.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The plan-tagged claim is fully supported: the user quote backs the Postgres-as-queue sentence, and the document backs the SKIP LOCKED sentence, since skipping locked rows is what avoids blocking under contention."
+ },
+ "cost": 0.00523399
+}

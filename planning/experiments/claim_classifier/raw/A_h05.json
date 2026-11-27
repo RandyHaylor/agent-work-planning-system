@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "h05",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The first claim, that planning data lives in Postgres, is supported by the cited quote. The second claim, that the user chose Postgres over MySQL, adds a MySQL comparison the quote does not contain, and the ancestor summary does not mention MySQL either."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The first claim, that planning data lives in Postgres, is supported by the cited quote. The second claim, that the user chose Postgres over MySQL, adds a MySQL comparison the quote does not contain, and the ancestor summary does not mention MySQL either.\"}"
+}

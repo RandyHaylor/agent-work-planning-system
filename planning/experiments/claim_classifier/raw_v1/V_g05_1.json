@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g05",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single-sentence documentation claim is fully supported by the cited document text, which states that jsonb data is stored in a decomposed binary format and that jsonb supports indexing.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single-sentence documentation claim is fully supported by the cited document text, which states that jsonb data is stored in a decomposed binary format and that jsonb supports indexing."
+ },
+ "cost": 0.00496279
+}

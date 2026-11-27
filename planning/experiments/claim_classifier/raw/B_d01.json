@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d01",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth, and sessions expire after 24 hours.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The only citation is the answer 'A' to the sign-in question, which supports GitHub OAuth. Nothing in the citation mentions a 24-hour session expiry, so that part of the sentence is unsupported."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth, and sessions expire after 24 hours.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The only citation is the answer 'A' to the sign-in question, which supports GitHub OAuth. Nothing in the citation mentions a 24-hour session expiry, so that part of the sentence is unsupported.\"}"
+}

@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "s05",
+ "expected": "fail",
+ "defect_expected": "summary_uncited",
+ "raw": "{\"sentences\": [{\"text\": \"httpx is used for model calls because it is the fastest Python client and supports HTTP/3.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"summary_uncited\"}",
+ "parsed": {
+  "verdict": "fail",
+  "defect": "summary_uncited"
+ }
+}

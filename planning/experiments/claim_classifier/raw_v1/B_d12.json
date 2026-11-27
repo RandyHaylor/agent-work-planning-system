@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d12",
+ "expected": "fail",
+ "defect_expected": "mislabelled_note",
+ "result": {
+  "sentences": [
+   {
+    "text": "The system must require two-factor authentication for all admin accounts.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "mislabelled_note",
+  "reason": "Tagged as a note, but the sentence states a requirement (2FA for all admin accounts) and has no citation. A note may make no requirement or technical claim."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"The system must require two-factor authentication for all admin accounts.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"mislabelled_note\", \"reason\": \"Tagged as a note, but the sentence states a requirement (2FA for all admin accounts) and has no citation. A note may make no requirement or technical claim.\"}"
+}

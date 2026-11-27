@@ -1,0 +1,17 @@
+{
+ "id": "g02",
+ "rep": 1,
+ "expected": "pass",
+ "defect": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "All planning data is stored in Postgres.",
+    "class": "USER",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

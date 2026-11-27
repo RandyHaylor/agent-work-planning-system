@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d08",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The claim has two sentences. The quote supports only the first ('everything goes in postgres'). The second sentence, about Postgres 16 logical replication and a hot standby, has no citation and nothing in the quote supports it."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The claim has two sentences. The quote supports only the first ('everything goes in postgres'). The second sentence, about Postgres 16 logical replication and a hot standby, has no citation and nothing in the quote supports it.\"}"
+}

@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g07",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Looked at three queue libraries so far; comparison continues in the next node.",
+    "label": "none"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The sole sentence is process/status talk about the research's progress, which a note may contain without citation. It makes no requirement or technical claim, so the note tag and empty citations are correct."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Looked at three queue libraries so far; comparison continues in the next node.\", \"label\": \"none\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The sole sentence is process/status talk about the research's progress, which a note may contain without citation. It makes no requirement or technical claim, so the note tag and empty citations are correct.\"}"
+}

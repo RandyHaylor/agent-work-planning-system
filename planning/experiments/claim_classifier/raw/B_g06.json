@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "g06",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Still need to ask the user about backup retention.",
+    "label": "none"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "Single sentence is process/status talk about a pending question, so it is 'none'. The node is tagged note, which makes no requirement or technical claim and needs no citation."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Still need to ask the user about backup retention.\", \"label\": \"none\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"Single sentence is process/status talk about a pending question, so it is 'none'. The node is tagged note, which makes no requirement or technical claim and needs no citation.\"}"
+}

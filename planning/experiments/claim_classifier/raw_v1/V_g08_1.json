@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g08",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The user_exchange quote states that there is no business logic in the UI, that the Gradio app is just an HTTPS client, and that the HTTPS interface does everything, which supports both sentences of the claim without adding detail.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The user_exchange quote states that there is no business logic in the UI, that the Gradio app is just an HTTPS client, and that the HTTPS interface does everything, which supports both sentences of the claim without adding detail."
+ },
+ "cost": 0.00510339
+}

@@ -1,0 +1,17 @@
+{
+ "id": "s04",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "summary_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "All planning data lives in Postgres 16 on a managed AWS RDS instance with daily backups.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail"
+ }
+}

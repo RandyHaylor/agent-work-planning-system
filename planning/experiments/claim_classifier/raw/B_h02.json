@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "h02",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "result": {
+  "sentences": [
+   {
+    "text": "jsonb supports indexing with GIN indexes.",
+    "label": "technical_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The quote says jsonb supports indexing and calls it an advantage. It does not mention GIN indexes, so the claim adds detail the citation does not state."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"jsonb supports indexing with GIN indexes.\", \"label\": \"technical_claim\"}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The quote says jsonb supports indexing and calls it an advantage. It does not mention GIN indexes, so the claim adds detail the citation does not state.\"}"
+}

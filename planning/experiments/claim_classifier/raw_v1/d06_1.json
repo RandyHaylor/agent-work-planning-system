@@ -1,0 +1,17 @@
+{
+ "id": "d06",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "contradicts",
+ "result": {
+  "sentences": [
+   {
+    "text": "The json type is faster to process than jsonb.",
+    "class": "TECH",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "contradicts"
+ }
+}

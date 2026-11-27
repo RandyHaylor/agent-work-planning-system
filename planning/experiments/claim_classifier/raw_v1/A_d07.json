@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d07",
+ "expected": "fail",
+ "defect_expected": "multi_sentence_uncited",
+ "result": {
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited",
+  "reason": "The claim has two sentences. The first ('The web UI holds no business logic') is supported by the user quote. The second ('It must load in under one second on a phone') has no citation and nothing in the quote mentions load time or phones."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"multi_sentence_uncited\", \"reason\": \"The claim has two sentences. The first ('The web UI holds no business logic') is supported by the user quote. The second ('It must load in under one second on a phone') has no citation and nothing in the quote mentions load time or phones.\"}"
+}

@@ -1,0 +1,21 @@
+{
+ "cond": "C",
+ "id": "g03",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Reviews run on the local Gemma model by default.\", \"kind\": \"user_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The proposal_response pre_text asks approval of 'default reviewer = local gemma4', and the reply 'yes' answers it, so the decision is supported without added detail.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Reviews run on the local Gemma model by default.",
+    "kind": "user_claim",
+    "supported": true
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The proposal_response pre_text asks approval of 'default reviewer = local gemma4', and the reply 'yes' answers it, so the decision is supported without added detail."
+ },
+ "cost": 0.004745290000000001
+}

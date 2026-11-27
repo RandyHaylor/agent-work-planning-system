@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g06",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The item is tagged note and its text is a to-do about asking the user, which is neither a requirement, decision, technical, nor documentation claim, so it needs no citation.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The item is tagged note and its text is a to-do about asking the user, which is neither a requirement, decision, technical, nor documentation claim, so it needs no citation."
+ },
+ "cost": 0.005202590000000001
+}

@@ -1,0 +1,22 @@
+{
+ "id": "d08",
+ "rep": 2,
+ "expected": "fail",
+ "defect": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "All planning data is stored in Postgres.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "Postgres 16 logical replication keeps a hot standby in sync.",
+    "class": "TECH",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

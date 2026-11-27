@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "d03",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "result": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The quote supports sync and async APIs and HTTP/1.1 and HTTP/2, but says nothing about HTTP/3. The claim's HTTP/3 support is added detail the document does not state."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The quote supports sync and async APIs and HTTP/1.1 and HTTP/2, but says nothing about HTTP/3. The claim's HTTP/3 support is added detail the document does not state.\"}"
+}

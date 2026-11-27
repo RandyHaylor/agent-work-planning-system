@@ -1,0 +1,12 @@
+{
+ "cond": "A",
+ "id": "h04",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "result": {
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The only citation is a document quote about SKIP LOCKED skipping locked rows. It does not say Postgres should be the job queue, and it says nothing about the user asking for it, so the 'as the user asked' detail is unsupported."
+ },
+ "raw": "{\"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The only citation is a document quote about SKIP LOCKED skipping locked rows. It does not say Postgres should be the job queue, and it says nothing about the user asking for it, so the 'as the user asked' detail is unsupported.\"}"
+}

@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "s01",
+ "expected": "pass",
+ "defect_expected": "none",
+ "result": {
+  "sentences": [
+   {
+    "text": "Users sign in with GitHub OAuth (user chose option A).",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single claim is a user decision backed by the user's bare 'A' answer, which is valid because the pre_text shows the question 'GitHub OAuth or email+password?'. The claim adds no detail beyond that choice."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Users sign in with GitHub OAuth (user chose option A).\", \"label\": \"user_claim\"}], \"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single claim is a user decision backed by the user's bare 'A' answer, which is valid because the pre_text shows the question 'GitHub OAuth or email+password?'. The claim adds no detail beyond that choice.\"}"
+}

@@ -1,0 +1,22 @@
+{
+ "id": "d11",
+ "rep": 1,
+ "expected": "fail",
+ "defect": "multi_sentence_uncited",
+ "result": {
+  "sentences": [
+   {
+    "text": "Use Postgres as the job queue, as the user asked.",
+    "class": "USER",
+    "supported": true
+   },
+   {
+    "text": "Jobs are retried three times with exponential backoff.",
+    "class": "USER",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "multi_sentence_uncited"
+ }
+}

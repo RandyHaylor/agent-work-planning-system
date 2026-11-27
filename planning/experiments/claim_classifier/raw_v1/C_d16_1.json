@@ -1,0 +1,26 @@
+{
+ "cond": "C",
+ "id": "d16",
+ "expected": "fail",
+ "defect_expected": "wrong_origin",
+ "rep": 1,
+ "raw": "{\"sentences\": [{\"text\": \"Use httpx for model calls.\", \"kind\": \"user_claim\", \"supported\": true}, {\"text\": \"httpx supports HTTP/2 out of the box with no extra install.\", \"kind\": \"technical_claim\", \"supported\": false}], \"verdict\": \"fail\", \"defect\": \"wrong_origin\", \"reason\": \"The second sentence is a technical claim, which a requirement tag does not allow unless a document origin supports it, and the only citation is a user_exchange that says httpx 'does http2 fine' without mentioning 'out of the box' or 'no extra install'.\"}",
+ "parsed": {
+  "sentences": [
+   {
+    "text": "Use httpx for model calls.",
+    "kind": "user_claim",
+    "supported": true
+   },
+   {
+    "text": "httpx supports HTTP/2 out of the box with no extra install.",
+    "kind": "technical_claim",
+    "supported": false
+   }
+  ],
+  "verdict": "fail",
+  "defect": "wrong_origin",
+  "reason": "The second sentence is a technical claim, which a requirement tag does not allow unless a document origin supports it, and the only citation is a user_exchange that says httpx 'does http2 fine' without mentioning 'out of the box' or 'no extra install'."
+ },
+ "cost": 0.0048608900000000005
+}

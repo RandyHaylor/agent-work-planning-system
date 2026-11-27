@@ -1,0 +1,18 @@
+{
+ "cond": "B",
+ "id": "d02",
+ "expected": "fail",
+ "defect_expected": "adds_detail",
+ "result": {
+  "sentences": [
+   {
+    "text": "Plans export to Markdown and PDF.",
+    "label": "user_claim"
+   }
+  ],
+  "verdict": "fail",
+  "defect": "adds_detail",
+  "reason": "The quote supports export to Markdown only ('export a plan as markdown'). The claim adds PDF, which the quote does not mention, so the sentence is unsupported."
+ },
+ "raw": "{\"sentences\": [{\"text\": \"Plans export to Markdown and PDF.\", \"label\": \"user_claim\"}], \"verdict\": \"fail\", \"defect\": \"adds_detail\", \"reason\": \"The quote supports export to Markdown only ('export a plan as markdown'). The claim adds PDF, which the quote does not mention, so the sentence is unsupported.\"}"
+}

@@ -1,0 +1,13 @@
+{
+ "cond": "B0",
+ "id": "g05",
+ "rep": 1,
+ "expected": "pass",
+ "defect_expected": "none",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The single claim sentence is supported by the cited document text: jsonb is stored in a decomposed binary format and supports indexing, with no added detail or contradiction."
+ },
+ "raw_tail": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The single claim sentence is supported by the cited document text: jsonb is stored in a decomposed binary format and supports indexing, with no added detail or contradiction.\"}\n"
+}

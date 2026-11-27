@@ -1,0 +1,11 @@
+{
+ "variant": "V2",
+ "id": "g05",
+ "expected": "pass",
+ "defect_expected": "none",
+ "raw": "{\"sentences\": [{\"text\": \"The jsonb type stores JSON in a decomposed binary format and supports indexing.\", \"kind\": \"technical_claim\", \"supported\": true}], \"verdict\": \"pass\", \"defect\": \"none\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none"
+ }
+}

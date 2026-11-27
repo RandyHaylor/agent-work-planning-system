@@ -1,0 +1,14 @@
+{
+ "cond": "V",
+ "id": "g07",
+ "expected": "pass",
+ "defect_expected": "none",
+ "rep": 1,
+ "raw": "{\"verdict\": \"pass\", \"defect\": \"none\", \"reason\": \"The note only reports research progress (that three queue libraries were looked at and comparison continues), with no requirement or technical claim about the system, so it needs no citation.\"}",
+ "parsed": {
+  "verdict": "pass",
+  "defect": "none",
+  "reason": "The note only reports research progress (that three queue libraries were looked at and comparison continues), with no requirement or technical claim about the system, so it needs no citation."
+ },
+ "cost": 0.00496329
+}
