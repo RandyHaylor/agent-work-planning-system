@@ -11,3 +11,5 @@ node_modules/
 tools/pi/agent/sessions/
 stop-settings.json
 .claude/worktrees/
+.claude/settings.local.json
+.claude/usage.json
