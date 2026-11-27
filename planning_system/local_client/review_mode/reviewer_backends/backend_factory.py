@@ -1,21 +1,20 @@
 """ReviewerBackendFactory: backend name (from client config / `--backend`) -> backend. Adding a harness = one class
-plus one entry in _builders."""
+plus one entry in _builders. pi is parked (user 2026-11-26) and not selectable here."""
 from __future__ import annotations
 
 from typing import Callable, Optional
 
-import httpx
-
 from planning_system.contract import Invalid
+from planning_system.model_calls import ModelEndpointFactory, load_model_endpoints
 
 from ...review_worker import ReviewWorkerInterface
 from .claude_code_backend import DEFAULT_CLAUDE_REVIEWER_MODEL, ClaudeCodeBackend
 from .interface import ReviewerBackend
-from .local_llm_backend import DEFAULT_LOCAL_LLM_MODEL, LocalLlmBackend
-from .pi_backend import DEFAULT_PI_MODEL, PiBackend
+from .one_shot_backend import OneShotReviewerBackend
 
 DEFAULT_BACKEND = "local_llm"
-BACKEND_NAMES = ("local_llm", "claude_code", "pi")
+BACKEND_NAMES = ("local_llm", "claude_code")
+DEFAULT_LOCAL_ENDPOINT = "local_gemma4"
 
 ReviewWorkerFactory = Callable[[str], ReviewWorkerInterface]   # model name -> review worker
 
@@ -33,17 +32,20 @@ def claude_code_review_worker(model: str) -> ReviewWorkerInterface:
 
 
 class ReviewerBackendFactory:
+    """model_endpoints defaults to load_model_endpoints() (read on first local_llm use); `model` for local_llm
+    overrides the endpoint's configured model."""
 
     def __init__(self, review_worker_factory: Optional[ReviewWorkerFactory] = None,
-                 http_transport: Optional[httpx.BaseTransport] = None):
+                 model_endpoints: Optional[ModelEndpointFactory] = None,
+                 local_endpoint_name: str = DEFAULT_LOCAL_ENDPOINT):
         self._review_worker_factory = review_worker_factory or claude_code_review_worker
-        self._http_transport = http_transport
+        self._model_endpoints = model_endpoints
+        self._local_endpoint_name = local_endpoint_name
         self._builders: dict[str, Callable[[Optional[str]], ReviewerBackend]] = {
-            "local_llm": lambda model: LocalLlmBackend(model=model or DEFAULT_LOCAL_LLM_MODEL,
-                                                       transport=self._http_transport),
+            "local_llm": lambda model: OneShotReviewerBackend(
+                self._endpoints().create(self._local_endpoint_name, model)),
             "claude_code": lambda model: ClaudeCodeBackend(
                 self._review_worker_factory(model or DEFAULT_CLAUDE_REVIEWER_MODEL)),
-            "pi": lambda model: PiBackend(model=model or DEFAULT_PI_MODEL),
         }
 
     def create(self, name: Optional[str] = None, model: Optional[str] = None) -> ReviewerBackend:
@@ -51,3 +53,8 @@ class ReviewerBackendFactory:
         if builder is None:
             raise Invalid(f"unknown reviewer backend {name!r}; choose one of {', '.join(BACKEND_NAMES)}")
         return builder(model)
+
+    def _endpoints(self) -> ModelEndpointFactory:
+        if self._model_endpoints is None:
+            self._model_endpoints = load_model_endpoints()
+        return self._model_endpoints

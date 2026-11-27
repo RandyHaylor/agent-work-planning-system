@@ -1,4 +1,7 @@
-"""pi: our tiny pi harness (build log #47): the npm-installed pi CLI under tools/pi in RPC mode, isolated config
+"""PARKED (user 2026-11-26): pinned, not wired; may be integrated later the way Unharness does. Not selectable
+from ReviewerBackendFactory; kept with its tests (run against a fake pi process).
+
+pi: our tiny pi harness (build log #47): the npm-installed pi CLI under tools/pi in RPC mode, isolated config
 via PI_CODING_AGENT_DIR=tools/pi/agent, provider local-llamacpp (the same llama.cpp gemma4 server), thinking off
 through PI_REQUEST_PAYLOAD_INJECTION_JSON (read by the copied reasoning-control extension). Bare: no tools, no
 session file, no context files/skills/templates/themes. Running it live waits on the user's OK (build log #48)."""

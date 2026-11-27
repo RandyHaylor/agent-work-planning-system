@@ -68,7 +68,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     # Content reviews (05-spec-citation-enforcement-and-review.md "CLI"); serve runs under the review task's token
     CommandSpec(("review", "serve"), TARGET_LOCAL, "serve_reviews", (
         Arg("--project", "project_id", "int", required=True),
-        Arg("--backend", "backend", help="local_llm (default) | claude_code | pi"), Arg("--model", "model"),
+        Arg("--backend", "backend", help="local_llm (default; --model overrides the endpoint's model) | claude_code"), Arg("--model", "model"),
         Arg("--poll-seconds", "poll_seconds", "float", default=5.0), Arg("--once", "once", "flag"))),
     CommandSpec(("review", "list"), TARGET_API, "list_reviews", (
         Arg("--project", "project_id", "int", required=True),
