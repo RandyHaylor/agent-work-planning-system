@@ -363,6 +363,12 @@ The user corrected premises in the agent's "already decided" list; fixed in `02-
 - User: "Talk to unharness dev to find out about mimicing it's pi vm runner in our own env, running our own tiny pi harness and running small minmal mpi sessions using the same gemma4 model that can run on local host."
 - This supersedes build log #18 ("review_dispatch reduces to the planner running an ordinary review task"): reviews run automatically on a client in review mode.
 
+### Model calls, pi parked, agent failure modes (user, 2026-11-26)
+
+- User: "What I want is this: a good generic interface, and yes lets just go with a direct llama.cpp for one-off for now to keep this tidy. We'll hold off on PI as later we might integrate it the way that unharness does." and "your initial PI integration, lets just pin that and ignore it for the moment."
+- Enforced citations (code and review) to be discussed: "it should mean that we require research quotes where appropriate and user quotes where appropriate. Lets talk through oht it works now and how we might want it to work to have the desired effect."
+- Failure modes to address in the system (user's words): agents "reinvent wheels for no good reason. every direction/suggestion/plan should be questioned 'do common pattenrs/examples/open source solutions exist already? are there lessons learned out there we can lean on?"; agents "latch onto the first idea of what's wrong instead of considering all possibilities and deciding which are most likely given th current situation, or prioritizing eliminating the very easiest to rule out"; the "guess and try hallucinatory loop": "when an error is hit, identify what can possibly be the cause by researching ONLY THE ERROR - NOT INCLUDING THE GUESSES THE AGENT COMES UP WITH!" Options to explore: rules in the prompt builder ("will act more as a role prompt manager for us"), "perhaps we need some scaffolding/detection/templates/something".
+
 ### Build handover and process (user, 2026-11-25)
 
 - **Process kept for the build.** User: "the spirit of this tool is that the planner and user totally map out/scaffold/write integration tests/types/hollow modules/etc for the whole project THEN the work can churn along and do as much as it can without intervention, noting any issues to address for the end once all work that can be done (to scope and spec and within our rules) is done."
