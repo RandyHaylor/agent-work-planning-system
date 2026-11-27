@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "db_wrong_database",
+ "rep": 2,
+ "answer": "**Diagnosis: the migration ran against the wrong database.** The app connects to `planning` (from `DATABASE_URL=postgresql://app@localhost/planning`), but `psql -d planning_dev -f 0007_owner.sql` applied the change to `planning_dev`. So `planning.plans` never got `owner_id`, and the query fails.\n\nThe hint supports this. Postgres suggests `plans.owner_name`, so the `plans` table the app is hitting has a similar column under a different name. That table is probably an older schema, not the one the migration changed. The `ALTER TABLE` output only confirms the change landed in `planning_dev`.\n\nI could not check this directly: `psql` isn't installed in this sandbox, and the migration file isn't in this repo (the only match was an unrelated experiment script). So this rests on the error text and the connection string, not on inspecting either database.\n\n**Fix**\n\n1. Confirm the target schema (as the app's role):\n   ```\n   psql \"postgresql://app@localhost/planning\" -c '\\d plans'\n   ```\n   You should see `owner_name` and no `owner_id`.\n\n2. Read `0007_owner.sql` before running it on `planning`. If it only adds `owner_id`, it's safe. If `owner_name` exists in the app's DB and holds data, the migration probably needs a backfill (`owner_id` from `owner_name`) and possibly a drop of the old column. Don't run it blind against a DB with data.\n\n3. Apply it to the app's database:\n   ```\n   psql \"postgresql://app@localhost/planning\" -f 0007_owner.sql\n   ```\n\n4. Verify, then restart the app and re-run the failing query:\n   ```\n   psql \"postgresql://app@localhost/planning\" -c '\\d plans'\n   ```\n\n**Also check**\n\n- If `planning_dev` is meant to be the app's database, the other option is to point `DATABASE_URL` at it. Pick one database for the app and migrate that one; don't keep two that drift.\n- If the app's migration tool tracks applied versions (e.g. a `schema_migrations` table), record 0007 there after applying it by hand, or the next migrate run will try to apply it again.",
+ "grade": {
+  "candidates": 1,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": true,
+  "ranks_cost": false
+ }
+}

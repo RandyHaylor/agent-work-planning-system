@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "db_wrong_database",
+ "rep": 1,
+ "answer": "**Diagnosis: the migration went to the wrong database.**\n\n- `psql -d planning_dev -f 0007_owner.sql` applied the change to `planning_dev`. The app connects with `DATABASE_URL=postgresql://app@localhost/planning`, so it reads `planning`, which never got `owner_id`. The `ALTER TABLE` output only confirms the statement ran somewhere, not that it ran where the app looks.\n- The `HINT` confirms this. Postgres suggests `plans.owner_name` because that column exists in the database the app is actually querying. So `planning` has an older `plans` table with `owner_name` and no `owner_id`.\n\nI couldn't check the migration file itself. `0007_owner.sql` isn't in this repo, so I haven't verified its contents.\n\n**Fix:** apply the same migration to the database the app uses, then confirm:\n\n```bash\npsql \"postgresql://app@localhost/planning\" -f 0007_owner.sql\npsql \"postgresql://app@localhost/planning\" -c '\\d plans'\n```\n\n`\\d plans` should list `owner_id`. Then restart the app or rerun the failing query.\n\n**Before you run it:**\n\n1. Check that `planning` doesn't already have `owner_id` under another name. The hint points at `owner_name`. If the column is meant to replace `owner_name`, the migration needs to backfill from it and possibly drop it. I'd want to see the migration before deciding that, and you should confirm what `owner_name` holds.\n2. Decide whether `planning_dev` should match. If it should, run the migration there too, or the two databases will drift.\n3. Make sure the migration is safe to rerun. If it isn't, guard it with `ADD COLUMN IF NOT EXISTS`, or check `\\d plans` first.\n\nIf you paste `0007_owner.sql` and the output of `\\d plans` from `planning`, I can confirm whether the owner_name case needs a backfill.",
+ "grade": {
+  "candidates": 1,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}

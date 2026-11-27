@@ -1,0 +1,14 @@
+{
+ "cond": "P",
+ "scenario": "port_in_use",
+ "rep": 2,
+ "answer": "**Error (verbatim key line):** `Error: listen EADDRINUSE: address already in use :::3000`\n\n**Candidate causes, ranked by likelihood**\n\n1. **A different long-running process holds port 3000.** Likelihood: high. Cost: trivial (done). `ss -ltnp 'sport = :3000'` shows a LISTEN socket on `0.0.0.0:3000` and `[::]:3000`, but no process name. That usually means the owner is another user or root.\n2. **Orphaned child of last night's crashed API** (npm wrapper, cluster worker, or a pm2/systemd restart). Likelihood: medium. Cost: trivial. I ruled out `node server.js` (PID 5383, user aikenyon, cwd `/app`): it has run for 20 days, which predates the crash, so it is not last night's process.\n3. **Stale TIME_WAIT socket from the crash.** Likelihood: low. Cost: by logic. Node sets SO_REUSEADDR on Linux, so TIME_WAIT does not block `listen()`. The conflict is a LISTEN socket, which is what `ss` shows.\n\n**Checks run**\n\n- `ss -ltnp 'sport = :3000'`: LISTEN on 3000, process hidden. Confirms cause 1 exists; does not identify it.\n- `ps` for node processes: `node relay.js` (PID 6790, root, 20 days) and `node server.js` (PID 5383, aikenyon, 20 days) are the only node processes that could be bound to 3000 and predate the crash. `relay.js` is root-owned, so `ss` cannot show its name to me.\n- `lsof -nP -iTCP:3000 -sTCP:LISTEN`: no output (exit 1), likely a permissions limit.\n\n**Most likely cause:** a long-running root-owned process, most likely `node relay.js` (PID 6790), is holding port 3000. It was not started by last night's crash, so the crash left no orphan behind. The API failed because the port was already taken.\n\n**Confirm (one command):** `sudo ss -ltnp 'sport = :3000'`. Expected: a `node` PID with the owner shown. If it is 6790, cause 1 is confirmed. If it is 5383 or another PID, check `ps -o pid,ppid,user,cmd -p <PID>`.\n\n**Fix (after you confirm the holder is not needed):**\n- Stop the holder: `sudo kill <PID>`, then `npm start`.\n- Or run the API on another port: `PORT=3001 npm start`, if the code reads `process.env.PORT`. I have not checked your code, and the port is hard-coded in `app.listen(3000)` as you described.\n\nI have not stopped anything. Killing a root-owned process should wait for your go-ahead, because `relay.js` may be a service you depend on.",
+ "grade": {
+  "candidates": 3,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": true
+ }
+}

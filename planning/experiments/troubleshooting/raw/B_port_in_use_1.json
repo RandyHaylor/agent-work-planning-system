@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "port_in_use",
+ "rep": 1,
+ "answer": "The port is held by a Docker container, not by a leftover Node process from last night's crash.\n\n**Diagnosis**\n\n- `npm start` fails because something is already bound to `:::3000`. `EADDRINUSE` means a live socket exists, so this is not a stale file or lock.\n- The listener is `docker-proxy` (PIDs 355135 and 355143), bound to `0.0.0.0:3000` and `[::]:3000`.\n- `docker ps` shows the owner is container `demo-dashboard-cloud-sdk-1` (image `demo-dashboard-cloud-sdk`, ID `c64c84e87041`), which publishes `3000->3000` and has been up for 9 days.\n- The OOM kill didn't cause this. A killed process releases its sockets, and the container predates the crash. Your crashed app should not be holding the port.\n- `ss` showed no process name for the listener because `docker-proxy` runs as root. An empty owner column in `ss -ltnp` usually means root or another user, not \"nothing there.\"\n\n**Fix options (I haven't changed anything)**\n\n1. **Move your app to a different port (recommended, no disruption).** Make the port configurable and set it when you start:\n   ```js\n   app.listen(Number(process.env.PORT) || 3000);\n   ```\n   ```bash\n   PORT=3001 npm start\n   ```\n2. **Free port 3000 by stopping the container.** Only do this if you're sure nothing needs it. It is a running dashboard service on this machine, so I won't stop it without your go-ahead:\n   ```bash\n   docker stop demo-dashboard-cloud-sdk-1\n   ```\n   Restart it later with `docker start demo-dashboard-cloud-sdk-1`.\n\nTo confirm the owner yourself after either change: `docker ps --format '{{.Names}} {{.Ports}}'`, or `ss -ltn 'sport = :3000'` should show nothing once it's free.\n\n**Open question:** I checked this machine, which matches your working directory, but I can't tell which project your Node server belongs to. If that server is supposed to run on 3000 and the dashboard container is what it collides with, option 1 is the safer route. Tell me if you want me to stop the container or make the port change in your app's code.",
+ "grade": {
+  "candidates": 3,
+  "true_cause_listed": false,
+  "first_action_is_code_edit": true,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}

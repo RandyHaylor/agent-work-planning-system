@@ -1,0 +1,8 @@
+{
+ "cond": "A",
+ "project": "timezone_day",
+ "rep": 1,
+ "answer": "Both tests now pass, under `TZ=Pacific/Auckland` (as `run.sh` sets it) and under `TZ=America/New_York`.\n\n**Root cause:** `day_label` called `datetime.fromtimestamp(ts)` with no timezone. That converts the timestamp to the machine's local zone, so the result depends on where the code runs. The docstring and both tests expect the UTC day. Under `TZ=Pacific/Auckland`, timestamp 1700000000 (2023-11-14 22:13:20 UTC) is already 2023-11-15 locally, so both tests failed. Your run showed only `test_daily_counts` failing, which fits a machine in a UTC-offset zone such as US Eastern, where `test_day_label` happens to pass. Either way it is the same bug.\n\n**Fix** in `planning/experiments/troubleshooting/projects/timezone_day/report.py`:\n\n```python\nfrom datetime import datetime, timezone\n\n\ndef day_label(ts):\n    \"\"\"UTC calendar day (YYYY-MM-DD) of a unix timestamp.\"\"\"\n    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(\"%Y-%m-%d\")\n```\n\n`daily_counts` is unchanged; it inherits the fix through `day_label`. I did not touch the tests or `run.sh`, and I did not commit.",
+ "keyword_hit": true,
+ "n_candidates_guess": 0
+}

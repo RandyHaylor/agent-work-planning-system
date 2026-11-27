@@ -1,0 +1,13 @@
+{
+ "project": "timezone_day",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "A",
+ "rep": "3",
+ "wall_s": 6.4,
+ "timed_out": false
+}

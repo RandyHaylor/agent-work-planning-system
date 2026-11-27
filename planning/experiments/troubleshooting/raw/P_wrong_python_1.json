@@ -1,0 +1,14 @@
+{
+ "cond": "P",
+ "scenario": "wrong_python",
+ "rep": 1,
+ "answer": "**Error (verbatim):** `/usr/bin/python3: No module named planning_system.cli`\n\nI can't run these on your machine, so each check below is for you to run. Expected results are given so you can read the answer off the output.\n\n**Candidate causes, ranked**\n\n| # | Candidate | Likelihood | Cost to eliminate |\n|---|---|---|---|\n| 1 | `python3` resolves to `/usr/bin/python3`, the system interpreter, not the venv's. `pip install -e` put the package only in `.venv`. | High | By logic, plus a trivial check |\n| 2 | The venv's editable install is missing, broken, or points at a moved path. | Medium | Trivial check |\n| 3 | A stray `planning_system` directory in `~` (your cwd) is found without `cli.py`, so the import fails inside it. | Low | Trivial check |\n| 4 | `cli.py` is not where `-m planning_system.cli` expects it. | Low | Trivial check |\n\n**Cheapest checks first**\n\n1. **Which interpreter is running?**\n   `which -a python3; /usr/bin/python3 -c \"import sys; print(sys.executable)\"`\n   Confirms candidate 1 if the first `python3` is `/usr/bin/python3`.\n\n2. **Does the venv interpreter see the package?**\n   `~/work/planning/.venv/bin/python -c \"import planning_system; print(planning_system.__file__)\"`\n   - Prints a path under `~/work/planning/`: the install is fine, and cause 1 is confirmed.\n   - `ModuleNotFoundError`: the install is broken (candidate 2). Then run `~/work/planning/.venv/bin/pip show -f planning_system` to see where it points.\n\n3. **Is there a shadowing directory in home?**\n   `ls -d ~/planning_system* 2>/dev/null; echo \"exit $?\"`\n   Any hit here (with no `__init__.py` or `cli.py` inside) rules in candidate 3. Note that `python3 -m` puts the cwd first on `sys.path`, which is why home matters.\n\n4. **Does the module exist?**\n   `ls ~/work/planning/planning_system/cli.py`\n   If it is missing, candidate 4 is in play.\n\n**Most likely cause:** candidate 1. The shell has no venv active, so `python3` is the system Python, which has no access to the venv's site-packages. The editable install is fine, but nothing on the system path can see it. The current directory is also irrelevant, since the editable install does not depend on the cwd.\n\n**Fix (no code change needed):** run the venv's interpreter directly.\n\n`~/work/planning/.venv/bin/python -m planning_system.cli plan list`\n\nTo avoid retyping the path, activate the venv first (`source ~/work/planning/.venv/bin/activate`), or add a shell alias. If check 2 fails, reinstall with `~/work/planning/.venv/bin/pip install -e ~/work/planning`.",
+ "grade": {
+  "candidates": 4,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": true,
+  "ranks_cost": true
+ }
+}

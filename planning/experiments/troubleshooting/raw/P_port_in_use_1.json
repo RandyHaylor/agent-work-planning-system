@@ -1,0 +1,14 @@
+{
+ "cond": "P",
+ "scenario": "port_in_use",
+ "rep": 1,
+ "answer": "**Error (verbatim):** `Error: listen EADDRINUSE: address already in use :::3000`\n\n**Candidate causes, ranked by likelihood**\n\n1. **Another live process holds port 3000.** Likely. Cost: trivial check. **Confirmed.**\n2. **Orphaned process from the crashed server.** Unlikely. Cost: trivial check. **Ruled out.**\n3. **Port held in a non-LISTEN state, such as TIME_WAIT.** Unlikely. Cost: by logic. **Ruled out** (the bind failure needs a listener).\n4. **Config change sends the server to 3000 some other way.** Unlikely. Cost: by logic. **Ruled out**, since `app.listen(3000)` is hardcoded and the code is unchanged.\n\n**Checks run, cheapest first**\n\n- `ss -ltnp 'sport = :3000'` shows a LISTEN socket on `0.0.0.0:3000` and `[::]:3000`. This confirms something is listening; the process name is hidden without root.\n- `ls -l /proc/5383/cwd` shows PID 5383 (`node server.js`) runs from `/app`.\n- `ps -o pid,ppid,etime,rss,cmd -p 5383` shows it has been running for **20 days**, so it did not start after last night's crash.\n- `docker ps --filter publish=3000` shows container `demo-dashboard-cloud-sdk-1` (up 9 days) publishing `0.0.0.0:3000->3000/tcp`.\n\n**Most likely cause:** the Docker container `demo-dashboard-cloud-sdk-1` is publishing host port 3000. Its node process (PID 5383) is what holds the port, not your crashed API server. Your server's OOM-killed process left no listener, so the port was taken by something else.\n\n**Open question:** I can't tell from here whether `demo-dashboard-cloud-sdk` is your API server running in Docker or an unrelated service. The `ps` uptime suggests the port holder never crashed.\n\n**Fix, depending on the answer:**\n\n- If the container is unrelated: `docker stop demo-dashboard-cloud-sdk-1`, then `npm start`.\n- If it is your API server, or you need both running: start your server on another port with `PORT=3001 npm start`, or remap the container with `docker run -p 3001:3000` (or the compose equivalent). This avoids touching the code.\n\n**Not verified:** the OOM cause. My grep of the kernel log was blocked by the shell hook, so I can't confirm the kill from the logs. Running `journalctl -k --since yesterday | grep -i oom` as separate commands would confirm it.\n\n**Blocked:** the shell hook rejects chained or piped commands, which limited the checks.",
+ "grade": {
+  "candidates": 4,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": true,
+  "ranks_cost": true
+ }
+}

@@ -1,0 +1,13 @@
+{
+ "project": "config_merge",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "A",
+ "rep": "2",
+ "wall_s": 10.7,
+ "timed_out": false
+}

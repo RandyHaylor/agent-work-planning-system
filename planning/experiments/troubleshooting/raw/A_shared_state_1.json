@@ -1,0 +1,8 @@
+{
+ "cond": "A",
+ "project": "shared_state",
+ "rep": 1,
+ "answer": "**Root cause:** `items = []` is a class attribute in `Cart`. Every instance shares that one list, so items added in one test leak into the next `Cart()`. Test A adds two apples, so test B's new cart already counts 2. Test C then sees `['apple', 'apple', 'pear']`.\n\n**Fix:** create the list per instance in `__init__`.\n\n`cart.py`:\n```python\nclass Cart:\n    discount = 0\n\n    def __init__(self):\n        self.items = []\n\n    def add(self, sku, qty=1):\n        for _ in range(qty):\n            self.items.append(sku)\n\n    def count(self):\n        return len(self.items)\n```\n\n**Verification:** `run.sh` now reports all 3 tests passing (`OK`). I only changed `cart.py` in `planning/experiments/troubleshooting/projects/shared_state/`. `discount` is still a class attribute. It's an immutable int, so sharing it is harmless, but you may want it in `__init__` too for consistency.",
+ "keyword_hit": true,
+ "n_candidates_guess": 0
+}

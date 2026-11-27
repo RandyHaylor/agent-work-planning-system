@@ -1,0 +1,14 @@
+diff -ruN -x __pycache__ -x TROUBLESHOOTING.md /home/aikenyon/.cache/claude-code/tmp/claude-1000/-home-aikenyon-ai-skills-agents-resources-agent-work-planning-system/ed69a354-e825-48f0-841a-c1aa934455f3/scratchpad/trials/shared_state__A__2/pristine/cart.py /home/aikenyon/.cache/claude-code/tmp/claude-1000/-home-aikenyon-ai-skills-agents-resources-agent-work-planning-system/ed69a354-e825-48f0-841a-c1aa934455f3/scratchpad/trials/shared_state__A__2/work/cart.py
+--- /home/aikenyon/.cache/claude-code/tmp/claude-1000/-home-aikenyon-ai-skills-agents-resources-agent-work-planning-system/ed69a354-e825-48f0-841a-c1aa934455f3/scratchpad/trials/shared_state__A__2/pristine/cart.py	2026-11-26 22:22:52.236164324 -0500
++++ /home/aikenyon/.cache/claude-code/tmp/claude-1000/-home-aikenyon-ai-skills-agents-resources-agent-work-planning-system/ed69a354-e825-48f0-841a-c1aa934455f3/scratchpad/trials/shared_state__A__2/work/cart.py	2026-11-26 22:26:06.790429101 -0500
+@@ -1,7 +1,9 @@
+ class Cart:
+-    items = []
+     discount = 0
+ 
++    def __init__(self):
++        self.items = []
++
+     def add(self, sku, qty=1):
+         for _ in range(qty):
+             self.items.append(sku)

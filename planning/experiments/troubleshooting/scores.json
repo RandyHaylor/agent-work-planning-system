@@ -1,0 +1,14 @@
+{
+ "A": {
+  "n": 10,
+  "root_cause_keyword_hits": 10,
+  "misses": []
+ },
+ "B": {
+  "n": 10,
+  "root_cause_keyword_hits": 9,
+  "misses": [
+   "config_merge#1"
+  ]
+ }
+}

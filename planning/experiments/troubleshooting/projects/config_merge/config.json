@@ -1,0 +1,4 @@
+{
+  "database": {"url": "postgres://base/app", "pool": 5},
+  "debug": false
+}

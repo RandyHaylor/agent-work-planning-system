@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "env_path",
+ "rep": 2,
+ "answer": "**Diagnosis:** The service is running, but `DATABASE_URL` is not in its environment. The traceback shows the process started, so systemd loaded something, just not the variable. The most likely cause is that `EnvironmentFile=/etc/planner/env` points at a different file than the one that holds the variable, `/etc/planner/planner.env`. Systemd does not check the contents of a file you list, so a wrong path or a malformed line fails silently.\n\nLess likely causes, if the path is correct:\n- **Malformed lines.** systemd accepts plain `KEY=value`. A line like `export DATABASE_URL=...` is rejected and logged, not applied. Windows line endings (`\\r`) can also corrupt the value.\n- **Stale process.** Editing the env file does not affect a running service. The service has to be restarted.\n\n**Verify (run on the server):**\n\n```bash\n# 1. Which file does the unit actually read?\nsystemctl show planner -p EnvironmentFiles\n#    Look for the path, and for \"ignore_errors=yes\", which means the \"-\" prefix is set.\n\n# 2. Do those paths exist, and what is in them?\nls -l /etc/planner/\ncat -A /etc/planner/planner.env   # shows \\r, stray spaces, and \"export\"\n\n# 3. Is systemd logging a parse warning?\njournalctl -u planner -b | grep -i -E \"environment|ignoring\"\n```\n\nInterpreting the results:\n- If `/etc/planner/env` does not exist, the unit path is wrong. If the `-` prefix is set, systemd silently skips the missing file, which explains the silent failure.\n- If the file has `export`, `\\r`, or a space before `=`, fix the line.\n\n**Fix:**\n\n1. Point the unit at the real file and drop the `-` so a missing file is an error, not a silent skip:\n   ```ini\n   [Service]\n   EnvironmentFile=/etc/planner/planner.env\n   ```\n   Then `sudo systemctl daemon-reload`.\n\n2. Make the file a plain `KEY=value` file:\n   ```\n   DATABASE_URL=postgresql://user:pass@host:5432/dbname\n   ```\n   No `export`, no spaces around `=`, and LF line endings. Quotes are allowed but are stripped by systemd.\n\n3. Restart: `sudo systemctl restart planner`.\n\n4. Optionally, make `config.py` fail with a clear message instead of a bare `KeyError`:\n   ```python\n   DB_URL = os.environ.get(\"DATABASE_URL\")\n   if not DB_URL:\n       raise RuntimeError(\"DATABASE_URL is not set; check EnvironmentFile in the planner unit\")\n   ```\n\nI have not checked the machine itself. The diagnosis is from your description, so the `systemctl show` output in step 1 is the thing that would confirm it.",
+ "grade": {
+  "candidates": 3,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}

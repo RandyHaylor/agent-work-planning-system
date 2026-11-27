@@ -1,0 +1,4 @@
+{
+  "database": {"pool": 20},
+  "debug": true
+}

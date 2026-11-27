@@ -1,0 +1,13 @@
+{
+ "project": "shared_state",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "A",
+ "rep": "2",
+ "wall_s": 5.8,
+ "timed_out": false
+}

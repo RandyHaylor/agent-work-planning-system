@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "port_in_use",
+ "rep": 2,
+ "answer": "**Diagnosis: port 3000 is already taken by a different, healthy service, not by your crashed API.**\n\n- `ss -ltnp` shows a listener on `0.0.0.0:3000` and `[::]:3000`. Its owner is hidden, which fits a root-owned `docker-proxy`.\n- `docker ps` shows the container `demo-dashboard-cloud-sdk-1` publishing `0.0.0.0:3000->3000/tcp`. It has been up 9 days, so it has nothing to do with last night's crash.\n- The OOM-killed API process is gone. I found no leftover `node` process from it. Its port was released when it died, so the new `EADDRINUSE` comes from the container.\n\nI haven't changed anything. I didn't stop the container because it's another service that's been running for 9 days, and I can't see whether anything depends on it.\n\n**Fix options, in order of preference:**\n\n1. **Move your API off 3000.** Change the code (or env) to `app.listen(process.env.PORT || 3000)` and run `PORT=3001 npm start`. This doesn't touch the other service. Update any clients or proxies that expect 3000.\n2. **Stop the container, if it isn't needed.** Run `docker stop demo-dashboard-cloud-sdk-1`, then `npm start`. Confirm nothing uses it first. The `demo-dashboard` stack may restart it.\n3. **Confirm the crash cause before restarting the API.** Without a fix, it will hit OOM again. Check the kernel log with `dmesg -T | grep -i \"killed process\"` or `journalctl -k | grep -i oom`. The kernel record will show the process and memory use even when the app logs are silent.\n\nI'd go with option 1 unless the container is one you want to stop. Tell me which way you want to go, and I can make the port change or stop the container.",
+ "grade": {
+  "candidates": 2,
+  "true_cause_listed": false,
+  "first_action_is_code_edit": true,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}

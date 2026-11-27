@@ -1,0 +1,8 @@
+{
+ "cond": "A",
+ "project": "vendored_api",
+ "rep": 1,
+ "answer": "Both tests now pass.\n\n**Root cause:** `importer.load_readings()` called `tinycsv.read_rows()` without arguments. The vendored library's default is `header=True`, so it drops the first line. `data/readings.csv` has no header, so `sensor-a,12` was thrown away. That gives 3 rows and a total of 38 (50 − 12), which is exactly what the failures show.\n\n**Fix:** pass `header=False` at the call site. The vendored `tinycsv` is untouched.\n\n```python\n# importer.py\ndef load_readings(path=DATA):\n    rows = tinycsv.read_rows(Path(path).read_text(), header=False)\n    return [(name, int(value)) for name, value in rows]\n```\n\nThe only change is the added `, header=False`. `run.sh` now reports `Ran 2 tests ... OK`.\n\nI did not change the data file. Adding a header to the CSV would also work, but the file's format is headerless, so the caller should say so.\n\nI ran the tests with `run.sh` from the project directory. One earlier attempt ran `unittest` from the repo root and picked up unrelated modules; those errors are missing dependencies (`psycopg`, `sqlalchemy`, `fastapi`, `trafilatura`) and have nothing to do with this project.",
+ "keyword_hit": true,
+ "n_candidates_guess": 0
+}

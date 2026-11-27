@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "wrong_python",
+ "rep": 2,
+ "answer": "**Diagnosis:** the shell runs the system interpreter, `/usr/bin/python3`, and the package is installed only in the venv. `pip install -e` put `planning_system` into `~/work/planning/.venv`, so `/usr/bin/python3` has no record of it. The error is an import failure, not a bug in the CLI. Running from `~` doesn't help either, because `-m` only searches the current directory and its install locations, and `~` contains no `planning_system/`.\n\n**Fix:** call the venv's interpreter directly, so no activation is needed:\n\n```bash\n~/work/planning/.venv/bin/python -m planning_system.cli plan list\n```\n\nTo confirm the package resolves to the project:\n\n```bash\n~/work/planning/.venv/bin/python -c \"import planning_system; print(planning_system.__file__)\"\n```\n\nIf you'd rather type the short command, add an alias to `~/.bashrc`:\n\n```bash\nalias planning='~/work/planning/.venv/bin/python -m planning_system.cli'\n```\n\nThen `planning plan list` works from any directory.\n\n**Caveats I could not verify:**\n- `~/work/planning` doesn't exist on this machine, so I checked the copy in this repo (`planning_system/`) instead. Its `cli/` is a package with no `__main__.py`. If your copy is the same, `python -m planning_system.cli` will fail again after the interpreter fix, with a \"No module named ...cli.__main__\" style error. In that case use the console script the project defines (check `[project.scripts]` in its `pyproject.toml`, which I didn't read), or add a `cli/__main__.py` that calls the entry point.\n- If the import succeeds but the command still fails, send me the new error.",
+ "grade": {
+  "candidates": 1,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}

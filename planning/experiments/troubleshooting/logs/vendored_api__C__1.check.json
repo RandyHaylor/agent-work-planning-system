@@ -1,0 +1,25 @@
+{
+ "project": "vendored_api",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "C",
+ "rep": "1",
+ "wall_s": 29.3,
+ "timed_out": false,
+ "guard_log": [
+  {
+   "t": 1795749946.8868575,
+   "event": "fail",
+   "sig": "AssertionError: 38 != 50",
+   "count": 1
+  },
+  {
+   "t": 1795749970.1301801,
+   "event": "pass"
+  }
+ ]
+}

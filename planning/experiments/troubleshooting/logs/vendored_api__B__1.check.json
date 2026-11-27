@@ -1,0 +1,13 @@
+{
+ "project": "vendored_api",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "B",
+ "rep": "1",
+ "wall_s": 28.8,
+ "timed_out": false
+}

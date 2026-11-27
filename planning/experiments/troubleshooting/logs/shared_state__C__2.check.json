@@ -1,0 +1,25 @@
+{
+ "project": "shared_state",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "C",
+ "rep": "2",
+ "wall_s": 20.6,
+ "timed_out": false,
+ "guard_log": [
+  {
+   "t": 1795750002.9311616,
+   "event": "fail",
+   "sig": "AssertionError: Lists differ: ['apple', 'apple', 'pear'] != ['pear']",
+   "count": 1
+  },
+  {
+   "t": 1795750018.7744176,
+   "event": "pass"
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "project": "timezone_day",
+ "protected_modified": [],
+ "command_passes": true,
+ "probe_ok": true,
+ "probe_err": "",
+ "root_fixed": true,
+ "symptom_patch": false,
+ "cond": "C",
+ "rep": "2",
+ "wall_s": 23.9,
+ "timed_out": false,
+ "guard_log": [
+  {
+   "t": 1795750003.713314,
+   "event": "fail",
+   "sig": "AssertionError: '2023-11-15' != '2023-11-14'",
+   "count": 1
+  }
+ ]
+}

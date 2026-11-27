@@ -1,0 +1,14 @@
+{
+ "cond": "B",
+ "scenario": "wrong_python",
+ "rep": 1,
+ "answer": "**Diagnosis:** The command runs under `/usr/bin/python3`, the system interpreter. `pip install -e` put `planning_system` into the project's `.venv`, so only the venv's Python can import it. Running from `~` doesn't help: `python3 -m` adds the current directory to `sys.path`, and `~` doesn't contain the package. Activating the venv would fix it, but it isn't activated.\n\n**Fix:** Run the venv's interpreter directly, without activating it:\n\n```bash\n~/work/planning/.venv/bin/python -m planning_system.cli plan list\n```\n\nActivating works too, for one shell session:\n\n```bash\nsource ~/work/planning/.venv/bin/activate\npython -m planning_system.cli plan list\n```\n\n**Optional: a permanent shortcut** in `~/.bashrc`:\n\n```bash\nalias planctl='~/work/planning/.venv/bin/python -m planning_system.cli'\n```\n\nThen `planctl plan list` works from any directory.\n\n**If it still fails** with the venv interpreter, check the install:\n\n```bash\n~/work/planning/.venv/bin/python -c \"import planning_system, sys; print(planning_system.__file__)\"\n```\n\n- If this raises `ModuleNotFoundError`, the editable install didn't take. Re-run `~/work/planning/.venv/bin/pip install -e ~/work/planning` (adjust the path to wherever `pyproject.toml` or `setup.py` lives).\n- If the import works but `planning_system.cli` is missing, the `cli` module isn't in the package. Check for `cli.py` or `cli/` under the package directory.\n\nI haven't checked this on your machine; `~/work/planning` isn't in this repo. The diagnosis follows from the error and the interpreter path.",
+ "grade": {
+  "candidates": 1,
+  "true_cause_listed": true,
+  "first_action_is_code_edit": false,
+  "checks_before_fix": true,
+  "names_cause_without_check": false,
+  "ranks_cost": false
+ }
+}
