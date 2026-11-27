@@ -28,12 +28,14 @@ class NodeFacts:
 
 
 REVIEW_TASK_LABEL = "review"         # a worker on an in-progress task with this label may review its project
+USER_QUOTE_ORIGINS = ("user_exchange", "proposal_response")   # the user's own words (references origins)
 
 
 @dataclass(frozen=True)
 class ReferenceFacts:
     reference_id: ReferenceId
     owner: Optional[AgentId] = None
+    origin: Optional[str] = None     # e.g. "user_exchange"; planners may read the user's own words to cite them
 
 
 @dataclass(frozen=True)

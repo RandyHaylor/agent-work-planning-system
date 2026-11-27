@@ -86,6 +86,14 @@ def test_6_cited_reference_readable_by_anyone_who_reads_a_citing_node(policy):
     assert not policy.can_read_reference(PLANNER, ref, (FOREIGN,))
 
 
+def test_6b_planner_reads_uncited_user_quotes_but_not_other_uncited_references(policy):
+    """tmux test finding: a planner must read a freshly synced user quote to cite its lines."""
+    assert policy.can_read_reference(PLANNER, ReferenceFacts("r2", None, "user_exchange"), ())
+    assert policy.can_read_reference(PLANNER, ReferenceFacts("r3", None, "proposal_response"), ())
+    assert not policy.can_read_reference(PLANNER, ReferenceFacts("r4", None, "document"), ())
+    assert not policy.can_read_reference(WORKER, ReferenceFacts("r2", None, "user_exchange"), ())
+
+
 def test_7_quote_key_submits_user_quotes_and_nothing_else(policy):
     assert policy.can_submit_user_quote(QUOTE)
     for p in (ADMIN, PLANNER, WORKER):

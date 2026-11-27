@@ -142,5 +142,5 @@ class RequestAuthorizer(RequestAuthorizerInterface):
             return True                           # the agent that cited it into references
         facts = TreeFacts(s)
         citing = [facts.of_node(node) for node in s.tree.citing_nodes(ref.id)]
-        return s.policy.can_read_reference(p, ReferenceFacts(ref.id, ref.owner), citing) or \
+        return s.policy.can_read_reference(p, ReferenceFacts(ref.id, ref.owner, ref.origin), citing) or \
             RequestAuthorizer._holds_review_citing(p, ref.id, s)

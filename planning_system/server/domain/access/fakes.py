@@ -1,6 +1,6 @@
 """Test support: a simple table-driven policy that follows the spec's rules."""
 from .interface import PermissionPolicy
-from .types import ADMIN, PLANNER, QUOTE_CLIENT, WORKER
+from .types import ADMIN, PLANNER, QUOTE_CLIENT, USER_QUOTE_ORIGINS, WORKER
 
 
 def _in_project(p, project_id):
@@ -16,7 +16,9 @@ class TablePermissionPolicy(PermissionPolicy):
         return p.role == ADMIN or _in_project(p, node.project_id) or _own_task(p, node)
 
     def can_read_reference(self, p, ref, nodes_citing_it):
-        return p.role == ADMIN or any(self.can_read_node(p, n, ()) for n in nodes_citing_it)
+        if p.role == ADMIN or (p.role == PLANNER and ref.origin in USER_QUOTE_ORIGINS):
+            return True
+        return any(self.can_read_node(p, n, ()) for n in nodes_citing_it)
 
     def can_read_temp_entry(self, p, entry):
         return p.role == ADMIN or (p.agent_id is not None and p.agent_id == entry.owner)

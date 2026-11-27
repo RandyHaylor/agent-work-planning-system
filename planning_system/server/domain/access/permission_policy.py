@@ -6,7 +6,7 @@ context_assembly, not by reading the ancestor nodes, so can_read_node grants a w
 task only.
 """
 from .interface import PermissionPolicy
-from .types import ADMIN, PLANNER, QUOTE_CLIENT, REVIEW_TASK_LABEL, WORKER
+from .types import ADMIN, PLANNER, QUOTE_CLIENT, REVIEW_TASK_LABEL, USER_QUOTE_ORIGINS, WORKER
 
 IN_PROGRESS = "in_progress"
 
@@ -37,7 +37,11 @@ class RulePermissionPolicy(PermissionPolicy):
         return _manages(p, node) or _works_on(p, node)
 
     def can_read_reference(self, p, ref, nodes_citing_it):
-        return _is_admin(p) or any(self.can_read_node(p, n, ()) for n in nodes_citing_it)
+        if _is_admin(p):
+            return True
+        if p.role == PLANNER and ref.origin in USER_QUOTE_ORIGINS:
+            return True   # tmux test: a planner must read a freshly synced user quote to cite its lines
+        return any(self.can_read_node(p, n, ()) for n in nodes_citing_it)
 
     def can_read_temp_entry(self, p, entry):
         return _is_admin(p) or (p.agent_id is not None and p.agent_id == entry.owner)

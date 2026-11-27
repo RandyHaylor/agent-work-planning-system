@@ -13,7 +13,7 @@ EVIDENCE_ORIGINS = (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE, ORIGIN_DOCUM
 USER_ORIGINS = (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE)
 REFERENCE_ORIGINS = (ORIGIN_DOCUMENT, ORIGIN_KNOWLEDGE_BASE)
 
-USER_HINT = "needs a user quote: cite a user_exchange or proposal_response reference (planning quotes / the user's reply)"
+USER_HINT = "needs a user quote: cite a user_exchange or proposal_response reference (find the user's reply with `planning client exchanges`, sync it with `planning cite-exchange LOCAL_ID`, then read its lines with `planning references lines REF`)"
 REFERENCE_HINT = ("needs a reference quote: cite a document or knowledge_base reference "
                   "(load the page, file or code through the reader and cite it)")
 
