@@ -6,7 +6,7 @@ import json, re, sys, urllib.request, urllib.error, concurrent.futures as cf
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE))
 from common import ask  # noqa: E402
 
 RAW = HERE / "raw"; RAW.mkdir(exist_ok=True)
