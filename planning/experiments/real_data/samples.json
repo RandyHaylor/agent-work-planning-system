@@ -1,0 +1,298 @@
+[
+ {
+  "id": "r01",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Where edited presets are saved: alongside the server's files;   (the tool's user-data folder is pointed at a folder the server reads; its AI_PROMPT_BUILDER_HOME setting already allows this).",
+  "bullet": "5. **CORRECTED (user, terminal, 2026-11-23): pull in the whole tool, website included.** The agent misframed the study: the full prompt assembly is in Python (usable without the UI); the browser only has a duplicate. User: \"can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?\" So ai-rule-builder is copied in as our own module like fastReader (Python package, data, tests AND its website), adapted only as needed (role -> preset mapping, guidance served per role). The planner launches the website for the user to view and edit presets. `guidance-draft1.md` (fresh re-implementation) is withdrawn. Item 4 below is superseded. Where edited presets are saved: alongside the server's files; user: \"if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter\" (the tool's user-data folder is pointed at a folder the server reads; its `AI_PROMPT_BUILDER_HOME` setting already allows this).",
+  "quotes": [
+   "can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?",
+   "if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter"
+  ]
+ },
+ {
+  "id": "r02",
+  "doc": "planning/03-high-level-plan.md",
+  "sentence": "Modules are chosen with the user involved, using good judgement to separate functionality into clean modules with good professional separation.",
+  "bullet": "Modules are chosen with the user involved, using good judgement to separate functionality into clean modules with good professional separation. User: \"I say we just include a list of different accepted approaches like that, and specify that user should be involved, and use good judgement to separate out functionality into clean movules iwth good professional separation.\"",
+  "quotes": [
+   "I say we just include a list of different accepted approaches like that, and specify that user should be involved, and use good judgement to separate out functionality into clean movules iwth good professional separation."
+  ]
+ },
+ {
+  "id": "r03",
+  "doc": "planning/process-levels.md",
+  "sentence": "Once every issue is fixed, in the layers above and in the task node itself, the escalation on the work node is marked resolved with notes, and the task resumes with an instruction to review the escalation.",
+  "bullet": "- **Resolving an escalation.** Once every issue is fixed, in the layers above and in the task node itself, the escalation on the work node is marked resolved with notes, and the task resumes with an instruction to review the escalation. A worker can never edit its task node directly; app permissions lock it. User: \"when an escalation is resolved, meaning all issues above and including the task node details itself (which a worker cannot edit directly ever, locked by app permissions rigidly), the escalation attached to the work node is marked resolved with notes, and the task is resumed with instruction to review the escalation\"",
+  "quotes": [
+   "when an escalation is resolved, meaning all issues above and including the task node details itself (which a worker cannot edit directly ever, locked by app permissions rigidly), the escalation attached to the work node is marked resolved with notes, and the task is resumed with instruction to review the escalation"
+  ]
+ },
+ {
+  "id": "r04",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Temp cache is a separate store from references.",
+  "bullet": "- **Temp cache is a separate store from references.** User: \"drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want.\"",
+  "quotes": [
+   "drop the `permanent` flag. If it doesn't make things a lot more complicated, keep the temp cache as a separate store from the permanent references. Citing moves an item from the cache into the references store. That way clearing the cache is just wiping the cache store, with no risk of accidentally deleting references we want."
+  ]
+ },
+ {
+  "id": "r05",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Depends-on field; the orchestrator decides what runs.",
+  "bullet": "- **Depends-on field; the orchestrator decides what runs.** User: \"the planning/admin agent decides who runs, and it can choose to run things in parallel. Typically siblings run in order, but add a \\\"depends on\\\" field: a list of sibling nodes a task depends on. If it isn't specified, a task depends on the sibling before it by default. If it is specified, it can name one or more siblings. Example: siblings 1-4, where 3 and 4 both list only 1. Then once 1 is done, the orchestrating agent can see that 2, 3 and 4 could run in parallel, if that's allowed, possible or helpful.\" Confirmed by the user: \"Order implies the dependency unless one is specified, but as a rule, when a task inserts a tech spike or requirement request as a sibling before itself, always add it to that task's depends-on.\"",
+  "quotes": [
+   "the planning/admin agent decides who runs, and it can choose to run things in parallel. Typically siblings run in order, but add a \\\"depends on\\\" field: a list of sibling nodes a task depends on. If it isn't specified, a task depends on the sibling before it by default. If it is specified, it can name one or more siblings. Example: siblings 1-4, where 3 and 4 both list only 1. Then once 1 is done, the orchestrating agent can see that 2, 3 and 4 could run in parallel, if that's allowed, possible or helpful.",
+   "Order implies the dependency unless one is specified, but as a rule, when a task inserts a tech spike or requirement request as a sibling before itself, always add it to that task's depends-on."
+  ]
+ },
+ {
+  "id": "r06",
+  "doc": "planning/process-levels.md",
+  "sentence": "The agent does the research and includes links, with no file-and-line citation system.",
+  "bullet": "- **Honor system.** The agent does the research and includes links, with no file-and-line citation system. User: \"the honor system means you trust the agent to do the research. yes include links\"",
+  "quotes": [
+   "the honor system means you trust the agent to do the research. yes include links"
+  ]
+ },
+ {
+  "id": "r07",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "The other changes made tonight (no requirement inheritance, review as a task, sibling spikes/requirement requests, states, depends-on) stay.",
+  "bullet": "4. **REVERTED (user, 2026-11-23): the planner creates all tasks; tasks do not split themselves.** User: \"I think I was focusing on the recursive dynamic solution and I started morphing this into that. still I like the changes and will keep them. revert to the planner creating all the tasksk though i was wrong about that we're not using recursion to have tasks split themselves up here. I do like a task being able to spawn a sibling tech spike, and I like the requirements request(or any escalation) being a task in the node tree as well that becomes an upstream sibling, removing the need for a separate queue.\" The other changes made tonight (no requirement inheritance, review as a task, sibling spikes/requirement requests, states, depends-on) stay. The note below is kept for history only and does NOT apply: \"nodes with children aren't work nodes in the usual sense. Agents are never assigned a node that already has children. Tasks aren't born with children; a task's own session breaks it into child nodes, so a node with children implicitly already has a session. That session is what requirement requests flow up to. There's a review or test task at the end of the children that checks whether the work is done. Once all children are done, the parent task's session resumes to confirm the child tasks are completed, write a summary and mark the node done, or report an error up if it isn't done.\"",
+  "quotes": [
+   "I think I was focusing on the recursive dynamic solution and I started morphing this into that. still I like the changes and will keep them. revert to the planner creating all the tasksk though i was wrong about that we're not using recursion to have tasks split themselves up here. I do like a task being able to spawn a sibling tech spike, and I like the requirements request(or any escalation) being a task in the node tree as well that becomes an upstream sibling, removing the need for a separate queue.",
+   "nodes with children aren't work nodes in the usual sense. Agents are never assigned a node that already has children. Tasks aren't born with children; a task's own session breaks it into child nodes, so a node with children implicitly already has a session. That session is what requirement requests flow up to. There's a review or test task at the end of the children that checks whether the work is done. Once all children are done, the parent task's session resumes to confirm the child tasks are completed, write a summary and mark the node done, or report an error up if it isn't done."
+  ]
+ },
+ {
+  "id": "r08",
+  "doc": "planning/process-levels.md",
+  "sentence": "Questions are asked one at a time, in the order that makes the most sense, using an ask-user-question tool with multiple-choice options where that is possible and makes sense.",
+  "bullet": "5. **Module specs.** Module separations MUST be chosen for good software architecture and encapsulation, NOT necessarily by subject matter or by upstream lists of project needs. User: \"modules seperations MUST be chosen for good software architecture and encapsulation and NOT necessarily by subject matter or upstream project need lists/etc.\" Prioritize good, proven software engineering patterns (strategy, adapter, facade, factory, etc.), but not for their own sake: only where they add efficiency and value and reduce or encapsulate complexity. User: \"we need to add to prioritize using good proven software engineering patterns, strategy, adapter, facade, factory, etc - but not just FOR THE SAKE OF IT - where it ADDS EFFICIENCY AND VALUE AND REDUCES OR ENCAPSULATES COMPLEXITY\" Nest modules where it makes sense instead of making many sibling modules with cross-dependencies; lean on tried-and-true software design: SOLID, maintainable, sensible, readable. User: \"rather htan try and make a bunch o fsibling modules - do NOT fight nestingmodules where it makes sense. ... I'm not trying to reinvent software design - i'm trying to LEAN ON TRIED AND TRUE SOFTWARE DESIGN - SOLID/MAINTAINABLE/SENSIBLE/READABLE\" Don't reinvent wheels: always research common patterns that meet the need, and use out-of-the-box code or build conventional patterns where that makes sense. User: \"we also need to stress not reinventing wheels - always research for common patterns meeting our needs and use out of the box code or build conventional patterns where that makes sense.\" These software-design rules must also inform the system itself: its prompting and the contents of its docs. User: \"this MUST inform the system itself and prompting we add (and contents of the docs as well).\" Level 5 requires many technical choices that may not have been made yet, and they must involve the user. Work in rounds: come up with questions, have them answered, do research and initial design, come up with the next round of questions, and repeat. Questions are asked one at a time, in the order that makes the most sense, using an ask-user-question tool with multiple-choice options where that is possible and makes sense. User: \"instructions need to say that the questions are asked one at a time, in the order that makes the most sense, using an ask user question tool with multiple choice options where it is possible and mkes snese\" User: \"it needs to be clear that level 5 requires making a lot of technical choices that may not have been made to this point. that must involve the user, so instructions for level 5 must specify 'come up with questions, have them answered, do research and initial design, come up with next round of requestions, repeat'\" Level 5 runs in two phases. First, walk through the entire module plan at the boundary level (each module's responsibility, nesting and dependencies) until every module is approved. Only then write types and public interfaces, module by module. User: \"It seems like we slipped from planning to writing interfaces too soon. I feel like it should formally require walking through the entire high level plan before going through and wirting types/interfaces\" Also, user: \"the module specs will be modules that might not line up with big pieces from level 3 which is more conceptual. there may be many more modules than big pieces.\"",
+  "quotes": [
+   "modules seperations MUST be chosen for good software architecture and encapsulation and NOT necessarily by subject matter or upstream project need lists/etc.",
+   "we need to add to prioritize using good proven software engineering patterns, strategy, adapter, facade, factory, etc - but not just FOR THE SAKE OF IT - where it ADDS EFFICIENCY AND VALUE AND REDUCES OR ENCAPSULATES COMPLEXITY",
+   "rather htan try and make a bunch o fsibling modules - do NOT fight nestingmodules where it makes sense. ... I'm not trying to reinvent software design - i'm trying to LEAN ON TRIED AND TRUE SOFTWARE DESIGN - SOLID/MAINTAINABLE/SENSIBLE/READABLE",
+   "we also need to stress not reinventing wheels - always research for common patterns meeting our needs and use out of the box code or build conventional patterns where that makes sense.",
+   "this MUST inform the system itself and prompting we add (and contents of the docs as well).",
+   "instructions need to say that the questions are asked one at a time, in the order that makes the most sense, using an ask user question tool with multiple choice options where it is possible and mkes snese",
+   "it needs to be clear that level 5 requires making a lot of technical choices that may not have been made to this point. that must involve the user, so instructions for level 5 must specify 'come up with questions, have them answered, do research and initial design, come up with next round of requestions, repeat'",
+   "It seems like we slipped from planning to writing interfaces too soon. I feel like it should formally require walking through the entire high level plan before going through and wirting types/interfaces",
+   "the module specs will be modules that might not line up with big pieces from level 3 which is more conceptual. there may be many more modules than big pieces."
+  ]
+ },
+ {
+  "id": "r09",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "REVERTED (user, 2026-11-23): the planner creates all tasks; tasks do not split themselves.",
+  "bullet": "4. **REVERTED (user, 2026-11-23): the planner creates all tasks; tasks do not split themselves.** User: \"I think I was focusing on the recursive dynamic solution and I started morphing this into that. still I like the changes and will keep them. revert to the planner creating all the tasksk though i was wrong about that we're not using recursion to have tasks split themselves up here. I do like a task being able to spawn a sibling tech spike, and I like the requirements request(or any escalation) being a task in the node tree as well that becomes an upstream sibling, removing the need for a separate queue.\" The other changes made tonight (no requirement inheritance, review as a task, sibling spikes/requirement requests, states, depends-on) stay. The note below is kept for history only and does NOT apply: \"nodes with children aren't work nodes in the usual sense. Agents are never assigned a node that already has children. Tasks aren't born with children; a task's own session breaks it into child nodes, so a node with children implicitly already has a session. That session is what requirement requests flow up to. There's a review or test task at the end of the children that checks whether the work is done. Once all children are done, the parent task's session resumes to confirm the child tasks are completed, write a summary and mark the node done, or report an error up if it isn't done.\"",
+  "quotes": [
+   "I think I was focusing on the recursive dynamic solution and I started morphing this into that. still I like the changes and will keep them. revert to the planner creating all the tasksk though i was wrong about that we're not using recursion to have tasks split themselves up here. I do like a task being able to spawn a sibling tech spike, and I like the requirements request(or any escalation) being a task in the node tree as well that becomes an upstream sibling, removing the need for a separate queue.",
+   "nodes with children aren't work nodes in the usual sense. Agents are never assigned a node that already has children. Tasks aren't born with children; a task's own session breaks it into child nodes, so a node with children implicitly already has a session. That session is what requirement requests flow up to. There's a review or test task at the end of the children that checks whether the work is done. Once all children are done, the parent task's session resumes to confirm the child tasks are completed, write a summary and mark the node done, or report an error up if it isn't done."
+  ]
+ },
+ {
+  "id": "r10",
+  "doc": "planning/process-levels.md",
+  "sentence": "Work in rounds: come up with questions, have them answered, do research and initial design, come up with the next round of questions, and repeat.",
+  "bullet": "5. **Module specs.** Module separations MUST be chosen for good software architecture and encapsulation, NOT necessarily by subject matter or by upstream lists of project needs. User: \"modules seperations MUST be chosen for good software architecture and encapsulation and NOT necessarily by subject matter or upstream project need lists/etc.\" Prioritize good, proven software engineering patterns (strategy, adapter, facade, factory, etc.), but not for their own sake: only where they add efficiency and value and reduce or encapsulate complexity. User: \"we need to add to prioritize using good proven software engineering patterns, strategy, adapter, facade, factory, etc - but not just FOR THE SAKE OF IT - where it ADDS EFFICIENCY AND VALUE AND REDUCES OR ENCAPSULATES COMPLEXITY\" Nest modules where it makes sense instead of making many sibling modules with cross-dependencies; lean on tried-and-true software design: SOLID, maintainable, sensible, readable. User: \"rather htan try and make a bunch o fsibling modules - do NOT fight nestingmodules where it makes sense. ... I'm not trying to reinvent software design - i'm trying to LEAN ON TRIED AND TRUE SOFTWARE DESIGN - SOLID/MAINTAINABLE/SENSIBLE/READABLE\" Don't reinvent wheels: always research common patterns that meet the need, and use out-of-the-box code or build conventional patterns where that makes sense. User: \"we also need to stress not reinventing wheels - always research for common patterns meeting our needs and use out of the box code or build conventional patterns where that makes sense.\" These software-design rules must also inform the system itself: its prompting and the contents of its docs. User: \"this MUST inform the system itself and prompting we add (and contents of the docs as well).\" Level 5 requires many technical choices that may not have been made yet, and they must involve the user. Work in rounds: come up with questions, have them answered, do research and initial design, come up with the next round of questions, and repeat. Questions are asked one at a time, in the order that makes the most sense, using an ask-user-question tool with multiple-choice options where that is possible and makes sense. User: \"instructions need to say that the questions are asked one at a time, in the order that makes the most sense, using an ask user question tool with multiple choice options where it is possible and mkes snese\" User: \"it needs to be clear that level 5 requires making a lot of technical choices that may not have been made to this point. that must involve the user, so instructions for level 5 must specify 'come up with questions, have them answered, do research and initial design, come up with next round of requestions, repeat'\" Level 5 runs in two phases. First, walk through the entire module plan at the boundary level (each module's responsibility, nesting and dependencies) until every module is approved. Only then write types and public interfaces, module by module. User: \"It seems like we slipped from planning to writing interfaces too soon. I feel like it should formally require walking through the entire high level plan before going through and wirting types/interfaces\" Also, user: \"the module specs will be modules that might not line up with big pieces from level 3 which is more conceptual. there may be many more modules than big pieces.\"",
+  "quotes": [
+   "modules seperations MUST be chosen for good software architecture and encapsulation and NOT necessarily by subject matter or upstream project need lists/etc.",
+   "we need to add to prioritize using good proven software engineering patterns, strategy, adapter, facade, factory, etc - but not just FOR THE SAKE OF IT - where it ADDS EFFICIENCY AND VALUE AND REDUCES OR ENCAPSULATES COMPLEXITY",
+   "rather htan try and make a bunch o fsibling modules - do NOT fight nestingmodules where it makes sense. ... I'm not trying to reinvent software design - i'm trying to LEAN ON TRIED AND TRUE SOFTWARE DESIGN - SOLID/MAINTAINABLE/SENSIBLE/READABLE",
+   "we also need to stress not reinventing wheels - always research for common patterns meeting our needs and use out of the box code or build conventional patterns where that makes sense.",
+   "this MUST inform the system itself and prompting we add (and contents of the docs as well).",
+   "instructions need to say that the questions are asked one at a time, in the order that makes the most sense, using an ask user question tool with multiple choice options where it is possible and mkes snese",
+   "it needs to be clear that level 5 requires making a lot of technical choices that may not have been made to this point. that must involve the user, so instructions for level 5 must specify 'come up with questions, have them answered, do research and initial design, come up with next round of requestions, repeat'",
+   "It seems like we slipped from planning to writing interfaces too soon. I feel like it should formally require walking through the entire high level plan before going through and wirting types/interfaces",
+   "the module specs will be modules that might not line up with big pieces from level 3 which is more conceptual. there may be many more modules than big pieces."
+  ]
+ },
+ {
+  "id": "r11",
+  "doc": "planning/process-levels.md",
+  "sentence": "Don't shy away from small modules.",
+  "bullet": "3. **Don't shy away from small modules.** User: \"Do NOT shy away from small modules - if a small module makes sense, then it's a small module.\"",
+  "quotes": [
+   "Do NOT shy away from small modules - if a small module makes sense, then it's a small module."
+  ]
+ },
+ {
+  "id": "r12",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "So: the local client's quote capture adapts source-of-truth's Claude Code capture into the Claude Code harness adapter; Codex is out of v1; the HarnessAdapter interface stays so Codex can be added later without changing anything else.",
+  "bullet": "User: \"so source of truth solves this already for claude. that needs to be adapted for our client's adapter. lets take codex off the table but PLEASE build it with an interface so we can connect codex later.\" So: the local client's quote capture adapts source-of-truth's Claude Code capture into the Claude Code harness adapter; Codex is out of v1; the HarnessAdapter interface stays so Codex can be added later without changing anything else.",
+  "quotes": [
+   "so source of truth solves this already for claude. that needs to be adapted for our client's adapter. lets take codex off the table but PLEASE build it with an interface so we can connect codex later."
+  ]
+ },
+ {
+  "id": "r13",
+  "doc": "planning/02-definition-of-done.md",
+  "sentence": "No separate MCP server: the HTTPS interface is already agent-first.",
+  "bullet": "18. **An agent can act as the user.** No separate MCP server: the HTTPS interface is already agent-first. A permission level lets an agent do every action the user could do in the web interface, and more. (Refined at level 5. User: \"our https interface is already LIKE a mcp server, so we don't need a separate mcp server - our tool is literally already an ai agent first tool! we simply need a permission level that allows an agent to act as a user - do all actions the user could do in the web interface and more. one more reason to have the web interface not contain business logic AT ALL\") User: \"we'll likely want to include mcp-like interface as well so an agent can read/edit/etc FOR the user if given the admin access credential\"",
+  "quotes": [
+   "our https interface is already LIKE a mcp server, so we don't need a separate mcp server - our tool is literally already an ai agent first tool! we simply need a permission level that allows an agent to act as a user - do all actions the user could do in the web interface and more. one more reason to have the web interface not contain business logic AT ALL",
+   "we'll likely want to include mcp-like interface as well so an agent can read/edit/etc FOR the user if given the admin access credential"
+  ]
+ },
+ {
+  "id": "r14",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Check result: the tool IS usable without the UI (Python compose_prompt_text, ai_prompt_builder/ruleset.py:87-112; CLI compose command, command_line.py:196,340), and the browser ALSO has its own copy of the assembly (js/rule-selection-state.js:92-129, used so the page works standalone).",
+  "bullet": "4. **Superseded by 5. Revised (user, Slack): build our own small module from its logic, not a copy of the tool.** User: \"Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over.\" Check result: the tool IS usable without the UI (Python `compose_prompt_text`, `ai_prompt_builder/ruleset.py:87-112`; CLI `compose` command, `command_line.py:196,340`), and the browser ALSO has its own copy of the assembly (`js/rule-selection-state.js:92-129`, used so the page works standalone). So the UI is not carried over. Rules and dev/technical presets are copied to `planning/source-material/ai-rule-builder/`.",
+  "quotes": [
+   "Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over."
+  ]
+ },
+ {
+  "id": "r15",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Node is a requirement (for quick-json-reader in JS).",
+  "bullet": "- **Node is a requirement** (for quick-json-reader in JS). User: \"Use Node for now as a requirement. It's not that big of a deal.\"",
+  "quotes": [
+   "Use Node for now as a requirement. It's not that big of a deal."
+  ]
+ },
+ {
+  "id": "r16",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Web extraction is a strategy pattern with selection and automatic fallback.",
+  "bullet": "4. **Web extraction is a strategy pattern with selection and automatic fallback.** User: \"We need a clean strategy pattern for web extraction so we can port in and choose from a list of different options - even automatically trying mlutiple approaches after failtures.\" Concrete strategies and failure checks come from background research and testing; the design proceeds without waiting. User: \"saying 'we need a generic strategy adapter/wrapper and way to choose/fall back to strategies' solves the design issue at a higher level letting us continue here\"",
+  "quotes": [
+   "We need a clean strategy pattern for web extraction so we can port in and choose from a list of different options - even automatically trying mlutiple approaches after failtures.",
+   "saying 'we need a generic strategy adapter/wrapper and way to choose/fall back to strategies' solves the design issue at a higher level letting us continue here"
+  ]
+ },
+ {
+  "id": "r17",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Rules and dev/technical presets are copied to planning/source-material/ai-rule-builder/.",
+  "bullet": "4. **Superseded by 5. Revised (user, Slack): build our own small module from its logic, not a copy of the tool.** User: \"Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over.\" Check result: the tool IS usable without the UI (Python `compose_prompt_text`, `ai_prompt_builder/ruleset.py:87-112`; CLI `compose` command, `command_line.py:196,340`), and the browser ALSO has its own copy of the assembly (`js/rule-selection-state.js:92-129`, used so the page works standalone). So the UI is not carried over. Rules and dev/technical presets are copied to `planning/source-material/ai-rule-builder/`.",
+  "quotes": [
+   "Keep it very simple: 1. Double-check the claim that ai-rule-builder does prompt assembly in browser JS. I explicitly specified it had to be usable without the UI, so verify with evidence (file and line) before we act on it. 2. Scrape all the rules, plus the developer and technical presets/roles, from ai-rule-builder. 3. Take its logic, but build our own local module to serve us, using the same paradigm (role templates with groupings of rules). If logic really is in the UI, don't carry the UI over."
+  ]
+ },
+ {
+  "id": "r18",
+  "doc": "planning/02-definition-of-done.md",
+  "sentence": "Every action, including the user's own actions, can be done directly through the HTTP interface and the CLI.",
+  "bullet": "17. **A Gradio UI that is only a UI.** Every action, including the user's own actions, can be done directly through the HTTP interface and the CLI. User: \"stick with gradio for the ui. It's also essential that the ui remain simply the ui, DO NOT PUT BUSINESS LOGIC IN THE WEB/GRADOI/UI CODE - REMEMBER THAT THERE'S A CLI AND HTTP INTERFACE THAT MUST DO EVERYTHING DIRECTLY - EVEN USER ACTIONS.\"",
+  "quotes": [
+   "stick with gradio for the ui. It's also essential that the ui remain simply the ui, DO NOT PUT BUSINESS LOGIC IN THE WEB/GRADOI/UI CODE - REMEMBER THAT THERE'S A CLI AND HTTP INTERFACE THAT MUST DO EVERYTHING DIRECTLY - EVEN USER ACTIONS."
+  ]
+ },
+ {
+  "id": "r19",
+  "doc": "planning/03-high-level-plan.md",
+  "sentence": "Their code and designs are reused wherever they fit.",
+  "bullet": "The agent planning system is the base. SoT, fastReader and quick-json-reader are not brought in as they are: we build versions of what they do that work inside the planning system, on its Postgres storage, its authentication and its permissions. Their code and designs are reused wherever they fit. User: \"we're meant to be adapting sot/fast reader in - not just bringing them in as is, building versions that work for us into the agent planning system to build what we need.\"",
+  "quotes": [
+   "we're meant to be adapting sot/fast reader in - not just bringing them in as is, building versions that work for us into the agent planning system to build what we need."
+  ]
+ },
+ {
+  "id": "r20",
+  "doc": "planning/process-levels.md",
+  "sentence": "A high-level function calls only things of similar scope, reading as a list of steps; string handling, raw conditionals and I/O live in the lower-level functions those steps call.",
+  "bullet": "9. **Never mix levels of detail.** Every function, and every module's public surface, works at one scope. A high-level function calls only things of similar scope, reading as a list of steps; string handling, raw conditionals and I/O live in the lower-level functions those steps call. The goal is organizing complexity, not reader comfort. User: \"what is VERY IMPORTANT is not mixing levels of detail in code. for example a top level main() fucntion calls things. It should have similar SCOPE calls. it should NOT look like: loadStorageHandler(), showLogin(), if login = x then y, using \\\"string\\\".. plus ... then do this...\" and \"our goal isn't so much 'keep the humans from switching modes' as it is 'don't fill up the box of clipboards with loose sheets of paper' because we hve to manage the groups of paper....\"",
+  "quotes": [
+   "what is VERY IMPORTANT is not mixing levels of detail in code. for example a top level main() fucntion calls things. It should have similar SCOPE calls. it should NOT look like: loadStorageHandler(), showLogin(), if login = x then y, using \\\"string\\\".. plus ... then do this...",
+   "our goal isn't so much 'keep the humans from switching modes' as it is 'don't fill up the box of clipboards with loose sheets of paper' because we hve to manage the groups of paper...."
+  ]
+ },
+ {
+  "id": "r21",
+  "doc": "planning/process-levels.md",
+  "sentence": "Every module, nested or not, gets its interface and external integration tests designed and mocked up front.",
+  "bullet": "6. **Every module, nested or not, gets its interface and external integration tests designed and mocked up front.** User: \"nested modules still get their interfaces and external integration tests designed/mocked up front.\"",
+  "quotes": [
+   "nested modules still get their interfaces and external integration tests designed/mocked up front."
+  ]
+ },
+ {
+  "id": "r22",
+  "doc": "planning/02-definition-of-done.md",
+  "sentence": "Harness adapters: Claude Code in v1, behind an interface so Codex and others connect later (corrected at level 5;  ).",
+  "bullet": "15. **Harness adapters: Claude Code in v1,** behind an interface so Codex and others connect later (corrected at level 5; user: \"lets take codex off the table but PLEASE build it with an interface so we can connect codex later\"). Earlier: \"we're starting with claude code and codex only.\"",
+  "quotes": [
+   "lets take codex off the table but PLEASE build it with an interface so we can connect codex later",
+   "we're starting with claude code and codex only."
+  ]
+ },
+ {
+  "id": "r23",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "The node's own content plus a general summary of every node above.",
+  "bullet": "1. **The node's own content plus a general summary of every node above.** User: \"The node gets all of its own stuff. Then it gets a general summary for every node above it. The top node has a general summary of what the whole thing does, and each node has its own general 'this is what this accomplishes' that builds on the one above it, so stacking them all up paints a clear story. It doesn't include every requirement and detail of the tasks in the stack, because you're not asking it to do all that work, but you do want to give it the context.\"",
+  "quotes": [
+   "The node gets all of its own stuff. Then it gets a general summary for every node above it. The top node has a general summary of what the whole thing does, and each node has its own general 'this is what this accomplishes' that builds on the one above it, so stacking them all up paints a clear story. It doesn't include every requirement and detail of the tasks in the stack, because you're not asking it to do all that work, but you do want to give it the context."
+  ]
+ },
+ {
+  "id": "r24",
+  "doc": "planning/03-high-level-plan.md",
+  "sentence": "Where a module reuses code from SoT, fastReader or quick-json-reader, it notes the source repo and commit.",
+  "bullet": "One repo. A module is a unit of work with a clean interface, and it is not always a package. A module becomes its own installable package only when that makes sense; otherwise it can be a folder, a file or an interface inside the app, so work can still be split neatly by interface or file. Every module, package or not, has clear documentation, an interface, types, a definition of done and tests. A non-package module that doesn't make sense to integration-test on its own can rely on unit tests. User: \"even if a module is not a package, it STILL needs clear documentation and testing. some non-pacakage modules may not really make sense for independent integration testing and unit testing will be sufficient.\" User: \"I'd like the ability to specify 'modules' as maybe not always being 'packages' per se - only when tha tmakes sense. it might prevent us from splitting up work neatly by interface/file/etc otherwise.\" Where a module reuses code from SoT, fastReader or quick-json-reader, it notes the source repo and commit.",
+  "quotes": [
+   "even if a module is not a package, it STILL needs clear documentation and testing. some non-pacakage modules may not really make sense for independent integration testing and unit testing will be sufficient.",
+   "I'd like the ability to specify 'modules' as maybe not always being 'packages' per se - only when tha tmakes sense. it might prevent us from splitting up work neatly by interface/file/etc otherwise."
+  ]
+ },
+ {
+  "id": "r25",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "This replaces the document_reader port in tree v5 and the earlier recommendation to port quick-json-reader to Python.",
+  "bullet": "- **Vendor fastReader and quick-json-reader mostly intact.** User: \"the project is getting big, so leave fastReader and the quick-json-reader plugin more or less intact and integrate them as modules. Vendor them: pull down a version into our codebase and edit our copy as needed, rather than depending on my GitHub-posted version. There's a lot in them already (the interactive help menu, a lot of testing), and they're robust, powerful tools. Don't plan to rewrite them now; implement and adapt them, changing only what's needed to work with the server's cache and references.\" This replaces the `document_reader` port in tree v5 and the earlier recommendation to port quick-json-reader to Python.",
+  "quotes": [
+   "the project is getting big, so leave fastReader and the quick-json-reader plugin more or less intact and integrate them as modules. Vendor them: pull down a version into our codebase and edit our copy as needed, rather than depending on my GitHub-posted version. There's a lot in them already (the interactive help menu, a lot of testing), and they're robust, powerful tools. Don't plan to rewrite them now; implement and adapt them, changing only what's needed to work with the server's cache and references."
+  ]
+ },
+ {
+  "id": "r26",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "The agent misframed the study: the full prompt assembly is in Python (usable without the UI); the browser only has a duplicate.",
+  "bullet": "5. **CORRECTED (user, terminal, 2026-11-23): pull in the whole tool, website included.** The agent misframed the study: the full prompt assembly is in Python (usable without the UI); the browser only has a duplicate. User: \"can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?\" So ai-rule-builder is copied in as our own module like fastReader (Python package, data, tests AND its website), adapted only as needed (role -> preset mapping, guidance served per role). The planner launches the website for the user to view and edit presets. `guidance-draft1.md` (fresh re-implementation) is withdrawn. Item 4 below is superseded. Where edited presets are saved: alongside the server's files; user: \"if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter\" (the tool's user-data folder is pointed at a folder the server reads; its `AI_PROMPT_BUILDER_HOME` setting already allows this).",
+  "quotes": [
+   "can't the website allow updating the presets in a cool way? I'd say pull it in because it was really useful, not built wrong. The agent planner can load the web interface for the user so the user can see and edit the presets, right?",
+   "if it's pulled in then the prompts save along with the server's files somewhere maybe. doesn't really matter"
+  ]
+ },
+ {
+  "id": "r27",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Module tree v4 is therefore not approved yet.",
+  "bullet": "1. **fastReader and quick-json-reader are their own package in this repo, adapted for our needs, not bolted on as is.** User: \"quick-json-reader and fastReader coming in DO need to be adapted and possibly not just wrenched on as is but converted for the purpose we have some specific needs for them. even though we're including them, they still do need to be treated as their own module/package in this repo, so we need to plan that well\". Module tree v4 is therefore not approved yet.",
+  "quotes": [
+   "quick-json-reader and fastReader coming in DO need to be adapted and possibly not just wrenched on as is but converted for the purpose we have some specific needs for them. even though we're including them, they still do need to be treated as their own module/package in this repo, so we need to plan that well"
+  ]
+ },
+ {
+  "id": "r28",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "Reviews are sent by the server to an available reviewer client; never sending one review to two reviewers is an internal detail of review dispatch.",
+  "bullet": "- **No claiming.** \"Claiming\" was the agent's wording, not the user's design. User: \"I feel like this system is set up so a planner/admin assigns tasks.\" Task nodes are assigned by the planner or admin, who mints the worker's scoped token; workers never pull work. Reviews are sent by the server to an available reviewer client; never sending one review to two reviewers is an internal detail of review dispatch. `node_claimer` and the claim command are dropped; the level 3 queue row is corrected. The research row on SKIP LOCKED stays as background for review dispatch.",
+  "quotes": [
+   "I feel like this system is set up so a planner/admin assigns tasks."
+  ]
+ },
+ {
+  "id": "r29",
+  "doc": "planning/05-module-specs.md",
+  "sentence": "No global server access token; self-signed TLS for v1.",
+  "bullet": "1. **No global server access token; self-signed TLS for v1.** User: \"Drop the global server access token; per-principal credentials over TLS are enough. For the first version, use a locally self-signed certificate and don't worry about it beyond that.\"",
+  "quotes": [
+   "Drop the global server access token; per-principal credentials over TLS are enough. For the first version, use a locally self-signed certificate and don't worry about it beyond that."
+  ]
+ },
+ {
+  "id": "r30",
+  "doc": "planning/02-definition-of-done.md",
+  "sentence": "A Gradio UI that is only a UI.",
+  "bullet": "17. **A Gradio UI that is only a UI.** Every action, including the user's own actions, can be done directly through the HTTP interface and the CLI. User: \"stick with gradio for the ui. It's also essential that the ui remain simply the ui, DO NOT PUT BUSINESS LOGIC IN THE WEB/GRADOI/UI CODE - REMEMBER THAT THERE'S A CLI AND HTTP INTERFACE THAT MUST DO EVERYTHING DIRECTLY - EVEN USER ACTIONS.\"",
+  "quotes": [
+   "stick with gradio for the ui. It's also essential that the ui remain simply the ui, DO NOT PUT BUSINESS LOGIC IN THE WEB/GRADOI/UI CODE - REMEMBER THAT THERE'S A CLI AND HTTP INTERFACE THAT MUST DO EVERYTHING DIRECTLY - EVEN USER ACTIONS."
+  ]
+ }
+]
