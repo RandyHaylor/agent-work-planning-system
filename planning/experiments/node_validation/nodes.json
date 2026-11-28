@@ -1,0 +1,165 @@
+[
+  {
+    "id": "n01", "level": "definition of done", "title": "report export done criteria",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "What should the export produce?", "text": "CSV files, one per report, and they have to open in Excel without fixing anything."},
+      "R2": {"origin": "user_exchange", "pre_text": "Any limits on size or speed?", "text": "Not that I know of. Just don't make it slow."}
+    },
+    "sentences": [
+      {"text": "Done when every report can be exported as its own CSV file.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "Exported files open in Excel with no manual fixes.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "An export of 100,000 rows finishes in under 5 seconds.", "label": "guess", "kind": "requirement", "cite": "R2"},
+      {"text": "Exports are also offered as XLSX.", "label": "guess", "kind": "requirement", "cite": "R1"},
+      {"text": "Still to confirm with the user: whether headers are needed.", "label": "neutral", "kind": "status", "cite": null}
+    ]
+  },
+  {
+    "id": "n02", "level": "design", "title": "job queue choice",
+    "references": {
+      "R1": {"origin": "document", "pre_text": "", "text": "SKIP LOCKED: With SKIP LOCKED, any selected rows that cannot be immediately locked are skipped. Skipping locked rows provides an inconsistent view of the data, so this is not suitable for general purpose work, but can be used to avoid lock contention with multiple consumers accessing a queue-like table."},
+      "R2": {"origin": "user_exchange", "pre_text": "We already run Postgres. OK to keep the job queue in Postgres instead of adding a broker?", "text": "yes"}
+    },
+    "sentences": [
+      {"text": "The job queue lives in a Postgres table.", "label": "backed", "kind": "design", "cite": "R2"},
+      {"text": "Workers take jobs with SELECT ... FOR UPDATE SKIP LOCKED so two workers never take the same job.", "label": "backed", "kind": "fact", "cite": "R1"},
+      {"text": "This handles about 10,000 jobs per second on our hardware.", "label": "guess", "kind": "fact", "cite": "R1"},
+      {"text": "Failed jobs are retried three times with exponential backoff.", "label": "guess", "kind": "design", "cite": null},
+      {"text": "A dead-letter table keeps jobs that fail every retry.", "label": "guess", "kind": "design", "cite": null}
+    ]
+  },
+  {
+    "id": "n03", "level": "task work report", "title": "login rate limit work",
+    "references": {
+      "R1": {"origin": "document", "pre_text": "", "text": "$ pytest tests/test_login.py\n..F.\nFAILED tests/test_login.py::test_lockout_after_five - AssertionError: expected 429, got 200\n3 passed, 1 failed in 0.41s"},
+      "R2": {"origin": "document", "pre_text": "", "text": "def check_rate(user):\n    if attempts[user] > 5:\n        return 429\n    return 200"}
+    },
+    "sentences": [
+      {"text": "Added a per-user attempt counter in check_rate.", "label": "backed", "kind": "work", "cite": "R2"},
+      {"text": "All login tests pass.", "label": "guess", "kind": "work", "cite": "R1"},
+      {"text": "Users are locked out after five failed attempts.", "label": "guess", "kind": "fact", "cite": "R2"},
+      {"text": "The lockout resets after 15 minutes.", "label": "guess", "kind": "fact", "cite": null},
+      {"text": "Next: look at the failing lockout test.", "label": "neutral", "kind": "status", "cite": null}
+    ]
+  },
+  {
+    "id": "n04", "level": "plan", "title": "settings page plan",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "What should users be able to change in settings?", "text": "Their display name and email. Password changes go through the reset email flow we already have."},
+      "R2": {"origin": "document", "pre_text": "", "text": "PATCH /users/{id} accepts a JSON body with any of: display_name (string, 1-40 chars), email (string). Returns 200 with the updated user, 422 on validation errors."}
+    },
+    "sentences": [
+      {"text": "Step 1: a form with display name and email fields.", "label": "backed", "kind": "plan", "cite": "R1"},
+      {"text": "Step 2: submit the form with PATCH /users/{id}.", "label": "backed", "kind": "plan", "cite": "R2"},
+      {"text": "Step 3: show the 422 validation errors next to the fields.", "label": "backed", "kind": "plan", "cite": "R2"},
+      {"text": "Step 4: add a password change box that calls the same endpoint.", "label": "guess", "kind": "plan", "cite": "R2"},
+      {"text": "Step 5: add a dark mode toggle, since users expect it.", "label": "guess", "kind": "plan", "cite": null}
+    ]
+  },
+  {
+    "id": "n05", "level": "research summary", "title": "pdf text extraction options",
+    "references": {
+      "R1": {"origin": "document", "pre_text": "", "text": "pypdf is a free and open-source pure-python PDF library capable of splitting, merging, cropping, and transforming the pages of PDF files. It can also add custom data, viewing options, and passwords to PDF files. pypdf can retrieve text and metadata from PDFs as well."},
+      "R2": {"origin": "document", "pre_text": "", "text": "Pdfminer.six is a community maintained fork of the original PDFMiner. It is a tool for extracting information from PDF documents. It focuses on getting and analyzing text data."}
+    },
+    "sentences": [
+      {"text": "pypdf is a pure-Python library that can extract text from PDFs.", "label": "backed", "kind": "fact", "cite": "R1"},
+      {"text": "pdfminer.six is a maintained fork of PDFMiner focused on extracting and analysing text.", "label": "backed", "kind": "fact", "cite": "R2"},
+      {"text": "pdfminer.six keeps the layout of tables better than pypdf.", "label": "guess", "kind": "fact", "cite": "R2"},
+      {"text": "pypdf cannot read scanned PDFs.", "label": "guess", "kind": "fact", "cite": null},
+      {"text": "We should use pdfminer.six.", "label": "guess", "kind": "design", "cite": null}
+    ]
+  },
+  {
+    "id": "n06", "level": "design", "title": "auth token storage",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "Should the CLI remember the login between runs, or ask every time?", "text": "Remember it. I don't want to type a password every time."},
+      "R2": {"origin": "document", "pre_text": "", "text": "keyring.set_password(service_name, username, password): Set password for the user in the specified service. keyring.get_password(service_name, username): Get password from the specified service. On Linux the default backend is the Secret Service (e.g. GNOME Keyring); on macOS it is the Keychain."}
+    },
+    "sentences": [
+      {"text": "The CLI keeps the login token between runs.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "The token is stored with keyring.set_password and read back with keyring.get_password.", "label": "backed", "kind": "design", "cite": "R2"},
+      {"text": "On Linux this uses the Secret Service, and on macOS the Keychain.", "label": "backed", "kind": "fact", "cite": "R2"},
+      {"text": "Tokens expire after 30 days.", "label": "guess", "kind": "fact", "cite": null},
+      {"text": "The user wants a logout command that wipes the token.", "label": "guess", "kind": "requirement", "cite": "R1"}
+    ]
+  },
+  {
+    "id": "n07", "level": "definition of done", "title": "backup done criteria",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "How often should the database be backed up, and how many should we keep?", "text": "Nightly. Keep two weeks."},
+      "R2": {"origin": "user_exchange", "pre_text": "Should backups be encrypted?", "text": "yes, with a key only I hold"}
+    },
+    "sentences": [
+      {"text": "Done when the database is backed up every night.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "Backups are kept for 14 days.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "Backups are encrypted with a key only the user holds.", "label": "backed", "kind": "requirement", "cite": "R2"},
+      {"text": "Backups are copied to a second region.", "label": "guess", "kind": "requirement", "cite": "R1"},
+      {"text": "A restore test runs every week.", "label": "guess", "kind": "requirement", "cite": null}
+    ]
+  },
+  {
+    "id": "n08", "level": "task work report", "title": "csv parser fix",
+    "references": {
+      "R1": {"origin": "document", "pre_text": "", "text": "$ pytest tests/test_csv.py -q\n........\n8 passed in 0.12s"},
+      "R2": {"origin": "document", "pre_text": "", "text": "-    rows = text.split('\\n')\n+    rows = list(csv.reader(io.StringIO(text)))"}
+    },
+    "sentences": [
+      {"text": "Replaced the manual newline split with csv.reader.", "label": "backed", "kind": "work", "cite": "R2"},
+      {"text": "All 8 CSV tests pass.", "label": "backed", "kind": "work", "cite": "R1"},
+      {"text": "Quoted fields with embedded newlines now parse correctly.", "label": "guess", "kind": "fact", "cite": "R2"},
+      {"text": "The change makes parsing about twice as fast.", "label": "guess", "kind": "fact", "cite": null}
+    ]
+  },
+  {
+    "id": "n09", "level": "design", "title": "notification delivery",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "How should users hear about finished jobs: email, in-app, or both?", "text": "in-app only for now"},
+      "R2": {"origin": "user_exchange", "pre_text": "Do in-app notifications need to arrive live, or is it fine if they show on the next page load?", "text": "next page load is fine"}
+    },
+    "sentences": [
+      {"text": "Users are told about finished jobs in the app only.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "Notifications show on the next page load; no live push.", "label": "backed", "kind": "design", "cite": "R2"},
+      {"text": "Notifications are stored in a notifications table and marked read when shown.", "label": "guess", "kind": "design", "cite": null},
+      {"text": "Unread notifications are deleted after 90 days.", "label": "guess", "kind": "design", "cite": null},
+      {"text": "Email can be added later if the user asks.", "label": "neutral", "kind": "status", "cite": null}
+    ]
+  },
+  {
+    "id": "c01", "level": "plan", "title": "readme update plan",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "What should the README cover?", "text": "How to install, how to run the server, and how to run the tests."},
+      "R2": {"origin": "document", "pre_text": "", "text": "uv run planning-server run\nuv run --extra test python -m pytest -q"}
+    },
+    "sentences": [
+      {"text": "Step 1: an install section.", "label": "backed", "kind": "plan", "cite": "R1"},
+      {"text": "Step 2: a section on running the server with uv run planning-server run.", "label": "backed", "kind": "plan", "cite": "R2"},
+      {"text": "Step 3: a section on running the tests with uv run --extra test python -m pytest -q.", "label": "backed", "kind": "plan", "cite": "R2"},
+      {"text": "Open question for the user: does the README need screenshots?", "label": "neutral", "kind": "status", "cite": null}
+    ]
+  },
+  {
+    "id": "c02", "level": "design", "title": "config file format",
+    "references": {
+      "R1": {"origin": "user_exchange", "pre_text": "Config in TOML or JSON?", "text": "TOML"},
+      "R2": {"origin": "document", "pre_text": "", "text": "tomllib: This module provides an interface for parsing TOML 1.0.0. This module does not support writing TOML. New in version 3.11."}
+    },
+    "sentences": [
+      {"text": "Configuration is written in TOML.", "label": "backed", "kind": "requirement", "cite": "R1"},
+      {"text": "It is read with the standard library tomllib, available from Python 3.11.", "label": "backed", "kind": "fact", "cite": "R2"},
+      {"text": "tomllib cannot write TOML, so the app only reads its config.", "label": "backed", "kind": "design", "cite": "R2"}
+    ]
+  },
+  {
+    "id": "n10", "level": "task work report", "title": "docker image work",
+    "references": {
+      "R1": {"origin": "document", "pre_text": "", "text": "$ docker build -t planner .\n...\nSuccessfully tagged planner:latest\n$ docker images planner\nREPOSITORY  TAG     SIZE\nplanner     latest  412MB"},
+      "R2": {"origin": "user_exchange", "pre_text": "Is a 400MB image OK or should I make it smaller?", "text": "fine for now"}
+    },
+    "sentences": [
+      {"text": "The image builds and is tagged planner:latest.", "label": "backed", "kind": "work", "cite": "R1"},
+      {"text": "The image is 412MB, which the user said is fine for now.", "label": "backed", "kind": "work", "cite": "R2"},
+      {"text": "The container starts and serves on port 8788.", "label": "guess", "kind": "work", "cite": "R1"},
+      {"text": "Using a multi-stage build would get it under 150MB.", "label": "guess", "kind": "fact", "cite": null}
+    ]
+  }
+]
