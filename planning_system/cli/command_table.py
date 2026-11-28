@@ -93,8 +93,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
                 authenticated=False),
     CommandSpec(("help",), TARGET_HELP, arguments=(Arg("command", "command", "strs"),), authenticated=False),
     # References
-    CommandSpec(("references", "get"), TARGET_API, "get_reference", (
-        Arg("id", "reference_id"), Arg("--follow-superseded", "follow_superseded", "flag"))),
+    CommandSpec(("references", "get"), TARGET_API, "get_reference", (Arg("id", "reference_id"),)),
     CommandSpec(("references", "lines"), TARGET_API, "reference_lines", (
         Arg("id", "reference_id"), Arg("--start", "start", "int"), Arg("--end", "end", "int"))),
     CommandSpec(("references", "render"), TARGET_API, "render_citation", (Arg("citation", "citation"),)),

@@ -124,7 +124,7 @@ class PlanningApiClientInterface(ABC):
     def reader_cite(self, reader_id: str, start_line: int, end_line: int) -> dict: ...  # POST /reader/cite
 
     @abstractmethod
-    def get_reference(self, reference_id: str, follow_superseded: bool = False) -> dict: ...  # GET /references/{id}
+    def get_reference(self, reference_id: str) -> dict: ...  # GET /references/{id}: newest version (+ note)
 
     @abstractmethod
     def reference_lines(self, reference_id: str, start: Optional[int] = None,

@@ -113,7 +113,7 @@ CASES = [
     ("POST", "/reader/tmp-1/json", {"flags": ["--keys"]}, None, C.ReaderJson("tmp-1", ("--keys",))),
     ("GET", "/reader/tmp-1/lines", None, {"start": 1, "end": 3}, C.ReaderLines("tmp-1", 1, 3)),
     ("POST", "/reader/cite", {"id": "tmp-1", "start_line": 1, "end_line": 2}, None, C.CiteCacheItem("tmp-1", 1, 2)),
-    ("GET", "/references/ref-1", None, {"follow_superseded": "true"}, C.GetReference("ref-1", True)),
+    ("GET", "/references/ref-1", None, None, C.GetReference("ref-1")),
     ("GET", "/references/ref-1/lines", None, {"start": 2, "end": 4}, C.ReadReferenceLines("ref-1", 2, 4)),
     ("POST", "/references/render", {"citation": "[ref-1:1-2]"}, None, C.RenderCitation("[ref-1:1-2]")),
     ("POST", "/references/user-exchange", {"session_id": "s", "user_message": "m", "pre_text": "p"}, None,

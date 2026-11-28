@@ -111,9 +111,8 @@ def store_user_exchange(body: UserExchangeBody, principal: Principal = Who, runn
 
 
 @router.get("/references/{reference_id}")
-def get_reference(reference_id: str, follow_superseded: bool = False, principal: Principal = Who,
-                  runner=Runner):
-    return _run(runner, C.GetReference(reference_id, follow_superseded), principal)
+def get_reference(reference_id: str, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.GetReference(reference_id), principal)
 
 
 @router.get("/references/{reference_id}/lines")

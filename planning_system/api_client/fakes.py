@@ -450,9 +450,8 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def reader_cite(self, reader_id, start_line, end_line):
         return self._call("POST", "/reader/cite", {"id": reader_id, "start_line": start_line, "end_line": end_line})
 
-    def get_reference(self, reference_id, follow_superseded=False):
-        params = {"follow_superseded": "true"} if follow_superseded else None
-        return self._call("GET", f"/references/{reference_id}", params=params)
+    def get_reference(self, reference_id):
+        return self._call("GET", f"/references/{reference_id}")
 
     def reference_lines(self, reference_id, start=None, end=None):
         return self._call("GET", f"/references/{reference_id}/lines", params={"start": start, "end": end})
