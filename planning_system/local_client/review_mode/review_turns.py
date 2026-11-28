@@ -14,6 +14,19 @@ SENTENCE_QUESTION = ("Does this sentence make a claim not fully supported by an 
                      "reference?")
 
 
+# build log #60 (2): requirement and decision restatements must not drop or weaken what the user said
+NOTHING_LOST_TAGS = frozenset({"requirement", "decision"})
+NOTHING_LOST_QUESTION = (
+    "Compare the FULL CLAIM with what the user said in the included user references (for a brief confirmation, "
+    "with the proposal the user approved, shown as PRE-INPUT CONTEXT). Does the claim drop or weaken any "
+    "condition, limit, exception or hedge the user stated (for example 'only', 'for now', 'unless ...', "
+    "'at most ...', 'maybe', 'if ...', 'after ...', a number or a scope)?")
+
+
+def needs_nothing_lost_check(packet: ReviewPacket) -> bool:
+    return packet.claim_tag in NOTHING_LOST_TAGS
+
+
 @dataclass(frozen=True)
 class SentenceAnswer:
     unsupported_claim: bool    # True = "yes": the sentence makes a claim the references don't fully support
@@ -49,6 +62,12 @@ def sentence_turn(number: int, total: int, sentence: str) -> str:
             'Reply with exactly {"answer": "yes"|"no", "reason": "..."}.')
 
 
+def nothing_lost_turn() -> str:
+    return (f"Now the whole claim. {NOTHING_LOST_QUESTION}\n"
+            'Reply with exactly {"answer": "yes"|"no", "reason": "<=15 words: which condition was dropped or '
+            'weakened; empty when no"}.')
+
+
 def title_turn(node_title: str) -> str:
     return (_title_rules(node_title, "Last: ")
             + 'Reply with exactly {"suggested_title": null} if the title is fine, else '
@@ -59,6 +78,7 @@ def bulk_turn(packet: ReviewPacket, sentences: list[str]) -> str:
     """One turn: the same rules and question as the per-sentence turns, asked of every numbered sentence at once,
     plus the title check."""
     numbered = "\n".join(f"{number}. {sentence}" for number, sentence in enumerate(sentences, start=1))
+    nothing_lost = needs_nothing_lost_check(packet)
     return (
         f"NEW REVIEW {packet.review_id}. Ignore every earlier review in this session.\n"
         "You check a planning item's claim against its included references. Ask of EVERY numbered sentence "
@@ -67,9 +87,14 @@ def bulk_turn(packet: ReviewPacket, sentences: list[str]) -> str:
         + _claim_and_references(packet)
         + f"\nNUMBERED SENTENCES OF THE CLAIM:\n{numbered}\n\n"
         + _title_rules(packet.node_title, "Also: ")
+        + (f"Also: {NOTHING_LOST_QUESTION} List each one in \"dropped_conditions\".\n" if nothing_lost else "")
         + 'Reply with exactly one JSON object, nothing else: {"unsupported": [{"sentence": <number>, '
-        '"reason": "<=15 words: what is unsupported"}], "suggested_title": null|"<noun phrase>"} '
-        '(an empty "unsupported" list when every sentence is supported).'
+        '"reason": "<=15 words: what is unsupported"}], '
+        + ('"dropped_conditions": [{"condition": "<the user\'s words>", "reason": "<=15 words"}], '
+           if nothing_lost else "")
+        + '"suggested_title": null|"<noun phrase>"} '
+        '(an empty "unsupported" list when every sentence is supported'
+        + ('; an empty "dropped_conditions" list when nothing was dropped or weakened).' if nothing_lost else ").")
     )
 
 
@@ -97,10 +122,15 @@ def _title_rules(node_title: str, lead: str) -> str:
 class BulkAnswer:
     unsupported: dict[int, str]          # sentence number -> reason
     suggested_title: Optional[str]
+    dropped_conditions: tuple[str, ...] = ()   # "<condition>: <reason>" (nothing-lost check)
 
 
-def read_bulk_answer(answer: str, sentence_count: int) -> BulkAnswer:
-    data = find_json_object(answer, lambda d: isinstance(d.get("unsupported"), list))
+def read_bulk_answer(answer: str, sentence_count: int, expect_dropped_conditions: bool = False) -> BulkAnswer:
+    def readable(d: dict) -> bool:
+        return isinstance(d.get("unsupported"), list) and (
+            not expect_dropped_conditions or isinstance(d.get("dropped_conditions"), list))
+
+    data = find_json_object(answer, readable)
     if data is None:
         raise UnparseableVerdict(f"no bulk answer from reviewer: {answer[:300]!r}")
     unsupported = {}
@@ -111,7 +141,16 @@ def read_bulk_answer(answer: str, sentence_count: int) -> BulkAnswer:
         reason = item.get("reason")
         unsupported[number] = reason.strip() if isinstance(reason, str) else ""
     title = data.get("suggested_title")
-    return BulkAnswer(unsupported, title.strip() if isinstance(title, str) and title.strip() else None)
+    dropped = tuple(_dropped_text(item) for item in data.get("dropped_conditions") or ()) \
+        if expect_dropped_conditions else ()
+    return BulkAnswer(unsupported, title.strip() if isinstance(title, str) and title.strip() else None, dropped)
+
+
+def _dropped_text(item) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+    parts = [str(item.get(key) or "").strip() for key in ("condition", "reason")]
+    return ": ".join(p for p in parts if p) or "a condition was dropped"
 
 
 def read_sentence_answer(answer: str) -> SentenceAnswer:

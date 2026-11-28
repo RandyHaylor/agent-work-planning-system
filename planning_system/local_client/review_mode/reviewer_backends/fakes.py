@@ -22,7 +22,7 @@ def turn_reply(unsupported_claim: bool = False, reason: str = "", suggested_titl
     """One JSON object every review turn accepts (opening, each sentence, title, bulk): handy for fake transports.
     In bulk, unsupported_claim marks sentence 1 only."""
     return json.dumps({"ready": True, "answer": "yes" if unsupported_claim else "no", "reason": reason,
-                       "suggested_title": suggested_title,
+                       "suggested_title": suggested_title, "dropped_conditions": [],
                        "unsupported": [{"sentence": 1, "reason": reason}] if unsupported_claim else []})
 
 

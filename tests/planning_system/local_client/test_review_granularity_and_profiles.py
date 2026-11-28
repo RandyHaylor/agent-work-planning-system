@@ -19,7 +19,7 @@ from planning_system.local_client.review_worker import ReviewWorker
 from planning_system.model_calls import FakeOneShotModelCall, ModelEndpointFactory
 
 PACKET = ReviewPacket.from_json({
-    "review_id": "rev-b", "node_title": "report output", "node_context_summary": "", "claim_tag": "requirement",
+    "review_id": "rev-b", "node_title": "report output", "node_context_summary": "", "claim_tag": "technical",
     "claim_text": "Reports are CSV [ref-1:1-1]. They go to S3. Daily runs.",
     "citations": [{"citation": "[ref-1:1-1]", "origin": "user_exchange", "quoted_text": "Write CSV reports.",
                    "pre_text": "", "full_text": ""}]})
@@ -121,6 +121,14 @@ def test_local_llm_reviews_per_sentence_by_default():
                                       + ['{"suggested_title": null}'])
     assert factory(model_call).create("local_llm").review(PACKET).passed
     assert len(model_call.requests) == 5                       # opening + 3 sentences + title
+
+
+def test_local_llm_requirement_gets_the_nothing_lost_turn():
+    model_call = FakeOneShotModelCall(['{"ready": true}'] + ['{"answer": "no", "reason": ""}'] * 4
+                                      + ['{"suggested_title": null}'])
+    requirement = ReviewPacket.from_json({**PACKET.__dict__, "citations": [], "claim_tag": "requirement"})
+    assert factory(model_call).create("local_llm").review(requirement).passed
+    assert len(model_call.requests) == 6                       # opening + 3 sentences + nothing lost + title
 
 
 def test_claude_code_reviews_in_bulk_by_default():

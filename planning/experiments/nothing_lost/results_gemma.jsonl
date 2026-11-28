@@ -1,0 +1,52 @@
+{"label": "baseline", "granularity": "per_sentence", "case": "L1", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 2.9}
+{"label": "baseline", "granularity": "per_sentence", "case": "L2", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "L3", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.2}
+{"label": "baseline", "granularity": "per_sentence", "case": "L4", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: Reference says 'Maybe Postgres', not a definitive statement that it uses it.", "seconds": 3.5}
+{"label": "baseline", "granularity": "per_sentence", "case": "L5", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "L6", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "L7", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "L8", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: omits 'of inactivity' specified in reference", "seconds": 3.3}
+{"label": "baseline", "granularity": "per_sentence", "case": "F1", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "F2", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "F3", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.2}
+{"label": "baseline", "granularity": "per_sentence", "case": "F4", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.1}
+{"label": "baseline", "granularity": "per_sentence", "case": "F5", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 3.2}
+{"label": "baseline", "granularity": "bulk", "case": "L1", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.5}
+{"label": "baseline", "granularity": "bulk", "case": "L2", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "L3", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "L4", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: Reference says 'Maybe Postgres', not that it 'uses' it.", "seconds": 2.0}
+{"label": "baseline", "granularity": "bulk", "case": "L5", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.3}
+{"label": "baseline", "granularity": "bulk", "case": "L6", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "L7", "lost": true, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.3}
+{"label": "baseline", "granularity": "bulk", "case": "L8", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: omits 'of inactivity' required by reference", "seconds": 1.9}
+{"label": "baseline", "granularity": "bulk", "case": "F1", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "F2", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "F3", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "baseline", "granularity": "bulk", "case": "F4", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.3}
+{"label": "baseline", "granularity": "bulk", "case": "F5", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported", "seconds": 1.4}
+{"label": "with_check", "granularity": "per_sentence", "case": "L1", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped 'only for now'", "seconds": 4.4}
+{"label": "with_check", "granularity": "per_sentence", "case": "L2", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped condition 'unless legal asks for longer'", "seconds": 4.6}
+{"label": "with_check", "granularity": "per_sentence", "case": "L3", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped exception for payment calls", "seconds": 4.6}
+{"label": "with_check", "granularity": "per_sentence", "case": "L4", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: Reference says 'Maybe Postgres', not a definitive statement that it uses it.; nothing lost check failed: Dropped the hedge 'Maybe' and the condition 'if the hosting allows it'.", "seconds": 5.2}
+{"label": "with_check", "granularity": "per_sentence", "case": "L5", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped 7-day grace period condition", "seconds": 4.6}
+{"label": "with_check", "granularity": "per_sentence", "case": "L6", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped the specific limit of 100 MB", "seconds": 4.6}
+{"label": "with_check", "granularity": "per_sentence", "case": "L7", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: dropped condition 'for the finance team only'", "seconds": 4.6}
+{"label": "with_check", "granularity": "per_sentence", "case": "L8", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: omits 'of inactivity' specified in reference; nothing lost check failed: dropped the condition 'of inactivity'", "seconds": 4.8}
+{"label": "with_check", "granularity": "per_sentence", "case": "F1", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 4.4}
+{"label": "with_check", "granularity": "per_sentence", "case": "F2", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 4.4}
+{"label": "with_check", "granularity": "per_sentence", "case": "F3", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 4.4}
+{"label": "with_check", "granularity": "per_sentence", "case": "F4", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 4.3}
+{"label": "with_check", "granularity": "per_sentence", "case": "F5", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 4.4}
+{"label": "with_check", "granularity": "bulk", "case": "L1", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: only: Claim omits the exclusivity of in-app notifications.; nothing lost check failed: for now: Claim omits the temporal limitation.", "seconds": 4.0}
+{"label": "with_check", "granularity": "bulk", "case": "L2", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: unless legal asks for longer: The claim omits the legal exception stated in the reference.", "seconds": 3.2}
+{"label": "with_check", "granularity": "bulk", "case": "L3", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: never for payment calls: The claim omits the exception for payment calls.", "seconds": 3.2}
+{"label": "with_check", "granularity": "bulk", "case": "L4", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: Claim states service 'uses' Postgres; reference only says 'Maybe Postgres'.; nothing lost check failed: Maybe: The claim removes the uncertainty/possibility.; nothing lost check failed: if the hosting allows it: The claim removes the conditional requirement.", "seconds": 4.8}
+{"label": "with_check", "granularity": "bulk", "case": "L5", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: only after a 7-day grace period: The claim omits the required grace period condition.", "seconds": 3.2}
+{"label": "with_check", "granularity": "bulk", "case": "L6", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: at most 100 MB per upload: The claim omits the specific size limit stated in the reference.", "seconds": 3.2}
+{"label": "with_check", "granularity": "bulk", "case": "L7", "lost": true, "error": null, "passed": false, "reason": "nothing lost check failed: for the finance team only: The claim omits the restricted audience specified in the proposal.", "seconds": 3.1}
+{"label": "with_check", "granularity": "bulk", "case": "L8", "lost": true, "error": null, "passed": false, "reason": "sentence 1 unsupported: Omits 'of inactivity' specified in reference; nothing lost check failed: of inactivity: The claim drops the condition for the expiration trigger", "seconds": 3.9}
+{"label": "with_check", "granularity": "bulk", "case": "F1", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 1.8}
+{"label": "with_check", "granularity": "bulk", "case": "F2", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 1.8}
+{"label": "with_check", "granularity": "bulk", "case": "F3", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 2.0}
+{"label": "with_check", "granularity": "bulk", "case": "F4", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 1.8}
+{"label": "with_check", "granularity": "bulk", "case": "F5", "lost": false, "error": null, "passed": true, "reason": "all 1 sentences supported; nothing lost", "seconds": 1.7}

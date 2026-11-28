@@ -22,7 +22,7 @@ class ScriptedConversation(ReviewConversation):
         return self.answers.pop(0)
 
 
-def packet(claim, tag="requirement"):
+def packet(claim, tag="technical"):
     return ReviewPacket.from_json({
         "review_id": "rev-9", "node_title": "report output", "node_context_summary": "reports",
         "claim_tag": tag, "claim_text": claim,

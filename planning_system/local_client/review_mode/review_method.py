@@ -5,6 +5,7 @@ sentence, otherwise bulk"."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Optional, Sequence
 
 from .review_conversation import ReviewConversation
 from .types import ReviewPacket, Verdict
@@ -19,3 +20,15 @@ class ReviewMethod(ABC):
     @abstractmethod
     def run(self, packet: ReviewPacket, conversation: ReviewConversation) -> Verdict:
         """Raises ReviewerUnavailable (backend failed) or UnparseableVerdict (an answer was unreadable)."""
+
+
+def verdict_from(sentences: list[str], unsupported: dict[int, str], dropped_conditions: Optional[Sequence[str]],
+                 suggested_title: Optional[str]) -> Verdict:
+    """Shared by both methods. dropped_conditions None = the nothing-lost check was not asked."""
+    failures = [f"sentence {number} unsupported: {unsupported[number] or sentences[number - 1]}"
+                for number in sorted(unsupported)]
+    failures += [f"nothing lost check failed: {dropped}" for dropped in dropped_conditions or ()]
+    if failures:
+        return Verdict(False, "; ".join(failures), suggested_title)
+    passed = f"all {len(sentences)} sentences supported" + ("; nothing lost" if dropped_conditions is not None else "")
+    return Verdict(True, passed, suggested_title)

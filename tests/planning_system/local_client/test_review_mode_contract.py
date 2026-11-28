@@ -32,7 +32,7 @@ FAKE_PI = Path(__file__).with_name("fake_pi_rpc.py")
 
 PACKET = ReviewPacket.from_json({
     "review_id": "rev-1", "node_title": "vendor placement", "node_context_summary": "where vendors go",
-    "claim_tag": "requirement", "claim_text": "Vendors go on even floors [ref-7:3-3].",
+    "claim_tag": "technical", "claim_text": "Vendors go on even floors [ref-7:3-3].",
     "citations": [{"citation": "[ref-7:3-3]", "origin": "user_exchange", "quoted_text": "yes",
                    "pre_text": "Shall vendors go on even floors?", "full_text": "yes"}]})
 
@@ -126,7 +126,7 @@ def test_serve_returns_promptly_when_stopped_while_idle(loop_class, reviewer_api
 def test_opening_turn_inlines_quotes_and_the_sentence_question():
     prompt = opening_turn(PACKET)
     for expected in ("NEW REVIEW rev-1", "PRE-INPUT CONTEXT", "Shall vendors go on even floors?", "CITED TEXT",
-                     "Vendors go on even floors [ref-7:3-3].", "vendor placement", "CLAIM TAG: requirement",
+                     "Vendors go on even floors [ref-7:3-3].", "vendor placement", "CLAIM TAG: technical",
                      "Does this sentence make a claim not fully supported by an included user or document reference?",
                      '"answer"'):
         assert expected in prompt
