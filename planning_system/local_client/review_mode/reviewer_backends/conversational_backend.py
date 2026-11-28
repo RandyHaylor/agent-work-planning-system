@@ -6,6 +6,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Optional
 
+from ..kind_dispatch import ReviewByKind
+from ..node_guess_screen import NodeGuessScreen
 from ..review_conversation import ReviewConversation
 from ..review_method import ReviewMethod
 from ..sentence_review import SentenceBySentenceReview
@@ -23,7 +25,7 @@ class ConversationalReviewerBackend(ReviewerBackend):
 
     def review(self, packet: ReviewPacket) -> Verdict:
         if self._review_method is None:
-            self._review_method = SentenceBySentenceReview()
+            self._review_method = ReviewByKind(SentenceBySentenceReview(), NodeGuessScreen())
         return self._review_method.run(packet, self._open_conversation())
 
     @abstractmethod

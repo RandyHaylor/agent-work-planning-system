@@ -104,7 +104,7 @@ def _claim_and_references(packet: ReviewPacket) -> str:
             f"NODE CONTEXT SUMMARY: {packet.node_context_summary}\n"
             f"FULL CLAIM:\n{packet.claim_text}\n\n"
             "INCLUDED REFERENCES:\n"
-            + ("\n".join(_reference_block(i, c) for i, c in enumerate(packet.citations)) or "(none)\n"))
+            + ("\n".join(reference_block(i, c) for i, c in enumerate(packet.citations)) or "(none)\n"))
 
 
 def _title_rules(node_title: str, lead: str) -> str:
@@ -170,7 +170,7 @@ def read_title_answer(answer: str) -> Optional[str]:
     return title.strip() if isinstance(title, str) and title.strip() else None
 
 
-def _reference_block(index: int, citation: ResolvedCitation) -> str:
+def reference_block(index: int, citation: ResolvedCitation) -> str:
     lines = [f"--- reference[{index}] {citation.citation} origin={citation.origin} ---"]
     if citation.pre_text:
         lines.append(f"PRE-INPUT CONTEXT (what the agent had said before this user input):\n{citation.pre_text}")

@@ -3,8 +3,8 @@
 - local_llm: the existing llama.cpp gemma4 server (127.0.0.1:8898; one shared slot, short calls).
 - claude_code: headless `claude -p --model haiku` (short paid run).
 The user's words arrive through the quote key; a worker writes one claim the quote supports and one it
-contradicts; `planning review serve --once` reviews them; the planner can't mark the task done while a
-review failed. Run: uv run python -I scripts/live_review_run.py [--skip-claude]
+contradicts; `planning review serve --once` reviews them, then the whole-node guess screen (build log #60 (5))
+screens the node; the planner can't mark the task done while a review failed. Run: uv run python -I scripts/live_review_run.py [--skip-claude]
 """
 import json
 import os
@@ -125,11 +125,12 @@ def main() -> int:
         run(planner, "nodes", "state", str(review_task["id"]), "in_progress")
         reviewer = {**common, "PLANNING_TOKEN": reviewer_assign["worker_token"]}
 
-        backends = [("local_llm", None), ("local_llm", None)]
+        backends = [("local_llm", None), ("local_llm", None)]          # the two claims, oldest first
         if not skip_claude:
             run(worker, "content", "add", str(task["id"]), "--tags", "requirement",
                 "--text", f"Entries expire after three days [{user_ref}:2-2]")
             backends.append(("claude_code", "haiku"))
+        backends.append(("local_llm", None))                             # then the whole-node guess screen
         for backend, model in backends:
             args = ["review", "serve", "--project", pid, "--backend", backend, "--once"]
             if model:
@@ -141,10 +142,14 @@ def main() -> int:
         _, listed = run(planner, "review", "list", "--project", pid)
         for r in listed:
             print(f"  review {r.get('id')}: {r.get('status')}  reason={str(r.get('reason'))[:120]!r}")
-        statuses = [r.get("status") for r in listed]
+        statuses = [r.get("status") for r in listed if r.get("target_kind") == "content"]
+        node_reviews = [r for r in listed if r.get("target_kind") == "node" and r.get("status") != "superseded"]
         code, out = run(planner, "nodes", "state", str(task["id"]), "done", ok=False)
         print("  task 'done' while a review failed ->", "rejected" if code != 0 else "ALLOWED", str(out)[:200])
-        good = statuses.count("passed") >= 1 + (0 if skip_claude else 1) and statuses.count("failed") == 1
+        node_screened = len(node_reviews) == 1 and node_reviews[0].get("status") in ("passed", "failed")
+        print("  whole-node guess screen decided:", node_screened)
+        good = (statuses.count("passed") >= 1 + (0 if skip_claude else 1) and statuses.count("failed") == 1
+                and node_screened)
         print("LIVE REVIEW RUN", "PASSED" if good and code != 0 else "CHECK RESULTS")
         return 0 if good and code != 0 else 1
     finally:

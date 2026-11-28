@@ -5,7 +5,7 @@
 - TranscriptReplayConversation: any one-shot ask (e.g. parked pi); earlier turns are replayed inside each prompt."""
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Optional
 
 from planning_system.model_calls import ChatMessage, ChatModelCall, ChatRequest, ModelCallFailed
 
@@ -20,9 +20,10 @@ class ChatHistoryConversation(ReviewConversation):
         self._model_call, self._max_tokens = model_call, max_tokens
         self._messages: list[ChatMessage] = []
 
-    def say(self, text: str) -> str:
+    def say(self, text: str, max_tokens: Optional[int] = None) -> str:
         self._messages.append(ChatMessage("user", text))
-        request = ChatRequest(tuple(self._messages), json_output=True, max_tokens=self._max_tokens, temperature=0.0)
+        request = ChatRequest(tuple(self._messages), json_output=True, max_tokens=max_tokens or self._max_tokens,
+                              temperature=0.0)
         try:
             answer = self._model_call.chat(request).text
         except ModelCallFailed as error:
@@ -36,7 +37,7 @@ class ReviewWorkerConversation(ReviewConversation):
     def __init__(self, review_worker: ReviewWorkerInterface):
         self._review_worker = review_worker
 
-    def say(self, text: str) -> str:
+    def say(self, text: str, max_tokens: Optional[int] = None) -> str:
         try:
             return self._review_worker.ask(text)
         except Exception as error:           # any harness failure (timeout, dead process) = backend unavailable
@@ -49,7 +50,7 @@ class TranscriptReplayConversation(ReviewConversation):
         self._ask = ask
         self._turns: list[tuple[str, str]] = []
 
-    def say(self, text: str) -> str:
+    def say(self, text: str, max_tokens: Optional[int] = None) -> str:
         answer = self._ask(self._prompt(text))
         self._turns.append((text, answer))
         return answer

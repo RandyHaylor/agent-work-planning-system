@@ -206,11 +206,12 @@ def test_citation_gate_and_content_review(api, http):
     reviews = Reviews(http, planner_token)
     assert reviews.list(project["id"]).json() == []
 
-    # spec 12: cited -> pending, listed
+    # spec 12: cited -> pending, listed; the node changed, so a whole-node guess screen opens too (#60 (5))
     added = worker.add_content(task["id"], f"Entries live 72 hours [{user_id}:2-2]", ["requirement"])
     assert added["review"]["status"] == "pending" and added["message"] == "submitted for review (not approved)"
     first_review = added["review"]["id"]
-    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review]
+    first_node_review = added["node_review"]["id"]
+    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review, first_node_review]
 
     # build log #61: open_items need no citation, open no content review, and are listed per project
     with pytest.raises(Invalid) as error:
@@ -218,7 +219,9 @@ def test_citation_gate_and_content_review(api, http):
     assert "RESEARCH:" in str(error.value) and "ASK USER:" in str(error.value)
     todo = worker.add_content(task["id"], "RESEARCH: eviction policy\nASK USER: max entry size", ["open_items"])
     assert todo["review"] is None and "not reviewed" in todo["message"]
-    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review]
+    node_review = todo["node_review"]["id"]                         # replaces the earlier node review
+    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review, node_review]
+    assert reviews.list(project["id"], "superseded").json()[0]["id"] == first_node_review
     [open_item] = planner.open_items(project["id"])
     assert (open_item["node_id"], open_item["reference_id"]) == (task["id"], todo["reference_id"])
     assert open_item["lines"] == ["RESEARCH: eviction policy", "ASK USER: max entry size"]
@@ -237,9 +240,17 @@ def test_citation_gate_and_content_review(api, http):
     assert taken.status_code == 200, taken.text
     packet = taken.json()
     assert packet["review_id"] == first_review and packet["claim_tag"] == "requirement"
+    assert packet["kind"] == "content"
     [citation] = packet["citations"]
     assert citation["quoted_text"] == "Use 72 hours."
     assert citation["pre_text"] == "How long should entries live?"
+    # the whole-node packet: title, summary, every content item and all their quotes
+    node_packet = reviewer.take(project["id"]).json()
+    assert (node_packet["review_id"], node_packet["kind"]) == (node_review, "node")
+    assert node_packet["node_title"] == "cache lifetime"
+    assert [i["text"] for i in node_packet["content_items"]] == [
+        f"Entries live 72 hours [{user_id}:2-2]", "RESEARCH: eviction policy\nASK USER: max entry size"]
+    assert [c["quoted_text"] for c in node_packet["citations"]] == ["Use 72 hours."]
     assert reviewer.take(project["id"]).status_code == 204
     # build log #50: the holder may read the quotes of the review it holds
     holder = api.with_token(reviewer_token)
@@ -254,21 +265,37 @@ def test_citation_gate_and_content_review(api, http):
     [seen] = reviews.list(project["id"], "failed").json()
     assert (seen["reason"], seen["suggested_title"]) == ("quote does not mention entries", "entry lifetime")
     assert planner.get_node(task["id"])["state"] == "assigned"
+    # the guess screen fails too, with a reason per statement, shown the same way
+    reviewer.verdict(node_review, False, "statement 1 guessed: 'entries' not in any reference")
+    assert {r["id"] for r in reviews.list(project["id"], "failed").json()} == {first_review, node_review}
 
-    # build log #50: can't be done with a failed review
+    # build log #50: can't be done with a failed review (content or whole node)
     with pytest.raises(Invalid) as error:
         planner.set_state(task["id"], "done")
-    assert first_review in str(error.value)
+    assert first_review in str(error.value) and node_review in str(error.value)
 
-    # spec 15: replace -> old review superseded, new one pending
+    # spec 15: replace -> old review superseded, new one pending; the failed node review is replaced too
     replaced = planner.replace_content(task["id"], added["reference_id"], f"Use 72 hours [{user_id}:2-2]")
     assert replaced["review"]["status"] == "pending"
     statuses = {r["id"]: r["status"] for r in reviews.list(project["id"]).json()}
-    assert statuses == {first_review: "superseded", replaced["review"]["id"]: "pending"}
+    assert statuses == {first_review: "superseded", first_node_review: "superseded", node_review: "superseded",
+                        replaced["review"]["id"]: "pending", replaced["node_review"]["id"]: "pending"}
     with pytest.raises(Invalid):
         planner.set_state(task["id"], "done")                       # still pending
 
-    # pass -> done allowed
+    # a changed summary opens a new node review; an unchanged one does not
+    planner.update_node(task["id"], context_summary="How long entries live.")
+    assert len(reviews.list(project["id"], "pending").json()) == 2
+    planner.update_node(task["id"], context_summary="How long cache entries live.")
+    pending = [r["id"] for r in reviews.list(project["id"], "pending").json()]
+    assert pending[0] == replaced["review"]["id"] and len(pending) == 2
+    last_node_review = pending[1]
+
+    # pass both -> done allowed
     assert reviewer.take(project["id"]).json()["review_id"] == replaced["review"]["id"]
     assert reviewer.verdict(replaced["review"]["id"], True, "quote states it").json()["status"] == "passed"
+    with pytest.raises(Invalid):
+        planner.set_state(task["id"], "done")                       # node review still pending
+    assert reviewer.take(project["id"]).json()["review_id"] == last_node_review
+    assert reviewer.verdict(last_node_review, True, "no guesses").json()["status"] == "passed"
     assert planner.set_state(task["id"], "done")["state"] == "done"

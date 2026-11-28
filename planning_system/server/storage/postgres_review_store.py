@@ -15,7 +15,7 @@ CONTENT_REVIEWS = Table(
     Column("id", Text, primary_key=True),
     Column("project_id", BigInteger, nullable=False),
     Column("node_id", BigInteger, nullable=False, index=True),
-    Column("content_reference_id", Text, nullable=False, index=True),
+    Column("content_reference_id", Text, index=True),           # None for a node review (migration 0003)
     Column("claim_tag", Text, nullable=False),
     Column("status", Text, nullable=False),
     Column("reviewer", Text),
@@ -24,11 +24,12 @@ CONTENT_REVIEWS = Table(
     Column("suggested_title", Text),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("decided_at", DateTime(timezone=True)),
+    Column("target_kind", Text, nullable=False, server_default="content"),
     Index("ix_content_reviews_project_status", "project_id", "status"),
 )
 
 _FIELDS = ("id", "project_id", "node_id", "content_reference_id", "claim_tag", "status", "reviewer", "taken_at",
-           "reason", "suggested_title", "created_at", "decided_at")
+           "reason", "suggested_title", "created_at", "decided_at", "target_kind")
 _ORDER = (CONTENT_REVIEWS.c.created_at, CONTENT_REVIEWS.c.id)
 
 
@@ -48,7 +49,7 @@ class PostgresReviewStore(ReviewStoragePort):
         self._conn.execute(update(CONTENT_REVIEWS).where(CONTENT_REVIEWS.c.id == record.id)
                            .values(**{k: v for k, v in row.items() if k != "id"}))
 
-    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None):
+    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None):
         c = CONTENT_REVIEWS.c
         statement = select(CONTENT_REVIEWS)
         if project_id is not None:
@@ -59,6 +60,8 @@ class PostgresReviewStore(ReviewStoragePort):
             statement = statement.where(c.node_id == node_id)
         if content_reference_id is not None:
             statement = statement.where(c.content_reference_id == content_reference_id)
+        if target_kind is not None:
+            statement = statement.where(c.target_kind == target_kind)
         return self._records(statement.order_by(*_ORDER))
 
     def lock_oldest_pending(self, project_id):

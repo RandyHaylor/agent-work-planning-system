@@ -19,7 +19,8 @@ class ReviewStoragePort(ABC):
 
     @abstractmethod
     def find(self, project_id: Optional[int] = None, statuses: Optional[Iterable[str]] = None,
-             node_id: Optional[int] = None, content_reference_id: Optional[str] = None) -> list[ReviewRecord]:
+             node_id: Optional[int] = None, content_reference_id: Optional[str] = None,
+             target_kind: Optional[str] = None) -> list[ReviewRecord]:
         """Matching records, oldest (created_at, id) first; None = any."""
 
     @abstractmethod

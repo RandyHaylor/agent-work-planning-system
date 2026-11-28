@@ -15,6 +15,11 @@ class ReviewLedger(ABC):
         """A new pending record for one content item."""
 
     @abstractmethod
+    def open_node(self, project_id: int, node_id: int) -> ReviewRecord:
+        """A new pending whole-node review (guess screen, build log #60 (5)); the node's earlier not-yet-decided
+        or failed node reviews become superseded (the node changed since)."""
+
+    @abstractmethod
     def supersede_for(self, content_reference_id: str) -> None:
         """Every not-yet-superseded record of that content item -> superseded (on replace_content)."""
 

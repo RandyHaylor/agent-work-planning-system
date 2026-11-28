@@ -12,8 +12,8 @@ from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, O
 
 from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort
-from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, PASSED, PENDING, SUPERSEDED, TAKEN,
-                    ResolvedCitation, ReviewPacket, ReviewRecord)
+from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, PASSED, PENDING, SUPERSEDED, TAKEN, TARGET_NODE,
+                    PacketContentItem, ResolvedCitation, ReviewPacket, ReviewRecord)
 
 
 class TickingClock(Clock):
@@ -42,13 +42,14 @@ class InMemoryReviewStorage(ReviewStoragePort):
     def save(self, record):
         self._records[record.id] = record
 
-    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None):
+    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None):
         statuses = None if statuses is None else set(statuses)
         found = [r for r in self._records.values()
                  if (project_id is None or r.project_id == project_id)
                  and (statuses is None or r.status in statuses)
                  and (node_id is None or r.node_id == node_id)
-                 and (content_reference_id is None or r.content_reference_id == content_reference_id)]
+                 and (content_reference_id is None or r.content_reference_id == content_reference_id)
+                 and (target_kind is None or r.target_kind == target_kind)]
         return sorted(found, key=lambda r: (r.created_at, r.id))
 
     def lock_oldest_pending(self, project_id):
@@ -70,6 +71,15 @@ class FakeReviewLedger(ReviewLedger):
     def open(self, project_id, node_id, content_reference_id, claim_tag):
         record = ReviewRecord(f"rev-fake-{next(self._ids)}", project_id, node_id, content_reference_id, claim_tag,
                               PENDING, None, None, "", None, self._clock.now(), None)
+        self._records[record.id] = record
+        return record
+
+    def open_node(self, project_id, node_id):
+        for r in list(self._records.values()):
+            if r.node_id == node_id and r.target_kind == TARGET_NODE and r.status in BLOCKING_STATUSES:
+                self._records[r.id] = dataclasses.replace(r, status=SUPERSEDED)
+        record = ReviewRecord(f"rev-fake-{next(self._ids)}", project_id, node_id, None, "", PENDING, None, None, "",
+                              None, self._clock.now(), None, TARGET_NODE)
         self._records[record.id] = record
         return record
 
@@ -97,18 +107,26 @@ class FakeReviewLedger(ReviewLedger):
             return None
         record = dataclasses.replace(pending[0], status=TAKEN, reviewer=reviewer, taken_at=self._clock.now())
         self._records[record.id] = record
-        text = self._references.get(record.content_reference_id, follow_superseded=False).text
         node = self._tree.get(record.node_id)
-        resolved = []
-        for c in citations_in(text):
-            ref = self._references.get(c.reference_id, follow_superseded=False)
-            lines = ref.text.splitlines()
-            user = ref.origin in (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE)
-            resolved.append(ResolvedCitation(
-                c, ref.origin, "\n".join(lines[c.start_line - 1:c.end_line]),
-                "\n".join(lines[:c.start_line - 1]) if ref.origin == ORIGIN_USER_EXCHANGE else "",
-                ref.text if user else ""))
-        return ReviewPacket(record.id, node.title, node.context_summary, record.claim_tag, text, tuple(resolved))
+        if record.target_kind == TARGET_NODE:
+            items = tuple(PacketContentItem(c.reference_id, tuple(sorted(c.tags)),
+                                            self._references.get(c.reference_id, follow_superseded=False).text)
+                          for c in self._tree.content(node.id))
+            texts = [node.title, node.context_summary, *(i.text for i in items)]
+            unique = list(dict.fromkeys(c for t in texts for c in citations_in(t)))
+            return ReviewPacket(record.id, node.title, node.context_summary, "", "",
+                                tuple(self._resolved(c) for c in unique), TARGET_NODE, items)
+        text = self._references.get(record.content_reference_id, follow_superseded=False).text
+        return ReviewPacket(record.id, node.title, node.context_summary, record.claim_tag, text,
+                            tuple(self._resolved(c) for c in citations_in(text)))
+
+    def _resolved(self, c):
+        ref = self._references.get(c.reference_id, follow_superseded=False)
+        lines = ref.text.splitlines()
+        user = ref.origin in (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE)
+        return ResolvedCitation(c, ref.origin, "\n".join(lines[c.start_line - 1:c.end_line]),
+                                "\n".join(lines[:c.start_line - 1]) if ref.origin == ORIGIN_USER_EXCHANGE else "",
+                                ref.text if user else "")
 
     def submit(self, review_id, reviewer, verdict):
         record = self._held(review_id, reviewer)

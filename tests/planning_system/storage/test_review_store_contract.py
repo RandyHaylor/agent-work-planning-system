@@ -53,6 +53,16 @@ def test_round_trip_save_and_find(review_store):
     assert review_store.taken_before(T0) == []
 
 
+def test_node_review_round_trip(review_store):
+    """Migration 0003: target_kind, and no content item for a node review."""
+    node_review = record("rev-n", content_reference_id=None, claim_tag="", target_kind="node")
+    review_store.add(node_review)
+    review_store.add(record("rev-c"))
+    assert review_store.get("rev-n") == node_review
+    assert review_store.get("rev-c").target_kind == "content"
+    assert [r.id for r in review_store.find(target_kind="node")] == ["rev-n"]
+
+
 def test_two_connections_never_take_the_same_record(engine):
     project = secrets.randbits(40)
     with engine.begin() as conn:

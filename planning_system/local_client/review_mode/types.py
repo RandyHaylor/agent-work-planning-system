@@ -30,6 +30,22 @@ class ResolvedCitation:
                    str(data.get("full_text") or ""))
 
 
+KIND_CONTENT = "content"      # one content item's claim against its citations
+KIND_NODE = "node"            # the whole node, guess screen (build log #60 (5))
+
+
+@dataclass(frozen=True)
+class PacketContentItem:
+    reference_id: str
+    tags: tuple[str, ...]
+    text: str
+
+    @classmethod
+    def from_json(cls, data: dict) -> "PacketContentItem":
+        return cls(str(data.get("reference_id") or ""), tuple(str(t) for t in data.get("tags") or ()),
+                   str(data.get("text") or ""))
+
+
 @dataclass(frozen=True)
 class ReviewPacket:
     review_id: str
@@ -38,13 +54,17 @@ class ReviewPacket:
     claim_tag: str
     claim_text: str
     citations: tuple[ResolvedCitation, ...]
+    kind: str = KIND_CONTENT
+    content_items: tuple[PacketContentItem, ...] = ()     # node packets: every current content item
 
     @classmethod
     def from_json(cls, data: dict) -> "ReviewPacket":
         return cls(str(data["review_id"]), str(data.get("node_title") or ""),
                    str(data.get("node_context_summary") or ""), str(data.get("claim_tag") or ""),
                    str(data.get("claim_text") or ""),
-                   tuple(ResolvedCitation.from_json(c) for c in data.get("citations") or ()))
+                   tuple(ResolvedCitation.from_json(c) for c in data.get("citations") or ()),
+                   str(data.get("kind") or KIND_CONTENT),
+                   tuple(PacketContentItem.from_json(i) for i in data.get("content_items") or ()))
 
 
 @dataclass(frozen=True)

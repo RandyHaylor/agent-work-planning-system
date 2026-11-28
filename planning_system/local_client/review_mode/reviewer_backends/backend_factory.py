@@ -10,6 +10,8 @@ from planning_system.model_calls import ModelEndpointFactory, load_model_endpoin
 
 from ...review_worker import ReviewWorkerInterface
 from ..bulk_review import BulkReview
+from ..kind_dispatch import ReviewByKind
+from ..node_guess_screen import NodeGuessScreen
 from ..review_method import BULK, ReviewMethod
 from ..reviewer_profiles import ReviewerProfile
 from ..sentence_review import SentenceBySentenceReview
@@ -27,7 +29,9 @@ ReviewWorkerFactory = Callable[[str], ReviewWorkerInterface]   # model name -> r
 
 
 def review_method_for(granularity: str) -> ReviewMethod:
-    return BulkReview() if granularity == BULK else SentenceBySentenceReview()
+    """Content reviews at the granularity; whole-node reviews always by the one-call guess screen."""
+    content = BulkReview() if granularity == BULK else SentenceBySentenceReview()
+    return ReviewByKind(content, NodeGuessScreen())
 
 
 def claude_code_review_worker(model: str) -> ReviewWorkerInterface:

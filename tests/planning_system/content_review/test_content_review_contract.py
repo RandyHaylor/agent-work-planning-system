@@ -131,6 +131,42 @@ def test_9g_blocking_for_node_is_pending_taken_and_failed(make_ledger, world):
     assert ledger.get(other.id).status == PASSED
 
 
+# whole-node guess screen (build log #60 (5)): a review record about a node, not a node type
+def test_node_review_is_a_record_about_the_node(make_ledger, world):
+    ledger = make_ledger()
+    record = ledger.open_node(world["project"].id, world["node"].id)
+    assert (record.status, record.target_kind, record.node_id, record.content_reference_id) == \
+        (PENDING, "node", world["node"].id, None)
+    assert open_one(ledger, world).target_kind == "content"
+    assert record.id in [r.id for r in ledger.blocking_for_node(world["node"].id)]
+
+
+def test_a_new_node_review_supersedes_the_nodes_earlier_open_node_reviews(make_ledger, world):
+    ledger = make_ledger()
+    content = open_one(ledger, world)
+    first = ledger.open_node(world["project"].id, world["node"].id)
+    second = ledger.open_node(world["project"].id, world["node"].id)
+    assert ledger.get(first.id).status == SUPERSEDED
+    assert ledger.get(second.id).status == PENDING and ledger.get(content.id).status == PENDING
+
+
+def test_node_packet_holds_title_summary_every_item_and_all_their_references(make_ledger, world):
+    tree = world["tree"]
+    tree.add_content(world["node"].id, "RESEARCH: eviction policy", ("open_items",))
+    ledger = make_ledger()
+    record = ledger.open_node(world["project"].id, world["node"].id)
+    packet = ledger.take_next(world["project"].id, "reviewer-a")
+    assert (packet.review_id, packet.kind) == (record.id, "node")
+    assert (packet.node_title, packet.node_context_summary) == ("cache lifetime", "How long entries live.")
+    assert [(i.reference_id, i.tags, i.text[:15]) for i in packet.content_items] == [
+        (world["content"].reference_id, ("requirement",), "TTL is 72 hours"),
+        (packet.content_items[1].reference_id, ("open_items",), "RESEARCH: evict")]
+    user, doc = packet.citations
+    assert (user.origin, user.quoted_text, user.pre_text) == ("user_exchange", "Use 72 hours.",
+                                                              "How long should entries live?")
+    assert (doc.origin, doc.quoted_text) == ("document", "TTL is 72 hours")
+
+
 # 10
 def test_10_packet_inlines_the_quotes(make_ledger, world):
     ledger = make_ledger()

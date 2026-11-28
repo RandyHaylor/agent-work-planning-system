@@ -13,7 +13,7 @@ from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort
 from .review_packet_builder import ReviewPacketBuilder
 from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, PASSED, PENDING, STATUSES, SUPERSEDED, TAKEN,
-                    ReviewRecord)
+                    TARGET_NODE, ReviewRecord)
 
 
 class ReviewLedgerService(ReviewLedger):
@@ -27,6 +27,16 @@ class ReviewLedgerService(ReviewLedger):
                               content_reference_id=content_reference_id, claim_tag=claim_tag, status=PENDING,
                               reviewer=None, taken_at=None, reason="", suggested_title=None,
                               created_at=self._clock.now(), decided_at=None)
+        self._storage.add(record)
+        return record
+
+    def open_node(self, project_id, node_id):
+        for record in self._storage.find(statuses=BLOCKING_STATUSES, node_id=node_id, target_kind=TARGET_NODE):
+            self._storage.save(dataclasses.replace(record, status=SUPERSEDED))
+        record = ReviewRecord(id=f"rev-{uuid.uuid4()}", project_id=project_id, node_id=node_id,
+                              content_reference_id=None, claim_tag="", status=PENDING, reviewer=None, taken_at=None,
+                              reason="", suggested_title=None, created_at=self._clock.now(), decided_at=None,
+                              target_kind=TARGET_NODE)
         self._storage.add(record)
         return record
 

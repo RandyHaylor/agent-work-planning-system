@@ -22,6 +22,7 @@ class SubmittedContent:
     tags: frozenset
     review: Optional[SubmittedReview]
     message: str = SUBMITTED_MESSAGE
+    node_review: Optional[SubmittedReview] = None     # the whole-node guess screen this change opened
 
 
 def project_of(services, node_id: int) -> int:
@@ -29,9 +30,17 @@ def project_of(services, node_id: int) -> int:
     return ancestors[0].id if ancestors else node_id
 
 
+def open_node_review(services, node_id: int) -> SubmittedReview:
+    """The node changed (content, title or summary): one whole-node guess screen (build log #60 (5))."""
+    record = services.reviews.open_node(project_of(services, node_id), node_id)
+    return SubmittedReview(record.id, record.status)
+
+
 def submit(services, node_id: int, content, claim) -> SubmittedContent:
     """claim: the gate's CheckedClaim."""
     if not claim.reviewed:
-        return SubmittedContent(content.reference_id, content.tags, None, NOT_REVIEWED_MESSAGE)
+        return SubmittedContent(content.reference_id, content.tags, None, NOT_REVIEWED_MESSAGE,
+                                open_node_review(services, node_id))
     record = services.reviews.open(project_of(services, node_id), node_id, content.reference_id, claim.claim_tag)
-    return SubmittedContent(content.reference_id, content.tags, SubmittedReview(record.id, record.status))
+    return SubmittedContent(content.reference_id, content.tags, SubmittedReview(record.id, record.status),
+                            node_review=open_node_review(services, node_id))
