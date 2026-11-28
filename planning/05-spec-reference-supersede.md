@@ -1,4 +1,10 @@
-# Spec: superseding evidence references (DRAFT: open points decided 2026-11-27; whole spec awaiting approval)
+# Spec: superseding evidence references (APPROVED 2026-11-27: "Approve without (c)")
+
+## Changes from the experiment (`planning/experiments/supersede/results.md`), approved with the spec
+
+- (a) The all-quotes check is ONE call per new user statement that lists every cited user quote and returns the ones it changes (perfect on gemma4 and Haiku); batched when the quotes don't fit one prompt.
+- (b) The trial review shows the reviewer the diff-matched lines AND the whole new copy; rule added: a deprecation or warning about the claimed thing counts as no longer supported.
+- Not adopted: (c) a Haiku second opinion when gemma says a claim still holds.
 
 ## The requirement (user, 2026-11-27)
 
