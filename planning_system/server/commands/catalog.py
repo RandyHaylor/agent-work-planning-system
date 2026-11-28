@@ -41,11 +41,15 @@ from .rotate_credential import RotateCredential
 from .set_node_state import SetNodeState
 from .start_admin_session import StartAdminSession
 from .store_user_exchange import StoreUserExchange
+from .system_halt import GetHaltState, HaltSystem, UnhaltSystem
 from .update_node import UpdateNode
 
 CORE_ROUTES = {
     ("POST", "/admin/sessions"): StartAdminSession,
     ("DELETE", "/admin/sessions"): EndAdminSession,
+    ("POST", "/admin/halt"): HaltSystem,             # build log #68
+    ("POST", "/admin/unhalt"): UnhaltSystem,
+    ("GET", "/admin/halt"): GetHaltState,
     ("GET", "/me"): GetCurrentPrincipal,
     ("POST", "/credentials"): MintCredential,
     ("POST", "/credentials/quote-key"): MintQuoteKey,

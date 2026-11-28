@@ -13,6 +13,7 @@ from .permissions import NoPrincipalNeeded, Permission
 @dataclass(frozen=True)
 class StartAdminSession(WriteCommand):
     password: str
+    allowed_while_halted = True      # the admin must be able to log in to un-halt
 
     def required_permission(self) -> Permission:
         return NoPrincipalNeeded()

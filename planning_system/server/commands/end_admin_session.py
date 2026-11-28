@@ -13,6 +13,7 @@ from .permissions import RoleIs, Permission
 
 @dataclass(frozen=True)
 class EndAdminSession(WriteCommand):
+    allowed_while_halted = True
 
     def required_permission(self) -> Permission:
         return RoleIs(("admin",))

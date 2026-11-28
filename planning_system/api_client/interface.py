@@ -177,6 +177,17 @@ class PlanningApiClientInterface(ABC):
     @abstractmethod
     def release_review(self, review_id: str) -> dict: ...              # POST /reviews/{id}/release
 
+    # server halt (admin; build log #68). While halted every write and review hand-out raises Halted (423).
+    @abstractmethod
+    def halt_server(self, project_id: Optional[int] = None, reason: str = "") -> dict:
+        """POST /admin/halt: the whole system (project_id None) or one project. Returns the halt state."""
+
+    @abstractmethod
+    def unhalt_server(self, project_id: Optional[int] = None) -> dict: ...   # POST /admin/unhalt
+
+    @abstractmethod
+    def halt_status(self) -> dict: ...                                 # GET /admin/halt
+
     # guidance
     @abstractmethod
     def guidance(self, role: str) -> dict: ...                         # GET /guidance/{role}

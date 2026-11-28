@@ -86,7 +86,18 @@ class FakeLocalClient(LocalClientInterface):
     def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False, profile=None,
                       granularity=None):
         choice = ReviewerChoice(profile, backend, model, granularity)
-        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once)
+        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once, project_id)
+
+    def halt(self):
+        """In memory: stops every running task (no processes, no marker)."""
+        killed = [{"agent_id": s.agent_id, "kind": s.kind, "pid": s.pid, "outcome": "terminated"}
+                  for s in self._task_runner.running_tasks() if s.alive]
+        for row in killed:
+            self._task_runner.stop_task(row["agent_id"])
+        return {"halted": True, "killed": killed}
+
+    def resume(self):
+        return {"resumed": True, "was_halted": True}
 
 
 class RecordingLocalClient(LocalClientInterface):
@@ -124,3 +135,9 @@ class RecordingLocalClient(LocalClientInterface):
                       granularity=None):
         return self._record("serve_reviews", project_id=project_id, backend=backend, model=model,
                             poll_seconds=poll_seconds, once=once, profile=profile, granularity=granularity)
+
+    def halt(self):
+        return self._record("halt")
+
+    def resume(self):
+        return self._record("resume")

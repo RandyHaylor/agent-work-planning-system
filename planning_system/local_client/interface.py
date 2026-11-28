@@ -66,7 +66,18 @@ class LocalClientInterface(ABC):
         """Review mode: takes the project's content reviews one at a time with the reviewer the profile names
         (default profile "local"); backend/model/granularity override the profile.
         once -> handles at most one and returns {"review_id": id or None}; else serves until SIGINT/SIGTERM
-        (finishing the review in hand) and returns {"stopped": True}."""
+        (finishing the review in hand; a second signal aborts it) and returns {"stopped": True} (+ "aborted").
+        Raises ClientHalted while the client is halted."""
+
+    @abstractmethod
+    def halt(self) -> dict:
+        """`planning halt`: sets the halt marker, then kills every live process this client started (task sessions,
+        review loops, reviewer processes), each by its whole process group, SIGTERM then SIGKILL after a short
+        grace; waits for nothing to finish. Returns {"halted": True, "killed": [{agent_id, kind, pid, outcome}]}."""
+
+    @abstractmethod
+    def resume(self) -> dict:
+        """`planning resume`: clears the halt marker so sessions can start again."""
 
 
 # (project_id, reviewer choice, poll_seconds) -> a review-mode loop

@@ -16,6 +16,7 @@ from planning_system.server.domain.context_assembly import ContextAssembler
 from planning_system.server.domain.project_tree import ProjectTree
 from planning_system.server.domain.references import (Reader, ReferenceLibrary, RelatedReferences,
                                                       SupersedeCandidates, TempCache)
+from planning_system.server.domain.system_halt import HaltSwitch
 from planning_system.server.domain.task_assignment import TaskAssigner
 from planning_system.server.storage.storage import Stores
 
@@ -36,6 +37,7 @@ class Services:
     reader: Optional[Reader] = None
     candidates: Optional[SupersedeCandidates] = None     # supersede candidates (05-spec-reference-supersede.md)
     related: Optional[RelatedReferences] = None          # same-source / same-topic lookup ("search first")
+    halt: Optional[HaltSwitch] = None                    # the admin's stop switch (build log #68)
 
 
 class ServicesFactory(ABC):

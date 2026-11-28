@@ -5,12 +5,12 @@ from typing import Any, Optional
 
 import httpx
 
-from planning_system.errors import Forbidden, Invalid, NotFound
+from planning_system.errors import Halted, Forbidden, Invalid, NotFound
 
 from .client_settings import tls_verify_for
 from .types import ApiError, ClientSettings
 
-_CONTRACT_ERRORS = {404: NotFound, 403: Forbidden, 422: Invalid}
+_CONTRACT_ERRORS = {404: NotFound, 403: Forbidden, 422: Invalid, 423: Halted}
 
 
 class HttpTransport:

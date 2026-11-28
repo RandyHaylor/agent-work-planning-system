@@ -22,13 +22,17 @@ class TaskRunnerInterface(ABC):
 
 
 class RunningSessionsRegistryInterface(ABC):
-    """Local JSON file of sessions this client started."""
+    """Local JSON file of every process this client started (task sessions, review loops, reviewer processes)."""
 
     @abstractmethod
     def record(self, session: RunningSession) -> None: ...
 
     @abstractmethod
     def mark_stopped(self, agent_id: str) -> None: ...
+
+    @abstractmethod
+    def forget(self, agent_id: str) -> None:
+        """Drops the row (a review loop or reviewer process that ended normally); no error when absent."""
 
     @abstractmethod
     def all(self) -> list[RunningSession]: ...

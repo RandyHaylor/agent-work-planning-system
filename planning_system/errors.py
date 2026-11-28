@@ -23,4 +23,9 @@ class Conflict(DomainError):
     """-> 409 (e.g. a review verdict from someone not holding the review)"""
 
 
-__all__ = ["Conflict", "DomainError", "Forbidden", "Invalid", "NotFound"]
+class Halted(DomainError):
+    """-> 423 Locked: an admin halted the system or the project; writes and review hand-outs are refused until
+    un-halted (build log #68). Also the base of the local client's own halt refusal."""
+
+
+__all__ = ["Conflict", "DomainError", "Forbidden", "Halted", "Invalid", "NotFound"]

@@ -117,6 +117,13 @@ forbidden_modules = ["planning_system.server.domain.task_assignment.interface", 
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
+name = "domain.system_halt is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain_wiring", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.system_halt.halt_switch", "planning_system.server.domain.system_halt.interface", "planning_system.server.domain.system_halt.ports", "planning_system.server.domain.system_halt.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
 name = "domain does not depend on the layers above it"
 type = "forbidden"
 source_modules = ["planning_system.server.domain"]

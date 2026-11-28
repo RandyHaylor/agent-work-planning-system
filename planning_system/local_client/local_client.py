@@ -1,5 +1,5 @@
 """LocalClient facade: delegates each call to one child (task_runner, review_worker, quote_capture ports,
-hook installer)."""
+hook installer, halt)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,6 +7,7 @@ from typing import Optional, Sequence
 
 from planning_system.api_client import ClientSettings
 
+from .halt import ClientSessionTracker, SessionHalter
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceId,
                         ReferenceSyncPort, ReviewModeFactory)
 from .review_mode import ReviewerChoice
@@ -19,13 +20,17 @@ class LocalClient(LocalClientInterface):
 
     def __init__(self, task_runner: TaskRunnerInterface, review_worker: ReviewWorkerInterface,
                  reference_sync: ReferenceSyncPort, exchange_reader: ExchangeReaderPort,
-                 hook_installer: HookInstallerPort, review_mode_factory: Optional[ReviewModeFactory] = None):
+                 hook_installer: HookInstallerPort, review_mode_factory: Optional[ReviewModeFactory] = None,
+                 session_tracker: Optional[ClientSessionTracker] = None,
+                 session_halter: Optional[SessionHalter] = None):
         self._task_runner = task_runner
         self._review_worker = review_worker
         self._reference_sync = reference_sync
         self._exchange_reader = exchange_reader
         self._hook_installer = hook_installer
         self._review_mode_factory = review_mode_factory
+        self._session_tracker = session_tracker
+        self._session_halter = session_halter
 
     def install_hooks(self) -> None:
         self._hook_installer.install()
@@ -53,8 +58,22 @@ class LocalClient(LocalClientInterface):
                       granularity: Optional[str] = None) -> dict:
         if self._review_mode_factory is None:
             raise RuntimeError("this local client was built without review mode")
+        if self._session_tracker is not None:
+            self._session_tracker.ensure_not_halted()
         choice = ReviewerChoice(profile, backend, model, granularity)
-        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once)
+        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once, project_id,
+                               self._session_tracker)
+
+    def halt(self) -> dict:
+        return self._halter().halt()
+
+    def resume(self) -> dict:
+        return self._halter().resume()
+
+    def _halter(self) -> SessionHalter:
+        if self._session_halter is None:
+            raise RuntimeError("this local client was built without halt")
+        return self._session_halter
 
 
 def build_local_client(settings: ClientSettings) -> LocalClientInterface:
@@ -63,6 +82,7 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
 
     from .client_credentials import FileClientCredentials
     from .client_paths import ClientPaths
+    from .halt import client_session_control
     from .harness_adapters import AdapterConfig, adapter_for
     from .harness_adapters.claude_code.install import ClaudeCodeHookInstaller
     from .quote_capture.jsonl_exchange_cache import JsonlExchangeCache
@@ -75,11 +95,13 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
 
     paths = ClientPaths.from_environment()
     api = PlanningApiClient(settings)
-    adapter = adapter_for(AdapterConfig(), session_logs_directory=paths.session_logs_directory)
+    tracker, halter = client_session_control(paths)
+    adapter = adapter_for(AdapterConfig(), session_logs_directory=paths.session_logs_directory,
+                          process_tracker=tracker)
     cache = JsonlExchangeCache(paths.exchange_cache_file)
     return LocalClient(
         task_runner=TaskRunner(TaskSessionLauncher(api, adapter, settings),
-                               RunningSessionsRegistry(paths.running_sessions_file)),
+                               RunningSessionsRegistry(paths.running_sessions_file), tracker.ensure_not_halted),
         review_worker=ReviewWorker(adapter, thinking_log_path=paths.reviewer_thinking_log_file),
         reference_sync=ReferenceSyncAdapter(ReferenceSyncService(
             cache, ApiServerReferences(api), StoredQuoteKey(FileClientCredentials(paths.home)))),
@@ -87,5 +109,7 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
         hook_installer=ClaudeCodeHookInstaller(),
         review_mode_factory=lambda project_id, choice, poll_seconds: ReviewModeLoop(
             api, ReviewerBackendFactory().create_from_profile(choice.resolve(load_reviewer_profiles())),
-            project_id, poll_seconds),
+            project_id, poll_seconds, tracker.ensure_not_halted),
+        session_tracker=tracker,
+        session_halter=halter,
     )

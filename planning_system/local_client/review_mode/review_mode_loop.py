@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import logging
 from threading import Event
-from typing import Optional
+from typing import Callable, Optional
 
 from planning_system.api_client import ApiError, PlanningApiClientInterface
 from planning_system.errors import DomainError
 
+from ..halt import ClientHalted
 from .interface import ReviewModeInterface
 from .reviewer_backends.interface import ReviewerBackend
 from .types import ReviewerUnavailable, ReviewPacket, UnparseableVerdict, Verdict
@@ -22,13 +23,20 @@ log = logging.getLogger(__name__)
 class ReviewModeLoop(ReviewModeInterface):
 
     def __init__(self, api_client: PlanningApiClientInterface, backend: ReviewerBackend, project_id: int,
-                 poll_seconds: float = 5.0):
+                 poll_seconds: float = 5.0, launch_guard: Optional[Callable[[], None]] = None):
+        """launch_guard: raises ClientHalted while the client is halted (checked before every take)."""
         self._api = api_client
         self._backend = backend
         self._project_id = project_id
         self._poll_seconds = poll_seconds
+        self._launch_guard = launch_guard or (lambda: None)
+
+    @property
+    def project_id(self) -> int:
+        return self._project_id
 
     def run_once(self) -> Optional[str]:
+        self._launch_guard()
         data = self._api.take_review(self._project_id)
         if not data:
             return None
@@ -48,7 +56,10 @@ class ReviewModeLoop(ReviewModeInterface):
         while not stop.is_set():
             try:
                 handled = self.run_once()
-            except (DomainError, ApiError) as error:       # server hiccup or lease lost: keep serving
+            except ClientHalted as error:
+                log.warning("review mode: stopping: %s", error)
+                return
+            except (DomainError, ApiError) as error:       # server hiccup, lease lost or server halted: keep serving
                 log.warning("review mode: server call failed: %s", error)
                 handled = None
             if handled is None:

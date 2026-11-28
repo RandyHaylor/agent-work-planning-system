@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from planning_system.errors import Forbidden, Invalid, NotFound
+from planning_system.errors import Forbidden, Halted, Invalid, NotFound
 
 from .interface import PlanningApiClientInterface
 from .types import ApiError, ClientSettings
@@ -55,6 +55,7 @@ class FakePlanningServer:
         self.reviews: dict[str, dict] = {}
         self.review_packets: dict[str, dict] = {}
         self.candidates: dict[str, dict] = {}
+        self.halt_state: dict = {"system": False, "projects": []}
         self._fail_next: Optional[tuple[int, Any]] = None
         self._routes = self._build_routes()
 
@@ -109,6 +110,8 @@ class FakePlanningServer:
                 principal = self._principal(request)
                 if needs_auth and principal is None:
                     return httpx.Response(403, json={"detail": "not authenticated"})
+                if self._refused_while_halted(method, request.url.path, principal, body or {}):
+                    return httpx.Response(423, json={"error": "Halted", "detail": "halted: writes are refused"})
                 try:
                     result = handler(principal, body or {}, dict(request.url.params), *match.groups())
                 except (KeyError, LookupError):
@@ -119,6 +122,36 @@ class FakePlanningServer:
                     return httpx.Response(204)
                 return httpx.Response(200, json=result)
         return httpx.Response(404, json={"detail": "no such route"})
+
+    def _refused_while_halted(self, method: str, path: str, principal: Optional[dict], body: dict) -> bool:
+        """Server halt (build log #68), simplified: every non-GET except admin sessions and halt itself."""
+        if method == "GET" or path in ("/admin/sessions", "/admin/halt", "/admin/unhalt"):
+            return False
+        if self.halt_state["system"]:
+            return True
+        project = (principal or {}).get("project_id") or body.get("project_id")
+        return project is not None and int(project) in self.halt_state["projects"]
+
+    def _halt(self, principal, body, query):
+        if principal["role"] != "admin":
+            raise _Status(403, "admin only")
+        if body.get("project_id") is None:
+            self.halt_state["system"] = True
+        else:
+            self.halt_state["projects"].append(int(body["project_id"]))
+        return self._halt_view()
+
+    def _unhalt(self, principal, body, query):
+        if principal["role"] != "admin":
+            raise _Status(403, "admin only")
+        if body.get("project_id") is None:
+            self.halt_state["system"] = False
+        else:
+            self.halt_state["projects"] = [p for p in self.halt_state["projects"] if p != int(body["project_id"])]
+        return self._halt_view()
+
+    def _halt_view(self) -> dict:
+        return {"system": self.halt_state["system"], "projects": sorted(self.halt_state["projects"])}
 
     def _principal(self, request: httpx.Request) -> Optional[dict]:
         header = request.headers.get("authorization", "")
@@ -142,6 +175,9 @@ class FakePlanningServer:
         return [
             ("POST", "/admin/sessions", False, self._admin_session),
             ("DELETE", "/admin/sessions", True, lambda p, b, q: {"ended": True}),
+            ("POST", "/admin/halt", True, self._halt),
+            ("POST", "/admin/unhalt", True, self._unhalt),
+            ("GET", "/admin/halt", True, lambda p, b, q: self._halt_view()),
             ("GET", "/me", True, lambda p, b, q: dict(p)),
             ("POST", "/credentials", True, self._mint),
             ("POST", "/credentials/quote-key", True, self._mint_quote_key),
@@ -380,7 +416,7 @@ class FakePlanningApiClient(PlanningApiClientInterface):
         if response.is_success:
             return body
         detail = body.get("detail", body) if isinstance(body, dict) else body
-        error_type = {404: NotFound, 403: Forbidden, 422: Invalid}.get(response.status_code)
+        error_type = {404: NotFound, 403: Forbidden, 422: Invalid, 423: Halted}.get(response.status_code)
         if error_type is not None:
             raise error_type(str(detail))
         raise ApiError(response.status_code, body)
@@ -536,6 +572,15 @@ class FakePlanningApiClient(PlanningApiClientInterface):
 
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")
+
+    def halt_server(self, project_id=None, reason=""):
+        return self._call("POST", "/admin/halt", {"project_id": project_id, "reason": reason})
+
+    def unhalt_server(self, project_id=None):
+        return self._call("POST", "/admin/unhalt", {"project_id": project_id})
+
+    def halt_status(self):
+        return self._call("GET", "/admin/halt")
 
     def guidance(self, role):
         return self._call("GET", f"/guidance/{role}")

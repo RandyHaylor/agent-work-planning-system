@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from planning_system.configuration import ConfigSection
 from planning_system.server.domain.agent_registry import AgentRegistryStoragePort
@@ -11,6 +12,7 @@ from planning_system.server.domain.content_review import ReviewStoragePort
 from planning_system.server.domain.project_tree import TreeStoragePort
 from planning_system.server.domain.references import (ReferenceStoragePort, SupersedeCandidateStoragePort,
                                                       TempCacheStoragePort)
+from planning_system.server.domain.system_halt import HaltStoragePort
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -18,6 +20,7 @@ from alembic.config import Config as AlembicConfig
 from .engine_setup import Transactions, TransactionsInterface, create_engine_from_section
 from .postgres_agent_registry_store import PostgresAgentRegistryStore
 from .postgres_credential_store import PostgresCredentialStore
+from .postgres_halt_store import PostgresHaltStore
 from .postgres_reference_store import PostgresReferenceStore
 from .postgres_review_store import PostgresReviewStore
 from .postgres_supersede_candidate_store import PostgresSupersedeCandidateStore
@@ -36,6 +39,7 @@ class Stores:
     agent_registry: AgentRegistryStoragePort
     reviews: ReviewStoragePort
     supersede_candidates: SupersedeCandidateStoragePort
+    halts: Optional[HaltStoragePort] = None
 
 
 @dataclass(frozen=True)
@@ -46,7 +50,7 @@ class Storage:
         return Stores(tree=PostgresTreeStore(conn), references=PostgresReferenceStore(conn),
                       temp_cache=PostgresTempCacheStore(conn), credentials=PostgresCredentialStore(conn),
                       agent_registry=PostgresAgentRegistryStore(conn), reviews=PostgresReviewStore(conn),
-                      supersede_candidates=PostgresSupersedeCandidateStore(conn))
+                      supersede_candidates=PostgresSupersedeCandidateStore(conn), halts=PostgresHaltStore(conn))
 
 
 def create_storage(section: ConfigSection) -> Storage:

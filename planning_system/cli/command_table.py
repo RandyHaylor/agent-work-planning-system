@@ -12,6 +12,13 @@ COMMANDS: tuple[CommandSpec, ...] = (
     # Identity and credentials
     CommandSpec(("admin", "login"), TARGET_LOGIN, authenticated=False),
     CommandSpec(("admin", "logout"), TARGET_API, "end_admin_session"),
+    # Server halt (build log #68): writes and review hand-outs refused until un-halted; reads still work
+    CommandSpec(("admin", "halt"), TARGET_API, "halt_server", (
+        Arg("--project", "project_id", "int", help="halt one project (default: the whole system)"),
+        Arg("--reason", "reason", default=""))),
+    CommandSpec(("admin", "unhalt"), TARGET_API, "unhalt_server", (
+        Arg("--project", "project_id", "int", help="un-halt one project (default: the whole system)"),)),
+    CommandSpec(("admin", "halt-status"), TARGET_API, "halt_status"),
     CommandSpec(("me",), TARGET_API, "me"),
     CommandSpec(("credentials", "mint"), TARGET_API, "mint_credential", (
         Arg("--role", "role", required=True), Arg("--project", "project_id", "int", required=True),
@@ -64,6 +71,9 @@ COMMANDS: tuple[CommandSpec, ...] = (
         mapper="task_start_request"),
     CommandSpec(("task", "stop"), TARGET_LOCAL, "stop_task", (Arg("agent_id", "agent_id"),), authenticated=False),
     CommandSpec(("task", "list"), TARGET_LOCAL, "running_tasks", authenticated=False),
+    # Halt (build log #68): this client kills everything it started and starts nothing until `planning resume`
+    CommandSpec(("halt",), TARGET_LOCAL, "halt", authenticated=False),
+    CommandSpec(("resume",), TARGET_LOCAL, "resume", authenticated=False),
     CommandSpec(("review", "ask"), TARGET_LOCAL, "ask_reviewer", (
         Arg("question", "question"), Arg("--context", "context_paths", "strs")), authenticated=False),
     # Content reviews (05-spec-citation-enforcement-and-review.md "CLI"); serve runs under the review task's token

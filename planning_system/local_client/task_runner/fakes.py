@@ -24,6 +24,9 @@ class InMemoryRunningSessionsRegistry(RunningSessionsRegistryInterface):
     def mark_stopped(self, agent_id: str) -> None:
         self._sessions[agent_id] = replace(self._sessions[agent_id], alive=False)
 
+    def forget(self, agent_id: str) -> None:
+        self._sessions.pop(agent_id, None)
+
     def all(self) -> list[RunningSession]:
         return list(self._sessions.values())
 

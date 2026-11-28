@@ -186,6 +186,16 @@ class PlanningApiClient(PlanningApiClientInterface):
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")
 
+    # server halt (build log #68)
+    def halt_server(self, project_id=None, reason=""):
+        return self._call("POST", "/admin/halt", {"project_id": project_id, "reason": reason})
+
+    def unhalt_server(self, project_id=None):
+        return self._call("POST", "/admin/unhalt", {"project_id": project_id})
+
+    def halt_status(self):
+        return self._call("GET", "/admin/halt")
+
     # guidance
     def guidance(self, role):
         return self._call("GET", f"/guidance/{role}")

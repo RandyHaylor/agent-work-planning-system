@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import signal
+from typing import Callable, Optional
 
 from ..harness_adapters import PersistentReviewerSessionHandle
 from .interface import RunningSessionsRegistryInterface, TaskRunnerInterface
@@ -12,12 +13,16 @@ from .types import RunningSession, TaskStartRequest
 
 class TaskRunner(TaskRunnerInterface):
 
-    def __init__(self, launcher: TaskSessionLauncher, registry: RunningSessionsRegistryInterface):
+    def __init__(self, launcher: TaskSessionLauncher, registry: RunningSessionsRegistryInterface,
+                 launch_guard: Optional[Callable[[], None]] = None):
+        """launch_guard: raises to refuse a start (a halted client, build log #68)."""
         self._launcher = launcher
         self._registry = registry
+        self._launch_guard = launch_guard or (lambda: None)
         self._handles: dict[str, PersistentReviewerSessionHandle] = {}
 
     def start_task(self, request: TaskStartRequest) -> str:
+        self._launch_guard()
         handle = self._launcher.launch(request)
         self._handles[request.agent_id] = handle
         self._registry.record(RunningSession(request.agent_id, request.node_id, request.role,

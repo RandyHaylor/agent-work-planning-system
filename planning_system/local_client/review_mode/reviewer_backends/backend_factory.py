@@ -37,11 +37,14 @@ def review_method_for(granularity: str) -> ReviewMethod:
 def claude_code_review_worker(model: str) -> ReviewWorkerInterface:
     """The production worker: Claude Code adapter, no tools (quotes are inlined), thinking log in the client home."""
     from ...client_paths import ClientPaths
+    from ...halt import client_session_control
     from ...harness_adapters import AdapterConfig, adapter_for
     from ...review_worker import ReviewWorker
 
     paths = ClientPaths.from_environment()
-    adapter = adapter_for(AdapterConfig(), session_logs_directory=paths.session_logs_directory)
+    tracker, _ = client_session_control(paths)        # every `claude -p` turn is registered for `planning halt`
+    adapter = adapter_for(AdapterConfig(), session_logs_directory=paths.session_logs_directory,
+                          process_tracker=tracker)
     return ReviewWorker(adapter, reviewer_model_name=model, thinking_log_path=paths.reviewer_thinking_log_file,
                         allowed_tool_names=[])
 

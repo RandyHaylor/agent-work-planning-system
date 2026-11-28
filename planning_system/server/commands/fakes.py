@@ -24,6 +24,8 @@ from planning_system.server.domain.project_tree.fakes import FakeProjectTree, Ti
 from planning_system.server.domain.references.fakes import FakeClock as ReferenceClock
 from planning_system.server.domain.references.fakes import (FakeReferenceLibrary, FakeRelatedReferences,
                                                             FakeSupersedeCandidates, FakeTempCache)
+from planning_system.server.domain.system_halt import HaltSwitchService
+from planning_system.server.domain.system_halt.fakes import InMemoryHaltStore
 from planning_system.server.domain.task_assignment.fakes import FakeTaskAssigner
 from planning_system.server.domain.references import Ingestion
 from planning_system.server.domain.references import ReaderService
@@ -53,7 +55,8 @@ def fake_services(stores=None) -> Services:
                     task_assigner=FakeTaskAssigner(tree, auth, agents),
                     enforcement=FakeCitationEnforcement(references), reviews=FakeReviewLedger(references, tree),
                     reader=reader, candidates=FakeSupersedeCandidates(references),
-                    related=FakeRelatedReferences(stores.references))
+                    related=FakeRelatedReferences(stores.references),
+                    halt=HaltSwitchService(stores.halts or InMemoryHaltStore(), TickingClock()))
 
 
 class FixedServicesFactory(ServicesFactory):

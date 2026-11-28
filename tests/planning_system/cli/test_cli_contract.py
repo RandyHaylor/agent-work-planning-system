@@ -107,6 +107,11 @@ SERVER_COMMANDS = [
      {"project_id": 1, "status": "failed", "node_id": 3}),
     (["review", "list", "--project", "1"], "list_reviews", {"project_id": 1}),
     (["review", "show", "rev-9"], "get_review", {"review_id": "rev-9"}),
+    (["admin", "halt"], "halt_server", {"reason": ""}),
+    (["admin", "halt", "--project", "4", "--reason", "maze"], "halt_server", {"project_id": 4, "reason": "maze"}),
+    (["admin", "unhalt", "--project", "4"], "unhalt_server", {"project_id": 4}),
+    (["admin", "unhalt"], "unhalt_server", {}),
+    (["admin", "halt-status"], "halt_status", {}),
 ]
 
 
@@ -143,6 +148,8 @@ def test_1_admin_login_prints_token(harness):
     (["review", "ask", "is it ok?", "--context", "a.py"], "ask_reviewer"),
     (["client", "install-hooks"], "install_hooks"),
     (["client", "exchanges", "--last", "3"], "list_exchanges"),
+    (["halt"], "halt"),
+    (["resume"], "resume"),
 ])
 def test_1_local_commands_call_local_client_only(harness, argv, method):
     assert harness.run(*argv) == 0

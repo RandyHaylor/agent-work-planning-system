@@ -29,7 +29,15 @@ class ClientPaths:
         return self.home / "running-sessions.json"
 
     @property
-    def session_logs_directory(self) -> Path:       # stream-json output of headless sessions
+    def halt_marker_file(self) -> Path:             # halt: present = `planning halt` in force
+        return self.home / "HALTED"
+
+    @property
+    def review_log_directory(self) -> Path:         # review_log: one JSONL file per day
+        return self.home / "review-log"
+
+    @property
+    def session_logs_directory(self) -> Path:      # stream-json output of headless sessions
         return self.home / "sessions"
 
     @property

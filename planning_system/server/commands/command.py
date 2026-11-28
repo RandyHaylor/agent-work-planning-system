@@ -21,6 +21,7 @@ class Access(Enum):
 
 class Command(ABC):
     access: Access
+    allowed_while_halted: bool = False     # admin log-in/out, halt, un-halt (halt_gate, build log #68)
 
     @abstractmethod
     def required_permission(self) -> Permission:

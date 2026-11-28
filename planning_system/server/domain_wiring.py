@@ -17,6 +17,7 @@ from planning_system.server.domain.citation_enforcement import CitationEnforceme
 from planning_system.server.domain.content_review import DEFAULT_LEASE, ReviewLedgerService
 from planning_system.server.domain.context_assembly import ContextAssemblerService
 from planning_system.server.domain.project_tree import ProjectTreeService
+from planning_system.server.domain.system_halt import HaltSwitchService
 from planning_system.server.domain.task_assignment import TaskAssignerService
 from planning_system.server.domain.references import (Clock, Ingestion, ReaderService, ReferenceLibraryService,
                                                       RelatedReferenceFinder, SourceFetcher,
@@ -69,7 +70,8 @@ class DomainServicesFactory(ServicesFactory):
             reviews=ReviewLedgerService(stores.reviews, references, tree, s.clock, s.review_lease),
             reader=ReaderService(temp_cache, references, ingestion, s.scanner_config, s.json_reader),
             candidates=SupersedeCandidateRegistry(stores.supersede_candidates, references, s.clock),
-            related=RelatedReferenceFinder(stores.references))
+            related=RelatedReferenceFinder(stores.references),
+            halt=HaltSwitchService(stores.halts, s.clock) if stores.halts is not None else None)
 
 
 __all__ = ["DomainServicesFactory", "DomainSettings", "SystemClock"]

@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import signal
 import subprocess
 import tempfile
 import threading
@@ -30,6 +31,7 @@ from ..ai_cli_adapter_interface import (
     AiCliAdapterInterface,
     PersistentReviewerSessionHandle,
 )
+from ..process_tracker import NoProcessTracking, ProcessTracker
 from ..types import HeadlessSessionSpec
 
 
@@ -98,7 +100,9 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
         streaming_event_appender: Optional[Callable[[str, str], None]] = None,
         per_call_timeout_seconds: float = 120.0,
         heartbeat_after_silent_seconds: float = 15.0,
+        process_tracker: Optional[ProcessTracker] = None,
     ) -> None:
+        self._process_tracker = process_tracker or NoProcessTracking()
         self._reviewer_session_id = reviewer_session_id
         self._allowed_tool_names = list(allowed_tool_names)
         self._allowed_read_paths = list(allowed_read_paths)
@@ -193,16 +197,22 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
 
     def send_prompt_and_await_response(self, prompt_text: str) -> str:
         command = self._build_command()
+        self._process_tracker.before_launch()          # a halted client launches nothing (build log #68)
         process_handle = self._launch(command, prompt_text)
-        pipe_readers = self._start_pipe_readers(process_handle)
         try:
-            outcome = self._await_result(pipe_readers.stdout_lines, process_handle.kill)
+            pipe_readers = self._start_pipe_readers(process_handle)
+            try:
+                outcome = self._await_result(pipe_readers.stdout_lines, process_handle.kill)
+            finally:
+                self._stop(process_handle, pipe_readers)
         finally:
-            self._stop(process_handle, pipe_readers)
+            if getattr(process_handle, "pid", None) is not None:
+                self._process_tracker.exited(process_handle.pid)
         return self._result_or_fallback(outcome)
 
     def _launch(self, command: list[str], prompt_text: str) -> "subprocess.Popen[str]":
-        """Starts claude and pipes the whole prompt to stdin (EOF makes it start)."""
+        """Starts claude in its own process group (so `planning halt` can kill it and whatever it started) and
+        pipes the whole prompt to stdin (EOF makes it start)."""
         self._emit_streamed_event(
             "SUBPROCESS_LAUNCH",
             f"session_id={self._reviewer_session_id} "
@@ -220,7 +230,10 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
             encoding="utf-8",
             errors="replace",
             bufsize=1,
+            start_new_session=True,
         )
+        if getattr(process_handle, "pid", None) is not None:
+            self._process_tracker.launched(process_handle.pid, f"reviewer {self._reviewer_session_id}")
         try:
             assert process_handle.stdin is not None
             process_handle.stdin.write(prompt_text)
@@ -292,9 +305,12 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
     def _stop(process_handle, pipe_readers: "_PipeReaders") -> None:
         if process_handle.poll() is None:
             try:
-                process_handle.kill()
-            except OSError:
-                pass
+                os.killpg(process_handle.pid, signal.SIGKILL)    # its own group: anything it started goes too
+            except (OSError, AttributeError):
+                try:
+                    process_handle.kill()
+                except OSError:
+                    pass
         pipe_readers.stderr_thread.join(timeout=2.0)
         pipe_readers.stdout_thread.join(timeout=2.0)
 
@@ -311,11 +327,13 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
 
 class ClaudeCodeAdapter(AiCliAdapterInterface):
     def __init__(self, current_session_id: str | None = None,
-                 session_logs_directory: "Path | None" = None) -> None:
+                 session_logs_directory: "Path | None" = None,
+                 process_tracker: Optional[ProcessTracker] = None) -> None:
         self._current_session_id = current_session_id or os.environ.get(
             "CLAUDE_SESSION_ID", "unknown-session"
         )
         self._session_logs_directory = Path(session_logs_directory or tempfile.gettempdir())
+        self._process_tracker = process_tracker
 
     def get_current_session_id(self) -> str:
         return self._current_session_id
@@ -349,6 +367,7 @@ class ClaudeCodeAdapter(AiCliAdapterInterface):
             priming_already_done=False,
             reviewer_model_name=reviewer_model_name,
             streaming_event_appender=streaming_event_appender,
+            process_tracker=self._process_tracker,
         )
         # Planning system: the reviewer answers free-form questions (05-spec-review-dispatch.md), so the
         # caller's priming text is sent as-is (SoT's JSON change-set verdict format is dropped).

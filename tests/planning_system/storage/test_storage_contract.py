@@ -26,7 +26,9 @@ from planning_system.server.domain.references.fakes import (InMemoryReferenceSto
                                                             InMemoryTempCacheStorage)
 from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
 from planning_system.server.domain.references.types import Reference, TempCacheEntry
-from planning_system.server.storage import (PostgresAgentRegistryStore, PostgresCredentialStore,
+from planning_system.server.domain.system_halt import Halt
+from planning_system.server.domain.system_halt.fakes import InMemoryHaltStore
+from planning_system.server.storage import (PostgresAgentRegistryStore, PostgresCredentialStore, PostgresHaltStore,
                                             PostgresReferenceStore, PostgresReviewStore,
                                             PostgresSupersedeCandidateStore, PostgresTempCacheStore,
                                             PostgresTreeStore, Storage, Stores, Transactions)
@@ -90,8 +92,25 @@ def test_stores_for_binds_all_six_stores_to_one_connection():
     bound = [getattr(stores, f.name) for f in dataclasses.fields(stores)]
     assert {type(s) for s in bound} == {
         PostgresTreeStore, PostgresReferenceStore, PostgresTempCacheStore, PostgresCredentialStore,
-        PostgresAgentRegistryStore, PostgresReviewStore, PostgresSupersedeCandidateStore}
+        PostgresAgentRegistryStore, PostgresReviewStore, PostgresSupersedeCandidateStore, PostgresHaltStore}
     assert all(s._conn is marker for s in bound)
+
+
+# ---- halts (build log #68)
+
+halt_store = store_fixture(InMemoryHaltStore, PostgresHaltStore)
+
+
+def test_halt_store_put_all_remove_one_row_per_scope(halt_store):
+    assert halt_store.all() == []
+    halt_store.put(Halt(None, "admin", "stop all", T0))
+    halt_store.put(Halt(7, "admin", "stop 7", T0))
+    halt_store.put(Halt(7, "admin", "again", T0 + timedelta(minutes=1)))      # same scope: replaced
+    by_scope = {h.project_id: h for h in halt_store.all()}
+    assert set(by_scope) == {None, 7}
+    assert by_scope[7].reason == "again" and by_scope[7].halted_at == T0 + timedelta(minutes=1)
+    assert halt_store.remove(None) is True and halt_store.remove(None) is False
+    assert [h.project_id for h in halt_store.all()] == [7]
 
 
 # ---- transactions (1, 2)

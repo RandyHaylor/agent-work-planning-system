@@ -138,6 +138,30 @@ def end_admin_session(principal: Principal = Who, runner=Runner):
     return _run(runner, C.EndAdminSession(), principal, shapes.ended)
 
 
+class HaltBody(BaseModel):
+    project_id: Optional[int] = None          # None = the whole system
+    reason: str = ""
+
+
+class UnhaltBody(BaseModel):
+    project_id: Optional[int] = None
+
+
+@router.post("/admin/halt")
+def halt_system(body: HaltBody, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.HaltSystem(body.project_id, body.reason), principal)
+
+
+@router.post("/admin/unhalt")
+def unhalt_system(body: UnhaltBody, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.UnhaltSystem(body.project_id), principal)
+
+
+@router.get("/admin/halt")
+def get_halt_state(principal: Principal = Who, runner=Runner):
+    return _run(runner, C.GetHaltState(), principal)
+
+
 @router.get("/me")
 def me(principal: Principal = Who, runner=Runner):
     return _run(runner, C.GetCurrentPrincipal(), principal)

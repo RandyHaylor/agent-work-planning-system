@@ -70,6 +70,10 @@ def server():
 # (method, concrete path, json body, query params, expected command)
 CASES = [
     ("DELETE", "/admin/sessions", None, None, C.EndAdminSession()),
+    ("POST", "/admin/halt", {"project_id": 3, "reason": "stop"}, None, C.HaltSystem(3, "stop")),
+    ("POST", "/admin/halt", {}, None, C.HaltSystem(None, "")),
+    ("POST", "/admin/unhalt", {"project_id": 3}, None, C.UnhaltSystem(3)),
+    ("GET", "/admin/halt", None, None, C.GetHaltState()),
     ("GET", "/me", None, None, C.GetCurrentPrincipal()),
     ("POST", "/credentials", {"role": "worker", "project_id": 1, "scope_node_id": 2, "agent_id": "a"}, None,
      C.MintCredential("worker", 1, 2, "a")),
@@ -260,6 +264,7 @@ SAMPLE_ARGS = {
     "reject_supersede": ("sup-1", "same"),
     "list_reviews": (1,), "get_review": ("rev-1",), "take_review": (1,),
     "submit_review_verdict": ("rev-1", True, "ok"), "release_review": ("rev-1",),
+    "halt_server": (4, "stop"), "unhalt_server": (4,), "halt_status": (),
 }
 REVIEW_METHODS = {"list_reviews", "get_review", "take_review", "submit_review_verdict", "release_review"}
 

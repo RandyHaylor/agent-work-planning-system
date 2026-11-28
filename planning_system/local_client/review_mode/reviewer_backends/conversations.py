@@ -9,6 +9,7 @@ from typing import Callable, Optional
 
 from planning_system.model_calls import ChatMessage, ChatModelCall, ChatRequest, ModelCallFailed
 
+from ...halt import ClientHalted
 from ...review_worker import ReviewWorkerInterface
 from ..review_conversation import ReviewConversation
 from ..types import ReviewerUnavailable
@@ -40,6 +41,8 @@ class ReviewWorkerConversation(ReviewConversation):
     def say(self, text: str, max_tokens: Optional[int] = None) -> str:
         try:
             return self._review_worker.ask(text)
+        except ClientHalted:                 # `planning halt`: no more turns, no retry
+            raise
         except Exception as error:           # any harness failure (timeout, dead process) = backend unavailable
             raise ReviewerUnavailable(f"claude reviewer failed: {error}") from error
 

@@ -6,7 +6,7 @@ See planning/BUILD-PLAN.md, "Shared contract". The error family lives in plannin
 from dataclasses import dataclass, field
 from typing import Optional
 
-from planning_system.errors import Conflict, DomainError, Forbidden, Invalid, NotFound
+from planning_system.errors import Conflict, DomainError, Forbidden, Halted, Invalid, NotFound
 
 ROLES = ("admin", "planner", "worker", "quote_client")
 
@@ -24,4 +24,4 @@ class Principal:
     credential_id: Optional[str] = field(default=None, compare=False)
 
 
-__all__ = ["Conflict", "DomainError", "Forbidden", "Invalid", "NotFound", "Principal", "ROLES"]
+__all__ = ["Conflict", "DomainError", "Forbidden", "Halted", "Invalid", "NotFound", "Principal", "ROLES"]

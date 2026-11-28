@@ -12,6 +12,7 @@ from planning_system.server.domain.project_tree.fakes import InMemoryTreeStorage
 from planning_system.server.domain.references.fakes import (InMemoryReferenceStorage,
                                                             InMemorySupersedeCandidateStorage,
                                                             InMemoryTempCacheStorage)
+from planning_system.server.domain.system_halt.fakes import InMemoryHaltStore
 
 from .engine_setup import TransactionsInterface
 from .storage import Stores
@@ -53,7 +54,7 @@ def in_memory_stores() -> Stores:
     return Stores(tree=InMemoryTreeStorage(), references=InMemoryReferenceStorage(),
                   temp_cache=InMemoryTempCacheStorage(), credentials=InMemoryCredentialStorage(),
                   agent_registry=InMemoryAgentRegistryStorage(), reviews=InMemoryReviewStorage(),
-                  supersede_candidates=InMemorySupersedeCandidateStorage())
+                  supersede_candidates=InMemorySupersedeCandidateStorage(), halts=InMemoryHaltStore())
 
 
 @dataclass(frozen=True)
