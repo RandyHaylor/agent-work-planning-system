@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Principal
-from planning_system.server.domain.content_review import Verdict
+from planning_system.server.domain.content_review import ReviewedWith, Verdict
 
 from .command import WriteCommand
 from .permissions import CanReviewRecord, Permission
@@ -23,12 +23,14 @@ class SubmitReviewVerdict(WriteCommand):
     reason: str
     suggested_title: Optional[str] = None
     findings: tuple[str, ...] = ()
+    reviewed_with: Optional[ReviewedWith] = None     # backend/model/profile/granularity/prompt version (log #70)
 
     def required_permission(self) -> Permission:
         return CanReviewRecord(self.review_id)
 
     def run(self, services, principal: Optional[Principal]) -> Any:
         record = services.reviews.submit(self.review_id, reviewer_id(principal),
-                                         Verdict(self.passed, self.reason, self.suggested_title, self.findings))
+                                         Verdict(self.passed, self.reason, self.suggested_title, self.findings,
+                                                 self.reviewed_with))
         after_verdict(services, record)
         return record

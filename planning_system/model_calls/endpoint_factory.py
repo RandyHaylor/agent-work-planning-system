@@ -33,6 +33,10 @@ class ModelEndpointFactory:
     def names(self) -> list[str]:
         return sorted(self._endpoints.as_dict())
 
+    def configured_model(self, name: str) -> Optional[str]:
+        """The endpoint's configured model name (None for an unknown endpoint)."""
+        return self._endpoints.child(name).get("model") if self._endpoints.has(name) else None
+
     def create(self, name: str, model: Optional[str] = None) -> ChatModelCall:
         """model overrides the endpoint's configured model."""
         if not self._endpoints.has(name):

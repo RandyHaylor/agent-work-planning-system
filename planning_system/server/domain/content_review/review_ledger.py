@@ -82,7 +82,8 @@ class ReviewLedgerService(ReviewLedger):
     def submit(self, review_id, reviewer, verdict):
         record = dataclasses.replace(self._held(review_id, reviewer), status=PASSED if verdict.passed else FAILED,
                                      reason=verdict.reason, suggested_title=verdict.suggested_title,
-                                     findings=tuple(verdict.findings), decided_at=self._clock.now())
+                                     findings=tuple(verdict.findings), reviewed_with=verdict.reviewed_with,
+                                     decided_at=self._clock.now())
         self._storage.save(record)
         return record
 

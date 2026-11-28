@@ -158,7 +158,7 @@ class FakeReviewLedger(ReviewLedger):
         record = self._held(review_id, reviewer)
         record = dataclasses.replace(record, status=PASSED if verdict.passed else FAILED, reason=verdict.reason,
                                      suggested_title=verdict.suggested_title, findings=tuple(verdict.findings),
-                                     decided_at=self._clock.now())
+                                     reviewed_with=verdict.reviewed_with, decided_at=self._clock.now())
         self._records[record.id] = record
         return record
 

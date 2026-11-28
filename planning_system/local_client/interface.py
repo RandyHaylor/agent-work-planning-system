@@ -79,6 +79,10 @@ class LocalClientInterface(ABC):
     def resume(self) -> dict:
         """`planning resume`: clears the halt marker so sessions can start again."""
 
+    @abstractmethod
+    def review_log(self, review_id: Optional[str] = None, last: int = 20) -> list[dict]:
+        """`planning review log`: the newest review log records (oldest first), one review's when review_id is set."""
+
 
 # (project_id, reviewer choice, poll_seconds) -> a review-mode loop
 ReviewModeFactory = Callable[[int, ReviewerChoice, float], ReviewModeInterface]

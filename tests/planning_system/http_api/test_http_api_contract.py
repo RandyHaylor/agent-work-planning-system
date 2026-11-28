@@ -22,6 +22,7 @@ from planning_system.server.domain.access.fakes import TablePermissionPolicy
 from planning_system.server.domain.authentication.fakes import (FakeAuthentication, FakeClock,
                                                                 InMemoryCredentialStorage)
 from planning_system.server.domain.authentication.types import IssuedCredential
+from planning_system.server.domain.content_review import ReviewedWith
 from planning_system.server.domain.context_assembly.types import AssembledContext
 from planning_system.server.domain.references.types import Citation, Reference
 from planning_system.server.http_api import create_app, serve
@@ -110,6 +111,11 @@ CASES = [
     ("POST", "/reviews/rev-1/release", None, None, C.ReleaseReview("rev-1")),
     ("POST", "/reviews/rev-1/verdict", {"passed": False, "reason": "r", "findings": ["ref-a"]}, None,
      C.SubmitReviewVerdict("rev-1", False, "r", None, ("ref-a",))),
+    ("POST", "/reviews/rev-1/verdict", {"passed": True, "reason": "r", "reviewed_with": {
+        "backend": "claude_code", "model": "haiku", "profile": "haiku-compare", "granularity": "both",
+        "prompt_version": "abc"}}, None,
+     C.SubmitReviewVerdict("rev-1", True, "r", None, (), ReviewedWith("claude_code", "haiku", "haiku-compare",
+                                                                     "both", "abc"))),
     ("POST", "/supersede-candidates", {"project_id": 1, "old_reference_id": "ref-a", "new_reference_id": "ref-b",
                                        "reason": "newer docs"}, None,
      C.ProposeSupersede(1, "ref-a", "ref-b", "newer docs")),

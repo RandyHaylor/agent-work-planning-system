@@ -12,9 +12,12 @@ from ...review_worker import ReviewWorkerInterface
 from ..bulk_review import BulkReview
 from ..kind_dispatch import ReviewByKind
 from ..node_guess_screen import NodeGuessScreen
+from ..prompt_version import PROMPT_VERSION
+from ..review_log import LoggingReviewerBackend, ReviewLogFile, ReviewRecorder
 from ..review_method import BOTH, BULK, METHOD_GRANULARITIES, ReviewMethod
 from ..reviewer_profiles import ReviewerProfile
 from ..sentence_review import SentenceBySentenceReview
+from ..types import ReviewerIdentity
 from .claude_code_backend import DEFAULT_CLAUDE_REVIEWER_MODEL, ClaudeCodeBackend
 from .compare_backend import CompareReviewerBackend
 from .interface import ReviewerBackend
@@ -72,18 +75,45 @@ class ReviewerBackendFactory:
         """granularity: per_sentence | bulk | both (compare mode); default per_sentence for local_llm, bulk
         otherwise. `both` builds one backend per method, so each run has its own fresh conversation (for claude_code
         its own reviewer session)."""
-        backend_name = name or DEFAULT_BACKEND
-        builder = self._builders.get(backend_name)
-        if builder is None:
-            raise Invalid(f"unknown reviewer backend {name!r}; choose one of {', '.join(BACKEND_NAMES)}")
-        resolved = ReviewerProfile("(flags)", backend_name, model, granularity).resolved_granularity()
-        if resolved == BOTH:
-            return CompareReviewerBackend([(method, builder(model).use_review_method(review_method_for(method)))
-                                           for method in METHOD_GRANULARITIES])
-        return builder(model).use_review_method(review_method_for(resolved))
+        return self.create_from_profile(ReviewerProfile(None, name or DEFAULT_BACKEND, model, granularity))
 
-    def create_from_profile(self, profile: ReviewerProfile) -> ReviewerBackend:
-        return self.create(profile.backend, profile.model, profile.granularity)
+    def create_from_profile(self, profile: ReviewerProfile, review_log: Optional[ReviewLogFile] = None,
+                            project_id: int = 0) -> ReviewerBackend:
+        """review_log: every review attempt is recorded there (turns, raw answers, timings, verdict; build log #70).
+        The backend's `identity` (backend, model, profile, granularity, prompt version) goes with each verdict."""
+        builder = self._builders.get(profile.backend)
+        if builder is None:
+            raise Invalid(f"unknown reviewer backend {profile.backend!r}; choose one of {', '.join(BACKEND_NAMES)}")
+        granularity = profile.resolved_granularity()
+        recorder = ReviewRecorder() if review_log is not None else None
+
+        def one(method: str) -> ReviewerBackend:
+            backend = builder(profile.model).use_review_method(review_method_for(method))
+            if recorder is not None:
+                backend.use_conversation_decorator(lambda conversation: recorder.conversation(conversation, method))
+            return backend
+
+        if granularity == BOTH:
+            backend = CompareReviewerBackend([(method, one(method)) for method in METHOD_GRANULARITIES])
+            if recorder is not None:
+                backend.observe_with(recorder.compared)
+        else:
+            backend = one(granularity)
+        backend.identity = ReviewerIdentity(profile.backend, self._model_name(profile), profile.name, granularity,
+                                            PROMPT_VERSION)
+        if recorder is None:
+            return backend
+        return LoggingReviewerBackend(backend, recorder, review_log, backend.identity, project_id)
+
+    def _model_name(self, profile: ReviewerProfile) -> Optional[str]:
+        if profile.model:
+            return profile.model
+        if profile.backend == "claude_code":
+            return DEFAULT_CLAUDE_REVIEWER_MODEL
+        try:
+            return self._endpoints().configured_model(self._local_endpoint_name)
+        except (AttributeError, Invalid):        # a stand-in endpoint factory: the model stays unnamed in the log
+            return None
 
     def _endpoints(self) -> ModelEndpointFactory:
         if self._model_endpoints is None:

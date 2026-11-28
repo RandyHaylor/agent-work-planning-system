@@ -349,7 +349,7 @@ class FakePlanningServer:
         record = self._held(principal, review_id)
         record.update(status="passed" if body["passed"] else "failed", reason=body["reason"],
                       suggested_title=body.get("suggested_title"), findings=list(body.get("findings") or []),
-                      decided_at="2026-11-25T02:00:00+00:00")
+                      reviewed_with=body.get("reviewed_with"), decided_at="2026-11-25T02:00:00+00:00")
         return record
 
     # ---- supersede candidates (no permission checks in the fake)
@@ -565,10 +565,12 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def take_review(self, project_id):
         return self._call("POST", "/reviews/take", {"project_id": project_id}) or None
 
-    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=()):
-        return self._call("POST", f"/reviews/{review_id}/verdict",
-                          {"passed": passed, "reason": reason, "suggested_title": suggested_title,
-                           "findings": list(findings or ())})
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=(), reviewed_with=None):
+        body = {"passed": passed, "reason": reason, "suggested_title": suggested_title,
+                "findings": list(findings or ())}
+        if reviewed_with is not None:
+            body["reviewed_with"] = reviewed_with
+        return self._call("POST", f"/reviews/{review_id}/verdict", body)
 
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")

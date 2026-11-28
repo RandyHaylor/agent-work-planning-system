@@ -148,6 +148,8 @@ def test_1_admin_login_prints_token(harness):
     (["review", "ask", "is it ok?", "--context", "a.py"], "ask_reviewer"),
     (["client", "install-hooks"], "install_hooks"),
     (["client", "exchanges", "--last", "3"], "list_exchanges"),
+    (["review", "log", "--review", "rev-1", "--last", "3"], "review_log"),
+    (["review", "log"], "review_log"),
     (["halt"], "halt"),
     (["resume"], "resume"),
 ])

@@ -90,6 +90,10 @@ COMMANDS: tuple[CommandSpec, ...] = (
         Arg("--status", "status", help="pending | taken | passed | failed | superseded"),
         Arg("--node", "node_id", "int"))),
     CommandSpec(("review", "show"), TARGET_API, "get_review", (Arg("review_id", "review_id"),)),
+    # the client's review log (build log #70): every turn, raw answer, timing and verdict of each review
+    CommandSpec(("review", "log"), TARGET_LOCAL, "review_log", (
+        Arg("--review", "review_id", help="only this review's records"),
+        Arg("--last", "last", "int", default=20)), authenticated=False),
     # Reader
     CommandSpec(("load",), TARGET_API, "reader_load", (
         Arg("source", "source", "strs"), Arg("--search", "search_terms"), Arg("--strategy", "strategy"),

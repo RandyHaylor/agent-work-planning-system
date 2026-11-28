@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from planning_system.contract import Principal
 from planning_system.server import commands as C
+from planning_system.server.domain.content_review import ReviewedWith
 from planning_system.server.http_api.dependencies import command_runner, current_principal
 from planning_system.server.http_api import response_shapes as shapes
 from planning_system.server.http_api.json_encoding import to_json
@@ -104,11 +105,20 @@ class TakeReviewBody(BaseModel):
     project_id: int
 
 
+class ReviewedWithBody(BaseModel):
+    backend: Optional[str] = None
+    model: Optional[str] = None
+    profile: Optional[str] = None
+    granularity: Optional[str] = None
+    prompt_version: Optional[str] = None
+
+
 class VerdictBody(BaseModel):
     passed: bool
     reason: str
     suggested_title: Optional[str] = None
     findings: list[str] = Field(default_factory=list)   # quote checks: the earlier quotes the new one changes
+    reviewed_with: Optional[ReviewedWithBody] = None     # which reviewer produced it (build log #70)
 
 
 class ProposeSupersedeBody(BaseModel):
@@ -308,8 +318,9 @@ def get_review(review_id: str, principal: Principal = Who, runner=Runner):
 
 @router.post("/reviews/{review_id}/verdict")
 def submit_review_verdict(review_id: str, body: VerdictBody, principal: Principal = Who, runner=Runner):
+    reviewed_with = None if body.reviewed_with is None else ReviewedWith(**body.reviewed_with.model_dump())
     return _run(runner, C.SubmitReviewVerdict(review_id, body.passed, body.reason, body.suggested_title,
-                                              tuple(body.findings)), principal)
+                                              tuple(body.findings), reviewed_with), principal)
 
 
 @router.post("/reviews/{review_id}/release")

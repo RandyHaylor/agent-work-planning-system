@@ -2,11 +2,13 @@
 lock_oldest_pending is SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1 so two reviewers never get one record."""
 from __future__ import annotations
 
+import dataclasses
+
 from sqlalchemy import JSON, BigInteger, Column, DateTime, Index, Table, Text, select, update
 from sqlalchemy.engine import Connection
 
 from planning_system.server.domain.content_review import ReviewStoragePort
-from planning_system.server.domain.content_review import PENDING, TAKEN, ReviewRecord
+from planning_system.server.domain.content_review import PENDING, TAKEN, ReviewedWith, ReviewRecord
 
 from .metadata import METADATA
 
@@ -29,6 +31,7 @@ CONTENT_REVIEWS = Table(
     Column("replaces_reference_id", Text),                        # migration 0004
     Column("candidate_id", Text, index=True),                     # migration 0004
     Column("findings", JSON, nullable=False, server_default="[]"),  # migration 0004
+    Column("reviewed_with", JSON),                                # migration 0006: the verdict's reviewer
     Index("ix_content_reviews_project_status", "project_id", "status"),
 )
 
@@ -85,9 +88,11 @@ class PostgresReviewStore(ReviewStoragePort):
                              .order_by(*_ORDER))
 
     def _records(self, statement):
-        return [ReviewRecord(**{f: r._mapping[f] for f in _FIELDS}, findings=tuple(r._mapping["findings"] or ()))
+        return [ReviewRecord(**{f: r._mapping[f] for f in _FIELDS}, findings=tuple(r._mapping["findings"] or ()),
+                             reviewed_with=ReviewedWith.from_dict(r._mapping["reviewed_with"]))
                 for r in self._conn.execute(statement)]
 
 
 def _row(record: ReviewRecord) -> dict:
-    return {**{f: getattr(record, f) for f in _FIELDS}, "findings": list(record.findings)}
+    return {**{f: getattr(record, f) for f in _FIELDS}, "findings": list(record.findings),
+            "reviewed_with": dataclasses.asdict(record.reviewed_with) if record.reviewed_with else None}

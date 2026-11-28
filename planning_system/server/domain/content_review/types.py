@@ -22,6 +22,22 @@ NODE_GATING_KINDS = frozenset({TARGET_CONTENT, TARGET_NODE})   # only these keep
 
 
 @dataclass(frozen=True)
+class ReviewedWith:
+    """Which reviewer produced a verdict (build log #70); every field as the client reports it."""
+    backend: Optional[str] = None            # local_llm | claude_code
+    model: Optional[str] = None
+    profile: Optional[str] = None            # reviewer profile name; None when set by flags only
+    granularity: Optional[str] = None        # per_sentence | bulk | both
+    prompt_version: Optional[str] = None     # hash of the client's review prompt texts
+
+    @classmethod
+    def from_dict(cls, data: Optional[dict]) -> Optional["ReviewedWith"]:
+        if not data:
+            return None
+        return cls(**{name: data.get(name) for name in cls.__dataclass_fields__})
+
+
+@dataclass(frozen=True)
 class ReviewRecord:
     id: str                          # "rev-<uuid4>"
     project_id: int
@@ -40,6 +56,7 @@ class ReviewRecord:
     replaces_reference_id: Optional[str] = None  # trial: the older reference the item cites
     candidate_id: Optional[str] = None           # trial: the supersede candidate it tries out
     findings: tuple[str, ...] = ()               # quote_check: the earlier quotes (reference ids) it changes
+    reviewed_with: Optional[ReviewedWith] = None  # the reviewer of the submitted verdict (migration 0006)
 
 
 @dataclass(frozen=True)
@@ -91,3 +108,4 @@ class Verdict:                       # SoT PerOperationVerdict, one op per revie
     reason: str
     suggested_title: Optional[str] = None
     findings: tuple[str, ...] = ()   # quote_check: reference ids of the earlier quotes the new one changes
+    reviewed_with: Optional[ReviewedWith] = None

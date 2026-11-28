@@ -6,10 +6,10 @@ from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort
 from .review_ledger import ReviewLedgerService
 from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, NODE_GATING_KINDS, PASSED, PENDING, Comparison,
-    PacketContentItem, ResolvedCitation, ReviewPacket, ReviewRecord, STATUSES, SUPERSEDED, TAKEN, TARGET_CONTENT,
+    PacketContentItem, ResolvedCitation, ReviewedWith, ReviewPacket, ReviewRecord, STATUSES, SUPERSEDED, TAKEN, TARGET_CONTENT,
     TARGET_KINDS, TARGET_NODE, TARGET_QUOTE_CHECK, TARGET_TRIAL, Verdict)
 
 __all__ = ["BLOCKING_STATUSES", "Clock", "Comparison", "DEFAULT_LEASE", "FAILED", "NODE_GATING_KINDS", "PASSED",
-           "PENDING", "PacketContentItem", "ResolvedCitation", "ReviewLedger", "ReviewLedgerService", "ReviewPacket",
+           "PENDING", "PacketContentItem", "ResolvedCitation", "ReviewedWith", "ReviewLedger", "ReviewLedgerService", "ReviewPacket",
            "ReviewRecord", "ReviewStoragePort", "STATUSES", "SUPERSEDED", "TAKEN", "TARGET_CONTENT", "TARGET_KINDS",
            "TARGET_NODE", "TARGET_QUOTE_CHECK", "TARGET_TRIAL", "Verdict"]

@@ -99,6 +99,9 @@ class FakeLocalClient(LocalClientInterface):
     def resume(self):
         return {"resumed": True, "was_halted": True}
 
+    def review_log(self, review_id=None, last=20):
+        return []
+
 
 class RecordingLocalClient(LocalClientInterface):
     """Records (method, arguments); for cli tests."""
@@ -141,3 +144,6 @@ class RecordingLocalClient(LocalClientInterface):
 
     def resume(self):
         return self._record("resume")
+
+    def review_log(self, review_id=None, last=20):
+        return self._record("review_log", review_id=review_id, last=last)

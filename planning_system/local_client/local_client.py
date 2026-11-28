@@ -11,6 +11,7 @@ from .halt import ClientSessionTracker, SessionHalter
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceId,
                         ReferenceSyncPort, ReviewModeFactory)
 from .review_mode import ReviewerChoice
+from .review_mode.review_log import ReviewLogFile
 from .review_mode.serve_until_signalled import run_review_mode
 from .review_worker import ReviewWorkerInterface
 from .task_runner import RunningSession, TaskRunnerInterface, TaskStartRequest
@@ -22,7 +23,7 @@ class LocalClient(LocalClientInterface):
                  reference_sync: ReferenceSyncPort, exchange_reader: ExchangeReaderPort,
                  hook_installer: HookInstallerPort, review_mode_factory: Optional[ReviewModeFactory] = None,
                  session_tracker: Optional[ClientSessionTracker] = None,
-                 session_halter: Optional[SessionHalter] = None):
+                 session_halter: Optional[SessionHalter] = None, review_log: Optional[ReviewLogFile] = None):
         self._task_runner = task_runner
         self._review_worker = review_worker
         self._reference_sync = reference_sync
@@ -31,6 +32,7 @@ class LocalClient(LocalClientInterface):
         self._review_mode_factory = review_mode_factory
         self._session_tracker = session_tracker
         self._session_halter = session_halter
+        self._review_log = review_log
 
     def install_hooks(self) -> None:
         self._hook_installer.install()
@@ -70,6 +72,11 @@ class LocalClient(LocalClientInterface):
     def resume(self) -> dict:
         return self._halter().resume()
 
+    def review_log(self, review_id: Optional[str] = None, last: int = 20) -> list[dict]:
+        if self._review_log is None:
+            raise RuntimeError("this local client was built without a review log")
+        return self._review_log.recent(review_id, last)
+
     def _halter(self) -> SessionHalter:
         if self._session_halter is None:
             raise RuntimeError("this local client was built without halt")
@@ -90,6 +97,7 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
     from .quote_capture.reference_sync import ReferenceSyncService
     from .quote_capture_bridge import CachedExchangeReader, ReferenceSyncAdapter
     from .review_mode import ReviewerBackendFactory, ReviewModeLoop, load_reviewer_profiles
+    from .review_mode.review_log import ReviewLogFile
     from .review_worker import ReviewWorker
     from .task_runner import RunningSessionsRegistry, TaskRunner, TaskSessionLauncher
 
@@ -108,8 +116,10 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
         exchange_reader=CachedExchangeReader(cache),
         hook_installer=ClaudeCodeHookInstaller(),
         review_mode_factory=lambda project_id, choice, poll_seconds: ReviewModeLoop(
-            api, ReviewerBackendFactory().create_from_profile(choice.resolve(load_reviewer_profiles())),
+            api, ReviewerBackendFactory().create_from_profile(choice.resolve(load_reviewer_profiles()),
+                                                              ReviewLogFile(paths.review_log_directory), project_id),
             project_id, poll_seconds, tracker.ensure_not_halted),
+        review_log=ReviewLogFile(paths.review_log_directory),
         session_tracker=tracker,
         session_halter=halter,
     )

@@ -94,6 +94,20 @@ class ReviewPacket:
 
 
 @dataclass(frozen=True)
+class ReviewerIdentity:
+    """Which reviewer answered (build log #70): sent with every verdict and written to every review log record."""
+    backend: str
+    model: Optional[str]
+    profile: Optional[str]          # None when chosen by flags only
+    granularity: str                # per_sentence | bulk | both
+    prompt_version: str
+
+    def as_dict(self) -> dict:
+        return {"backend": self.backend, "model": self.model, "profile": self.profile,
+                "granularity": self.granularity, "prompt_version": self.prompt_version}
+
+
+@dataclass(frozen=True)
 class Verdict:                 # SoT PerOperationVerdict, one content item per review
     passed: bool
     reason: str

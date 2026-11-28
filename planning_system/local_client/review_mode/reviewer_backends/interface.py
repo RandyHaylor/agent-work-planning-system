@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
-from ..types import ReviewPacket, Verdict
+from ..types import ReviewerIdentity, ReviewPacket, Verdict
 
 
 class ReviewerBackend(ABC):
     name: str = ""
+    identity: Optional[ReviewerIdentity] = None     # set by the factory; sent with each verdict (build log #70)
 
     @abstractmethod
     def review(self, packet: ReviewPacket) -> Verdict:

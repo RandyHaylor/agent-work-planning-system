@@ -9,7 +9,8 @@ from sqlalchemy import delete
 from planning_system.server.domain.content_review.fakes import InMemoryReviewStorage, TickingClock
 from planning_system.server.domain.content_review.ports import ReviewStoragePort
 from planning_system.server.domain.content_review.review_ledger import ReviewLedgerService
-from planning_system.server.domain.content_review.types import FAILED, PENDING, TAKEN, ReviewRecord
+from planning_system.server.domain.content_review.types import (FAILED, PENDING, TAKEN, ReviewedWith, ReviewRecord,
+                                                                Verdict)
 from planning_system.server.storage import PostgresReviewStore
 from planning_system.server.storage.postgres_review_store import CONTENT_REVIEWS
 
@@ -71,6 +72,23 @@ def test_trial_and_quote_check_round_trip(review_store):
     review_store.add(check)
     assert review_store.get("rev-t") == trial and review_store.get("rev-q") == check
     assert [r.id for r in review_store.find(candidate_id="sup-1")] == ["rev-t"]
+
+
+def test_reviewed_with_round_trip(review_store):
+    """Migration 0006: the reviewer of a submitted verdict (build log #70)."""
+    decided = record("rev-w", status=FAILED, reason="[per_sentence] ok; [bulk] no", reviewed_with=ReviewedWith(
+        "claude_code", "haiku", "haiku-compare", "both", "abc123def456"))
+    review_store.add(decided)
+    review_store.add(record("rev-none"))
+    assert review_store.get("rev-w") == decided
+    assert review_store.get("rev-none").reviewed_with is None
+
+
+def test_ledger_stores_the_verdicts_reviewer():
+    ledger = ReviewLedgerService(InMemoryReviewStorage(), None, None, TickingClock())
+    ledger._storage.add(record("rev-l", status=TAKEN, reviewer="r1", taken_at=T0))
+    with_ = ReviewedWith("local_llm", "gemma", "local", "per_sentence", "v1")
+    assert ledger.submit("rev-l", "r1", Verdict(True, "ok", reviewed_with=with_)).reviewed_with == with_
 
 
 def test_two_connections_never_take_the_same_record(engine):

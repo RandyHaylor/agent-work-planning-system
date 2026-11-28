@@ -171,8 +171,9 @@ class PlanningApiClientInterface(ABC):
 
     @abstractmethod
     def submit_review_verdict(self, review_id: str, passed: bool, reason: str,
-                              suggested_title: Optional[str] = None,
-                              findings: Sequence[str] = ()) -> dict: ...   # POST /reviews/{id}/verdict
+                              suggested_title: Optional[str] = None, findings: Sequence[str] = (),
+                              reviewed_with: Optional[dict] = None) -> dict:
+        """POST /reviews/{id}/verdict. reviewed_with: {backend, model, profile, granularity, prompt_version}."""
 
     @abstractmethod
     def release_review(self, review_id: str) -> dict: ...              # POST /reviews/{id}/release

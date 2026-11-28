@@ -178,10 +178,12 @@ class PlanningApiClient(PlanningApiClientInterface):
     def take_review(self, project_id):
         return self._call("POST", "/reviews/take", {"project_id": project_id}) or None   # 204 -> ""
 
-    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=()):
-        return self._call("POST", f"/reviews/{review_id}/verdict",
-                          {"passed": passed, "reason": reason, "suggested_title": suggested_title,
-                           "findings": list(findings or ())})
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=(), reviewed_with=None):
+        body = {"passed": passed, "reason": reason, "suggested_title": suggested_title,
+                "findings": list(findings or ())}
+        if reviewed_with is not None:
+            body["reviewed_with"] = reviewed_with
+        return self._call("POST", f"/reviews/{review_id}/verdict", body)
 
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")
