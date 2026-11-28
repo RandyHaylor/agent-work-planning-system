@@ -19,7 +19,7 @@ from .router_mounting import mount_routers, router_specs
 def create_app(section: ConfigSection, runner: CommandRunnerInterface,
                authenticator: CredentialAuthenticator,
                extra_overrides: Optional[Mapping[Any, Any]] = None) -> FastAPI:
-    """extra_overrides: other modules' dependencies (e.g. prompt_builder's guidance_service)."""
+    """extra_overrides: further dependency overrides (e.g. dependencies.guidance_service)."""
     app = FastAPI(title="planning system")
     install_error_handlers(app)
     app.dependency_overrides[dependencies.current_principal] = principal_dependency(authenticator)

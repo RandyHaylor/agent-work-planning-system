@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from planning_system.contract import Principal
 from planning_system.server import commands as C
-from planning_system.server.http_api.dependencies import command_runner, current_principal
-from planning_system.server.http_api import response_shapes as shapes
-from planning_system.server.http_api.json_encoding import to_json
+from . import response_shapes as shapes
+from .dependencies import command_runner, current_principal
+from .json_encoding import to_json
 
 router = APIRouter(tags=["reader", "references"])
 

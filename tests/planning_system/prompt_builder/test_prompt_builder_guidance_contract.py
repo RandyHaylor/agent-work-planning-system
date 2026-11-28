@@ -10,7 +10,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from planning_system.contract import Principal
-from planning_system.prompt_builder import http_routes
+from planning_system.server.http_api import dependencies as http_dependencies
+from planning_system.server.http_api import guidance_routes
 from planning_system.prompt_builder.ai_prompt_builder import ruleset
 from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCatalog, SHIPPED_DATA_FOLDER
 from planning_system.prompt_builder.fakes import FakeGuidanceEditor, FakeGuidanceService
@@ -44,9 +45,9 @@ def preset_folder(tmp_path):
 def client(request, preset_folder):
     service = request.param(preset_folder)
     app = FastAPI()
-    app.include_router(http_routes.router)
-    app.dependency_overrides[http_routes.current_principal] = lambda: Principal(agent_id="a1", role="planner")
-    app.dependency_overrides[http_routes.guidance_service] = lambda: service
+    app.include_router(guidance_routes.router)
+    app.dependency_overrides[http_dependencies.current_principal] = lambda: Principal(agent_id="a1", role="planner")
+    app.dependency_overrides[http_dependencies.guidance_service] = lambda: service
     return TestClient(app)
 
 

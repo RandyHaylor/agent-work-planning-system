@@ -13,7 +13,6 @@ from planning_system.api_client.interface import PlanningApiClientInterface
 from planning_system.api_client.types import ClientSettings
 from planning_system.configuration import ConfigSection
 from planning_system.contract import Forbidden, Invalid, NotFound, Principal
-from planning_system.prompt_builder import http_routes as guidance_routes
 from planning_system.prompt_builder.guidance_interface import GuidanceService
 from planning_system.prompt_builder.guidance_types import RoleGuidance
 from planning_system.server import commands as C
@@ -26,13 +25,13 @@ from planning_system.server.domain.authentication.types import IssuedCredential
 from planning_system.server.domain.context_assembly.types import AssembledContext
 from planning_system.server.domain.references.types import Citation, Reference
 from planning_system.server.http_api import create_app, serve
-from planning_system.server.http_api.dependencies import authenticated_principal
+from planning_system.server.http_api import dependencies as http_dependencies
 from planning_system.server.http_api.tls import ensure_self_signed_cert
 
 ROUTERS = [
     {"router": "planning_system.server.http_api.command_routes:router"},
-    {"router": "planning_system.server.domain.references.http_routes:router"},
-    {"router": "planning_system.prompt_builder.http_routes:router"},
+    {"router": "planning_system.server.http_api.reference_routes:router"},
+    {"router": "planning_system.server.http_api.guidance_routes:router"},
 ]
 
 
@@ -61,8 +60,7 @@ def server():
     auth = FakeAuthentication(InMemoryCredentialStorage(), TablePermissionPolicy(), FakeClock())
     runner = RecordingCommandRunner(respond=lambda command, _: SAMPLE_RESULTS.get(type(command), {"ok": True}))
     app = create_app(ConfigSection("http_api", {"routers": ROUTERS}), runner, auth,
-                     {guidance_routes.guidance_service: StubGuidance,
-                      guidance_routes.current_principal: authenticated_principal})
+                     {http_dependencies.guidance_service: StubGuidance})
     admin = auth.start("admin-pw")
     client = TestClient(app, raise_server_exceptions=False)
     client.headers["Authorization"] = f"Bearer {admin.token}"

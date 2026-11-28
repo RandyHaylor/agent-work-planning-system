@@ -24,8 +24,8 @@ FIXTURE = Path(__file__).parent / "fixtures" / "caching_guide.html"
 ADMIN_PASSWORD = "correct horse battery"
 ROUTERS = [
     {"router": "planning_system.server.http_api.command_routes:router"},
-    {"router": "planning_system.server.domain.references.http_routes:router"},
-    {"router": "planning_system.prompt_builder.http_routes:router"},
+    {"router": "planning_system.server.http_api.reference_routes:router"},
+    {"router": "planning_system.server.http_api.guidance_routes:router"},
 ]
 
 

@@ -1,12 +1,11 @@
-"""FastAPI dependencies every module router uses. Signatures are the contract;
-the core server fills in the bodies. Other modules import these names only.
+"""FastAPI dependencies every http_api router uses. Signatures are the contract;
+the core server fills in the bodies.
 
 - current_principal: reads the Bearer token, returns a Principal (raises Forbidden if unknown).
 - command_runner: returns the CommandRunner; it owns the transaction
   (permission check -> transaction, read-only for reads -> run). Build log #13.
+- guidance_service: returns prompt_builder's GuidanceService (guidance is read from files, log #25).
 """
-from fastapi import Depends
-
 from planning_system.contract import Principal
 
 
@@ -14,11 +13,9 @@ def current_principal() -> Principal:  # filled in by the core server
     raise NotImplementedError
 
 
-def authenticated_principal(principal: Principal = Depends(current_principal)) -> Principal:
-    """Override for a module router's own principal placeholder (e.g. prompt_builder's), so that
-    module need not import the server: `overrides[module.current_principal] = authenticated_principal`."""
-    return principal
-
-
 def command_runner():  # -> planning_system.server.commands.CommandRunner; filled in by the core server
+    raise NotImplementedError
+
+
+def guidance_service():  # -> planning_system.prompt_builder GuidanceService; filled in by composition
     raise NotImplementedError

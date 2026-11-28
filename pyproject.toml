@@ -48,8 +48,8 @@ packages = ["ai_project_planning_server", "planning_system"]
 
 # Module boundaries (modularity review 2026-11-27, fix 2). Run: uv run --extra test lint-imports
 # (also run by tests/planning_system/test_import_contracts.py). Each domain package is imported only
-# through its __init__; `fakes` (test support) and references.http_routes (mounted by config) are the
-# allowed submodules.
+# through its __init__; `fakes` (test support) is the allowed submodule.
+# All HTTP routing lives in server.http_api (build log #58); domain modules hold no HTTP code.
 [tool.importlinter]
 root_packages = ["planning_system"]
 
@@ -123,9 +123,6 @@ source_modules = ["planning_system.server.domain"]
 forbidden_modules = ["planning_system.server.commands", "planning_system.server.http_api",
                      "planning_system.server.storage", "planning_system.server.composition"]
 allow_indirect_imports = true
-# The references router is mounted from its module (build log #4, #14).
-ignore_imports = ["planning_system.server.domain.references.http_routes -> planning_system.server.commands",
-                  "planning_system.server.domain.references.http_routes -> planning_system.server.http_api.*"]
 
 [[tool.importlinter.contracts]]
 name = "generic modules do not depend on the planning contract"

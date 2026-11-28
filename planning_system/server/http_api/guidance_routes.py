@@ -1,9 +1,8 @@
 """FastAPI router for /guidance (spec: HTTP routes). Reads only.
 
-Guidance is read from files, not the database, so these routes use the module's own
-`guidance_service` dependency (overridden by the server at mount time) rather than
-command_runner; auth is this module's own `current_principal` placeholder (any authenticated
-principal), which the server overrides with its own, so this module never imports the server.
+Guidance is read from files, not the database, so these routes call prompt_builder's public
+GuidanceService (the `guidance_service` dependency, filled in by the server) rather than
+command_runner. Auth: any authenticated principal. Build log #58: all HTTP routing lives in http_api.
 """
 from __future__ import annotations
 
@@ -12,16 +11,9 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, HTTPException
 
 from planning_system.contract import NotFound, Principal
-from .guidance_interface import GuidanceService
+from planning_system.prompt_builder.guidance_interface import GuidanceService
 
-
-def current_principal() -> Principal:  # filled in by the server (dependency_overrides)
-    raise NotImplementedError
-
-
-def guidance_service() -> GuidanceService:  # filled in by the server (dependency_overrides)
-    raise NotImplementedError
-
+from .dependencies import current_principal, guidance_service
 
 router = APIRouter(prefix="/guidance", tags=["guidance"])
 

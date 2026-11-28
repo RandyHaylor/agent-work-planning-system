@@ -19,7 +19,6 @@ from planning_system.configuration import ConfigSection
 from planning_system.document_extraction import build_document_extractor
 from planning_system.fastreader.cli import DEFAULT_CONFIG_PATH as SCANNER_CONFIG_PATH
 from planning_system.fastreader.scanner import load_config
-from planning_system.prompt_builder import http_routes as guidance_routes
 from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCatalog
 from planning_system.prompt_builder.role_guidance import GuidanceComposer, RolePresetMap, SessionInjections
 from planning_system.quick_json_reader import build_json_reader
@@ -36,7 +35,7 @@ from planning_system.server.domain.references import (SourceFetcher, UploadReque
                                                       WebSearchRequest)
 from planning_system.server.domain.references import TempCacheLifecycle
 from planning_system.server.http_api import create_app, serve
-from planning_system.server.http_api.dependencies import authenticated_principal
+from planning_system.server.http_api import dependencies as http_dependencies
 
 
 class SourceFetcherByRequest(SourceFetcher):
@@ -100,8 +99,7 @@ def build_app(section: ConfigSection, storage, settings: DomainSettings) -> Fast
     runner = CommandRunner(storage.transactions, storage.stores_for, DomainServicesFactory(settings),
                            RequestAuthorizer())
     return create_app(_child(section, "http_api"), runner, TransactionalAuthenticator(storage, settings.clock),
-                      {guidance_routes.guidance_service: guidance_service_factory(section),
-                       guidance_routes.current_principal: authenticated_principal})
+                      {http_dependencies.guidance_service: guidance_service_factory(section)})
 
 
 def purge_expired_temp_cache(storage, settings: DomainSettings) -> int:
