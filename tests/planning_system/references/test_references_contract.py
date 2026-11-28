@@ -11,8 +11,8 @@ from planning_system.server.domain.references.fakes import (FakeClock, FakeRefer
                                                             FakeTempCache,
                                                             InMemoryReferenceStorage,
                                                             InMemoryTempCacheStorage)
-from planning_system.server.domain.references.reference_library import ReferenceLibraryService
-from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
+from planning_system.server.domain.references.library.reference_library import ReferenceLibraryService
+from planning_system.server.domain.references.temp_cache.temp_cache_lifecycle import TempCacheLifecycle
 from planning_system.server.domain.references.types import Citation
 
 TTL = timedelta(days=1)

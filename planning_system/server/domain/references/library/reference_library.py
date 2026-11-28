@@ -1,8 +1,8 @@
 """The ReferenceLibrary facade: delegates to ingestion and citing_and_rendering."""
 from .citing_and_rendering import CitingAndRendering
-from .ingestion import Ingestion
-from .interface import ReferenceLibrary
-from .ports import ReferenceStoragePort
+from ..ingestion import Ingestion
+from ..interface import ReferenceLibrary
+from ..ports import ReferenceStoragePort
 
 
 class ReferenceLibraryService(ReferenceLibrary):

@@ -6,10 +6,10 @@ from planning_system.document_extraction.extraction_interface import DocumentExt
 from planning_system.document_extraction.extraction_types import ExtractionResult, SourceDocument
 from planning_system.server.domain.references.fakes import (FakeClock, InMemoryReferenceStorage,
                                                             InMemoryTempCacheStorage)
-from planning_system.server.domain.references.ingestion import Ingestion
-from planning_system.server.domain.references.source_fetcher_port import (SourceFetcher, UrlRequest,
+from planning_system.server.domain.references.ingestion.ingestion import Ingestion
+from planning_system.server.domain.references.ingestion.source_fetcher_port import (SourceFetcher, UrlRequest,
                                                                           WebSearchRequest)
-from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
+from planning_system.server.domain.references.temp_cache.temp_cache_lifecycle import TempCacheLifecycle
 
 
 class CountingFetcher(SourceFetcher):

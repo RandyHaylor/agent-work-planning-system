@@ -7,10 +7,10 @@ from typing import Mapping, Optional
 
 from planning_system.document_extraction.extraction_interface import DocumentExtractor
 
-from .interface import TempCache
-from .ports import ReferenceStoragePort
+from ..interface import TempCache
+from ..ports import ReferenceStoragePort
 from .source_fetcher_port import SourceFetcher, SourceRequest
-from .types import (ORIGIN_NODE, ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, AgentId, Reference,
+from ..types import (ORIGIN_NODE, ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, AgentId, Reference,
                     TempCacheEntry)
 
 

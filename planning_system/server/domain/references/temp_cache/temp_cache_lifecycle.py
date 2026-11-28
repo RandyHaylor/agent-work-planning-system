@@ -5,10 +5,10 @@ from datetime import timedelta
 
 from planning_system.errors import NotFound
 
-from .citation_syntax import slice_lines
-from .interface import TempCache
-from .ports import Clock, ReferenceStoragePort, TempCacheStoragePort
-from .types import ORIGIN_DOCUMENT, Citation, Reference, TempCacheEntry
+from ..citation_syntax import slice_lines
+from ..interface import TempCache
+from ..ports import Clock, ReferenceStoragePort, TempCacheStoragePort
+from ..types import ORIGIN_DOCUMENT, Citation, Reference, TempCacheEntry
 
 
 class TempCacheLifecycle(TempCache):

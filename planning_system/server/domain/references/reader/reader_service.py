@@ -18,7 +18,7 @@ from planning_system.quick_json_reader import JsonReaderInputError, JsonReaderIn
 from ..ingestion import Ingestion
 from ..interface import Reader, ReferenceLibrary, TempCache
 from .reader_cache_adapter import ReaderCacheAdapter
-from ..source_fetcher_port import FetchFailed
+from ..ingestion import FetchFailed
 from ..types import Citation
 
 ADMIN = "admin"

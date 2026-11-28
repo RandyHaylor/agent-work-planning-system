@@ -15,7 +15,7 @@ from planning_system.server.adapters.fakes import (
 from planning_system.server.adapters.http_source_fetcher import HttpSourceFetcher
 from planning_system.server.adapters.uploaded_file_source import UploadedFileSource
 from planning_system.server.adapters.web_search_source import WebSearchSource
-from planning_system.server.domain.references.source_fetcher_port import (
+from planning_system.server.domain.references.ingestion.source_fetcher_port import (
     FetchFailed, UploadRequest, UrlRequest, WebSearchRequest,
 )
 

@@ -3,9 +3,9 @@ import dataclasses
 
 from planning_system.errors import Invalid, NotFound
 
-from .citation_syntax import slice_lines
-from .ports import ReferenceStoragePort
-from .types import Citation, Reference
+from ..citation_syntax import slice_lines
+from ..ports import ReferenceStoragePort
+from ..types import Citation, Reference
 
 
 class CitingAndRendering:

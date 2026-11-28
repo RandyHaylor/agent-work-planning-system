@@ -17,7 +17,7 @@ from planning_system.server.adapters.fakes import FakeUploadedFileSource
 from planning_system.server.composition import SourceFetcherByRequest, build_app, domain_settings
 from planning_system.server.domain.authentication.fakes import InMemoryCredentialStorage
 from planning_system.server.domain.authentication.password_hashing import PasswordHasher
-from planning_system.server.domain.references.source_fetcher_port import UploadRequest
+from planning_system.server.domain.references.ingestion.source_fetcher_port import UploadRequest
 from planning_system.server.storage.fakes import InMemoryStorage, in_memory_stores
 
 FIXTURE = Path(__file__).parent / "fixtures" / "caching_guide.html"
