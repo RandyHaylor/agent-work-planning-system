@@ -28,7 +28,7 @@ from planning_system.server.adapters.http_source_fetcher import (HttpFetchSettin
 from planning_system.server.adapters.uploaded_file_source import UploadedFileSource
 from planning_system.server.adapters.web_search_source import WebSearchSource
 from planning_system.server.commands import CommandRunner, RequestAuthorizer
-from planning_system.server.commands.services import DomainServicesFactory, DomainSettings
+from planning_system.server.domain_wiring import DomainServicesFactory, DomainSettings
 from planning_system.server.domain.citation_enforcement import ClaimPolicy
 from planning_system.server.domain.authentication import CredentialAuthenticatorService
 from planning_system.server.domain.authentication import CredentialAuthenticator

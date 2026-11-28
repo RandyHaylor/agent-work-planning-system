@@ -7,10 +7,10 @@ from .catalog import CORE_ROUTES, REFERENCE_ROUTES, ROUTES
 from .command import Access, Command, ReadCommand, WriteCommand
 from .command_runner import CommandRunner, CommandRunnerInterface
 from .request_authorizer import RequestAuthorizer, RequestAuthorizerInterface
-from .services import DomainServicesFactory, Services, ServicesFactory
+from .services import Services, ServicesFactory
 
 __all__ = ["Access", "CORE_ROUTES", "Command", "CommandRunner", "CommandRunnerInterface",
-           "DomainServicesFactory", "REFERENCE_ROUTES", "ROUTES", "ReadCommand", "RequestAuthorizer",
+           "REFERENCE_ROUTES", "ROUTES", "ReadCommand", "RequestAuthorizer",
            "RequestAuthorizerInterface", "Services", "ServicesFactory", "WriteCommand"]
 
 globals().update({cls.__name__: cls for cls in ROUTES.values()})
