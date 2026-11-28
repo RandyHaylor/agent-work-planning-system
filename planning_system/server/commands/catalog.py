@@ -17,6 +17,7 @@ from .get_reference import GetReference
 from .list_ancestors import ListAncestors
 from .list_children import ListChildren
 from .list_nodes_by_state import ListNodesByState
+from .list_open_items import ListOpenItems
 from .list_ready_children import ListReadyChildren
 from .get_review import GetReview
 from .list_reviews import ListReviews
@@ -63,6 +64,7 @@ CORE_ROUTES = {
     ("POST", "/nodes/{node_id}/content"): AddNodeContent,
     ("PUT", "/nodes/{node_id}/content/{reference_id}"): ReplaceNodeContent,
     ("GET", "/nodes/{node_id}/context"): AssembleNodeContext,
+    ("GET", "/projects/{project_id}/open-items"): ListOpenItems,     # build log #61
     # content review (05-spec-citation-enforcement-and-review.md "Routes")
     ("GET", "/reviews"): ListReviews,
     ("POST", "/reviews/take"): TakeReview,

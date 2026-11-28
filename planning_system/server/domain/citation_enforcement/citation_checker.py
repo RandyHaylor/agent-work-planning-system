@@ -60,9 +60,10 @@ class CitationChecker:
 
     @staticmethod
     def check_origins(rule: ClaimRule, origins: list[str]) -> None:
-        if rule.needs and not set(origins) & rule.needs:
+        missing = [hint for group, hint in zip(rule.needs, rule.hints) if not set(origins) & group]
+        if missing:
             found = ", ".join(sorted(set(origins))) if origins else "no citations"
-            raise Invalid(f'a "{rule.tag}" claim {rule.hint}. Found only: {found}')
+            raise Invalid(f'a "{rule.tag}" claim {"; and ".join(missing)}. Found only: {found}')
         not_allowed = sorted({o for o in origins if o not in rule.allowed})
         if not_allowed:
             raise Invalid(f'a "{rule.tag}" claim may cite only {" or ".join(sorted(rule.allowed))} references; '

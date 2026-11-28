@@ -8,7 +8,7 @@ from typing import Any, Optional
 from planning_system.contract import NotFound, Principal
 
 from .command import WriteCommand
-from .content_submission import open_review
+from .content_submission import submit
 from .permissions import CanAddContent, Permission
 
 
@@ -27,7 +27,7 @@ class ReplaceNodeContent(WriteCommand):
         claim = services.enforcement.check_content(self.text, tags)
         content = services.tree.replace_content(self.node_id, self.reference_id, self.text, tags)
         services.reviews.supersede_for(self.reference_id)
-        return open_review(services, self.node_id, content, claim.claim_tag)
+        return submit(services, self.node_id, content, claim)
 
     def _old_tags(self, services) -> tuple[str, ...]:
         old = next((c for c in services.tree.content(self.node_id) if c.reference_id == self.reference_id), None)

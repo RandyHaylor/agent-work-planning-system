@@ -129,7 +129,7 @@ def test_walkthrough(api):
     assert cited["citation"] == f"[{cache_id}:{line}-{line}]"
     with pytest.raises(Invalid):
         worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding"])   # no claim tag
-    added = worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding", "technical"])
+    added = worker.add_content(task["id"], f"TTL is 72 hours {cited['citation']}", ["finding", "documentation"])
     assert added["review"]["status"] == "pending" and "not approved" in added["message"]
 
     # the planner can read the reference because it can read a node that cites it
@@ -211,6 +211,17 @@ def test_citation_gate_and_content_review(api, http):
     assert added["review"]["status"] == "pending" and added["message"] == "submitted for review (not approved)"
     first_review = added["review"]["id"]
     assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review]
+
+    # build log #61: open_items need no citation, open no content review, and are listed per project
+    with pytest.raises(Invalid) as error:
+        worker.add_content(task["id"], "RESEARCH: eviction policy\nWe use LRU", ["open_items"])
+    assert "RESEARCH:" in str(error.value) and "ASK USER:" in str(error.value)
+    todo = worker.add_content(task["id"], "RESEARCH: eviction policy\nASK USER: max entry size", ["open_items"])
+    assert todo["review"] is None and "not reviewed" in todo["message"]
+    assert [r["id"] for r in reviews.list(project["id"], "pending").json()] == [first_review]
+    [open_item] = planner.open_items(project["id"])
+    assert (open_item["node_id"], open_item["reference_id"]) == (task["id"], todo["reference_id"])
+    assert open_item["lines"] == ["RESEARCH: eviction policy", "ASK USER: max entry size"]
 
     # the planner starts the standing review task (a worker on a task labelled "review")
     review_task = planner.create_node(modules["id"], "citation review", "build", "Review cited claims.",

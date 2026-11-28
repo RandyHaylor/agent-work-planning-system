@@ -137,6 +137,9 @@ class PlanningApiClientInterface(ABC):
     def store_user_exchange(self, session_id: str, user_message: str, pre_text: str) -> dict:
         """POST /references/user-exchange (quote key only)."""
 
+    @abstractmethod
+    def open_items(self, project_id: int) -> list: ...                 # GET /projects/{id}/open-items (log #61)
+
     # content reviews (05-spec-citation-enforcement-and-review.md "Routes")
     @abstractmethod
     def list_reviews(self, project_id: int, status: Optional[str] = None,

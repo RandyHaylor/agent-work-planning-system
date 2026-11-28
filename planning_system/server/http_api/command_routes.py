@@ -244,6 +244,11 @@ def assemble_node_context(node_id: int, principal: Principal = Who, runner=Runne
     return _run(runner, C.AssembleNodeContext(node_id), principal, shapes.assembled_context)
 
 
+@router.get("/projects/{project_id}/open-items")
+def list_open_items(project_id: int, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.ListOpenItems(project_id), principal)
+
+
 # ---- content review
 
 @router.get("/reviews")

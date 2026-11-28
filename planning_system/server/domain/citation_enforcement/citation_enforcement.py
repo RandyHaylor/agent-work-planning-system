@@ -11,6 +11,7 @@ from . import title_rules
 from .citation_checker import CitationChecker
 from .claim_policy import ClaimPolicy
 from .interface import CitationEnforcement
+from .line_prefix_rule import check_line_prefixes
 from .types import CheckedClaim
 
 
@@ -25,10 +26,11 @@ class CitationEnforcementService(CitationEnforcement):
         if len(claim_tags) != 1:
             raise Invalid(f"content needs exactly one claim tag: {', '.join(self._policy.tags)} (got: {tags})")
         rule = self._policy.rule(claim_tags[0])
+        check_line_prefixes(rule.tag, text, rule.line_prefixes)
         citations = self._checker.parse(text)
         origins = self._checker.origins(citations)
         self._checker.check_origins(rule, origins)
-        return CheckedClaim(rule.tag, citations)
+        return CheckedClaim(rule.tag, citations, rule.reviewed)
 
     def check_title(self, title):
         title_rules.check_title(title)

@@ -97,6 +97,7 @@ CASES = [
     ("PUT", "/nodes/5/content/ref-1", {"text": "y"}, None, C.ReplaceNodeContent(5, "ref-1", "y")),
     ("PUT", "/nodes/5/content/ref-1", {"text": "y", "tags": ["note"]}, None,
      C.ReplaceNodeContent(5, "ref-1", "y", ("note",))),
+    ("GET", "/projects/1/open-items", None, None, C.ListOpenItems(1)),
     ("GET", "/reviews", None, {"project_id": 1, "status": "failed", "node_id": 5},
      C.ListReviews(1, "failed", 5)),
     ("POST", "/reviews/take", {"project_id": 1}, None, C.TakeReview(1)),
@@ -243,7 +244,7 @@ SAMPLE_ARGS = {
     "reader_get": ("r",), "reader_search": ("q",), "reader_json": ("r", ["--keys"]), "reader_lines": ("r", 1, 2),
     "reader_cite": ("r", 1, 2), "get_reference": (9,), "reference_lines": (9,), "render_citation": ("c",),
     "store_user_exchange": ("s", "m", "p"), "guidance": ("worker",), "guidance_templates": (),
-    "guidance_rules": (),
+    "guidance_rules": (), "open_items": (1,),
     "list_reviews": (1,), "get_review": ("rev-1",), "take_review": (1,),
     "submit_review_verdict": ("rev-1", True, "ok"), "release_review": ("rev-1",),
 }

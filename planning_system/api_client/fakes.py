@@ -180,6 +180,7 @@ class FakePlanningServer:
             ("GET", f"/references/{n}/lines", True, lambda p, b, q, i: {"id": int(i), "lines": []}),
             ("POST", "/references/render", True, lambda p, b, q: {"citation": b["citation"], "text": ""}),
             ("POST", "/references/user-exchange", True, self._user_exchange),
+            ("GET", f"/projects/{n}/open-items", True, self._open_items),
             ("GET", "/reviews", True, self._list_reviews),
             ("POST", "/reviews/take", True, self._take_review),
             ("GET", f"/reviews/{rid}", True, lambda p, b, q, i: self.reviews[i]),
@@ -267,6 +268,11 @@ class FakePlanningServer:
         self.references[reference_id] = {"id": reference_id, "hash": digest, **body}
         return {"reference_id": reference_id}
 
+
+    def _open_items(self, principal, body, query, project_id):
+        return [{"node_id": node_id, "node_title": self.nodes[node_id]["title"], "reference_id": item["reference_id"],
+                 "lines": [line.strip() for line in item["text"].splitlines() if line.strip()]}
+                for node_id, items in self.content.items() for item in items if "open_items" in item["tags"]]
 
     # ---- content reviews (05-spec-citation-enforcement-and-review.md; no permission checks in the fake)
     def _list_reviews(self, principal, body, query):
@@ -462,6 +468,9 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def store_user_exchange(self, session_id, user_message, pre_text):
         return self._call("POST", "/references/user-exchange",
                           {"session_id": session_id, "user_message": user_message, "pre_text": pre_text})
+
+    def open_items(self, project_id):
+        return self._call("GET", f"/projects/{project_id}/open-items")
 
     def list_reviews(self, project_id, status=None, node_id=None):
         return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})

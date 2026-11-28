@@ -8,7 +8,7 @@ from typing import Any, Optional
 from planning_system.contract import Principal
 
 from .command import WriteCommand
-from .content_submission import open_review
+from .content_submission import submit
 from .permissions import CanAddContent, Permission
 
 
@@ -24,4 +24,4 @@ class AddNodeContent(WriteCommand):
     def run(self, services, principal: Optional[Principal]) -> Any:
         claim = services.enforcement.check_content(self.text, self.tags)
         content = services.tree.add_content(self.node_id, self.text, self.tags)
-        return open_review(services, self.node_id, content, claim.claim_tag)
+        return submit(services, self.node_id, content, claim)

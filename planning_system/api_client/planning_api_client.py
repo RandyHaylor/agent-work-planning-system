@@ -148,6 +148,9 @@ class PlanningApiClient(PlanningApiClientInterface):
         return self._call("POST", "/references/user-exchange",
                           {"session_id": session_id, "user_message": user_message, "pre_text": pre_text})
 
+    def open_items(self, project_id):
+        return self._call("GET", f"/projects/{project_id}/open-items")
+
     # content reviews
     def list_reviews(self, project_id, status=None, node_id=None):
         return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})

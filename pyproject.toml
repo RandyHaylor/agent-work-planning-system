@@ -78,7 +78,7 @@ allow_indirect_imports = true
 name = "domain.citation_enforcement is imported only through its package"
 type = "forbidden"
 source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
-forbidden_modules = ["planning_system.server.domain.citation_enforcement.citation_checker", "planning_system.server.domain.citation_enforcement.citation_enforcement", "planning_system.server.domain.citation_enforcement.claim_policy", "planning_system.server.domain.citation_enforcement.interface", "planning_system.server.domain.citation_enforcement.title_rules", "planning_system.server.domain.citation_enforcement.types"]
+forbidden_modules = ["planning_system.server.domain.citation_enforcement.citation_checker", "planning_system.server.domain.citation_enforcement.citation_enforcement", "planning_system.server.domain.citation_enforcement.claim_policy", "planning_system.server.domain.citation_enforcement.interface", "planning_system.server.domain.citation_enforcement.line_prefix_rule", "planning_system.server.domain.citation_enforcement.title_rules", "planning_system.server.domain.citation_enforcement.types"]
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]

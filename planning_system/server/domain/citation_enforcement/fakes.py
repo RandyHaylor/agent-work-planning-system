@@ -23,6 +23,16 @@ class FakeCitationEnforcement(CitationEnforcement):
         claim = [t for t in tags if t in self._policy.tags]
         if len(claim) != 1:
             raise Invalid(f"content needs exactly one claim tag: {', '.join(self._policy.tags)} (got: {list(tags)})")
+        rule = self._policy.rule(claim[0])
+        if rule.line_prefixes:
+            lines = [line.strip() for line in text.splitlines() if line.strip()]
+            prefixes = ", ".join(rule.line_prefixes)
+            if not lines:
+                raise Invalid(f'a "{rule.tag}" item needs a line starting with one of {prefixes}')
+            bad = [line for line in lines if not line.startswith(rule.line_prefixes)]
+            if bad:
+                raise Invalid(f'a "{rule.tag}" item: every non-empty line must start with one of {prefixes}; '
+                              f"bad line: {bad[0]!r}")
         citations = citations_in(text)
         good = {f"[{c.reference_id}:{c.start_line}-{c.end_line}]" for c in citations}
         for found in _LOOKS_LIKE.findall(text):
@@ -46,12 +56,13 @@ class FakeCitationEnforcement(CitationEnforcement):
             origins.append(ref.origin)
         if problems:
             raise Invalid("; ".join(problems))
-        rule = self._policy.rule(claim[0])
-        if rule.needs and not set(origins) & rule.needs:
-            raise Invalid(f'a "{rule.tag}" claim {rule.hint}. Found only: {", ".join(origins) or "none"}')
+        missing = [hint for group, hint in zip(rule.needs, rule.hints) if not set(origins) & group]
+        if missing:
+            raise Invalid(f'a "{rule.tag}" claim {"; ".join(missing)}. '
+                          f'Found only: {", ".join(origins) or "no citations"}')
         if any(o not in rule.allowed for o in origins):
             raise Invalid(f'a "{rule.tag}" claim may cite only {", ".join(sorted(rule.allowed))}')
-        return CheckedClaim(claim[0], tuple(citations))
+        return CheckedClaim(claim[0], tuple(citations), rule.reviewed)
 
     def check_title(self, title):
         stripped = title.strip()

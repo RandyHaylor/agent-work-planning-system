@@ -64,6 +64,15 @@ def test_release_puts_back_to_pending(reviewer, server, ids):
     assert [r["id"] for r in reviewer.list_reviews(ids[0], status="pending")] == [record["id"]]
 
 
+def test_open_items_route(client_class, server, ids):
+    planner = client_class(ClientSettings(BASE_URL, None, server.issue_token("planner", ids[0])),
+                           transport=server.transport())
+    planner.add_content(ids[1], "RESEARCH: x\n\nASK USER: y", ["open_items"])
+    [item] = planner.open_items(ids[0])
+    assert (server.requests[-1].method, server.requests[-1].path) == ("GET", f"/projects/{ids[0]}/open-items")
+    assert item["node_id"] == ids[1] and item["lines"] == ["RESEARCH: x", "ASK USER: y"]
+
+
 def test_verdict_by_non_holder_is_409(reviewer, server, ids):
     record = server.seed_review(*ids)
     with pytest.raises(ApiError) as error:

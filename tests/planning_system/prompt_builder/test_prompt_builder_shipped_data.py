@@ -62,9 +62,12 @@ def test_planner_dev_manager_and_worker_get_the_claim_tag_rule(catalog, name):
     entries = [(e["categoryId"], e["optionId"], e["enabled"]) for e in catalog.find_preset(name)["entries"]]
     assert ("planning-claims", "claim-tags-and-citations", True) in entries
     text = ruleset.compose_prompt_text(catalog, ruleset.new_ruleset(catalog, catalog.find_preset(name)))
-    for tag in ("requirement", "decision", "technical", "documentation", "plan", "note"):
+    for tag in ("requirement", "decision", "technical", "documentation", "plan", "note", "open_items"):
         assert f"`{tag}`" in text
     assert "[<reference id>:<start>-<end>]" in text
+    for prefix in ("RESEARCH:", "ASK USER:", "VERIFY WITH USER:", "planning open-items"):   # build log #61
+        assert prefix in text
+    assert "a user quote (the why) AND a document reference (the proof)" in text
 
 
 def test_session_injections_are_the_repo_file_as_is():

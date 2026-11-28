@@ -40,7 +40,7 @@ def rejects(gate, text, tags, *fragments):
 @pytest.mark.parametrize("tags", [(), ("finding",), ("requirement", "technical")])
 def test_1_exactly_one_claim_tag(gate, tags):
     rejects(gate, "x [ref-user:1-1]", tags, "exactly one claim tag",
-            "requirement, decision, technical, documentation, plan, note")
+            "requirement, decision, technical, documentation, plan, note, open_items")
 
 
 def test_1b_other_descriptive_tags_may_sit_beside_the_claim_tag(gate):
@@ -59,7 +59,7 @@ def test_2_requirement_needs_a_user_quote(gate):
 # 3
 def test_3_technical_and_documentation_need_reference_quotes(gate):
     rejects(gate, "It does X [ref-user:1-1]", ("technical",), "document or knowledge_base")
-    assert gate.check_content("It does X [ref-doc:1-1]", ("technical",))
+    assert gate.check_content("It does X [ref-doc:1-1] [ref-user:2-2]", ("technical",))
     rejects(gate, "Doc says X [ref-doc:1-1] [ref-user:1-1]", ("documentation",), "may cite only")
     assert gate.check_content("Doc says X [ref-doc:1-1]", ("documentation",))
 
@@ -69,6 +69,57 @@ def test_4_node_citations_alone_never_count(gate):
     for tag in ("requirement", "technical", "plan"):
         rejects(gate, "As decided [ref-node:1-1]", (tag,), "Found only: node")
     assert gate.check_content("As decided [ref-node:1-1] [ref-user:1-1]", ("requirement",))
+
+
+# why rule (build log #60 (3), #61): plan and technical need a user citation (why) AND a document (proof)
+@pytest.mark.parametrize("tag", ["plan", "technical"])
+def test_why_rule_needs_both_a_user_and_a_document_citation(gate, tag):
+    rejects(gate, "Use Postgres [ref-doc:1-1]", (tag,), f'a "{tag}" claim', "user quote",
+            "user_exchange or proposal_response", "Found only: document")
+    rejects(gate, "Use Postgres [ref-user:1-1]", (tag,), f'a "{tag}" claim', "document or knowledge_base",
+                      "Found only: user_exchange")
+    rejects(gate, "Use Postgres", (tag,), "user quote", "document or knowledge_base", "no citations")
+    assert gate.check_content("Use Postgres [ref-user:1-1] [ref-doc:2-2]", (tag,)).claim_tag == tag
+    assert gate.check_content("Use Postgres [ref-reply:1-1] [ref-doc:2-2]", (tag,)).claim_tag == tag
+
+
+def test_why_rule_message_names_only_what_is_missing(gate):
+    only_user_missing = rejects(gate, "Use Postgres [ref-doc:1-1]", ("plan",))
+    assert "missing a user quote" in only_user_missing and "missing a reference quote" not in only_user_missing
+    only_doc_missing = rejects(gate, "Use Postgres [ref-user:1-1]", ("plan",))
+    assert "missing a reference quote" in only_doc_missing and "missing a user quote" not in only_doc_missing
+
+
+def test_requirement_decision_documentation_unchanged_by_the_why_rule(gate):
+    assert gate.check_content("Use X [ref-user:1-2]", ("requirement",))
+    assert gate.check_content("Use X [ref-reply:1-2]", ("decision",))
+    assert gate.check_content("Doc says X [ref-doc:1-1]", ("documentation",))
+
+
+# open_items (build log #61 (4)): a to-do list of what to research or ask/verify with the user
+def test_open_items_need_no_citation_and_are_not_reviewed(gate):
+    checked = gate.check_content("RESEARCH: which queue library\nASK USER: retention period\n\n"
+                                 "VERIFY WITH USER: in-app only for now", ("open_items",))
+    assert checked.claim_tag == "open_items" and checked.citations == () and checked.reviewed is False
+    assert gate.check_content("Use X [ref-user:1-2]", ("requirement",)).reviewed is True
+
+
+@pytest.mark.parametrize("text", ["RESEARCH: x\nWe use Postgres", "research: lower case", "ASK USER x",
+                                  "TODO: something", "  \n"])
+def test_open_items_every_non_empty_line_needs_a_prefix(gate, text):
+    message = rejects(gate, text, ("open_items",), '"open_items"', "RESEARCH:", "ASK USER:", "VERIFY WITH USER:")
+    if text.strip():
+        assert "line" in message
+
+
+def test_open_items_may_still_carry_citations(gate):
+    assert gate.check_content("VERIFY WITH USER: the 72 hours [ref-user:1-1]", ("open_items",))
+
+
+def test_policy_from_config_keeps_flat_needs_working(library):
+    table = {"plan": {"needs": ["user_exchange", "document"], "allowed": ["user_exchange", "document"]}}
+    gate = CitationEnforcementService(library, ClaimPolicy.from_mapping(table))
+    assert gate.check_content("x [ref-doc:1-1]", ("plan",)).reviewed is True
 
 
 # 5
@@ -84,7 +135,7 @@ def test_5b_unknown_temp_cache_id_says_cite_it_first(gate):
 
 
 def test_5c_a_cited_temp_item_keeps_its_tmp_id_and_is_valid(gate):
-    assert gate.check_content("x [tmp-doc:1-1]", ("technical",))
+    assert gate.check_content("x [tmp-doc:1-1]", ("documentation",))
 
 
 # 6

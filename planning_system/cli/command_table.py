@@ -50,6 +50,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(("content", "replace"), TARGET_API, "replace_content", (
         NODE_ID, Arg("reference_id", "reference_id"), Arg("--text", "text"), Arg("--file", "file")),
         mapper="text_or_file"),
+    CommandSpec(("open-items",), TARGET_API, "open_items", (Arg("--project", "project_id", "int", required=True),)),
     CommandSpec(("supplementary", "create"), TARGET_API, "create_supplementary_task", (
         Arg("--kind", "kind", required=True), Arg("--title", "title", required=True),
         Arg("--summary", "context_summary", required=True)), mapper="own_task"),
