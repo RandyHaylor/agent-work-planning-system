@@ -12,10 +12,11 @@ from ...review_worker import ReviewWorkerInterface
 from ..bulk_review import BulkReview
 from ..kind_dispatch import ReviewByKind
 from ..node_guess_screen import NodeGuessScreen
-from ..review_method import BULK, ReviewMethod
+from ..review_method import BOTH, BULK, METHOD_GRANULARITIES, ReviewMethod
 from ..reviewer_profiles import ReviewerProfile
 from ..sentence_review import SentenceBySentenceReview
 from .claude_code_backend import DEFAULT_CLAUDE_REVIEWER_MODEL, ClaudeCodeBackend
+from .compare_backend import CompareReviewerBackend
 from .interface import ReviewerBackend
 from .one_shot_backend import OneShotReviewerBackend
 
@@ -68,13 +69,18 @@ class ReviewerBackendFactory:
 
     def create(self, name: Optional[str] = None, model: Optional[str] = None,
                granularity: Optional[str] = None) -> ReviewerBackend:
-        """granularity: per_sentence | bulk; default per_sentence for local_llm, bulk otherwise."""
+        """granularity: per_sentence | bulk | both (compare mode); default per_sentence for local_llm, bulk
+        otherwise. `both` builds one backend per method, so each run has its own fresh conversation (for claude_code
+        its own reviewer session)."""
         backend_name = name or DEFAULT_BACKEND
         builder = self._builders.get(backend_name)
         if builder is None:
             raise Invalid(f"unknown reviewer backend {name!r}; choose one of {', '.join(BACKEND_NAMES)}")
-        profile = ReviewerProfile("(flags)", backend_name, model, granularity)
-        return builder(model).use_review_method(review_method_for(profile.resolved_granularity()))
+        resolved = ReviewerProfile("(flags)", backend_name, model, granularity).resolved_granularity()
+        if resolved == BOTH:
+            return CompareReviewerBackend([(method, builder(model).use_review_method(review_method_for(method)))
+                                           for method in METHOD_GRANULARITIES])
+        return builder(model).use_review_method(review_method_for(resolved))
 
     def create_from_profile(self, profile: ReviewerProfile) -> ReviewerBackend:
         return self.create(profile.backend, profile.model, profile.granularity)

@@ -12,7 +12,9 @@ from .types import ReviewPacket, Verdict
 
 PER_SENTENCE = "per_sentence"
 BULK = "bulk"
-GRANULARITIES = (PER_SENTENCE, BULK)
+BOTH = "both"                 # compare mode: per_sentence and bulk, each in its own conversation (build log #69)
+METHOD_GRANULARITIES = (PER_SENTENCE, BULK)
+GRANULARITIES = (PER_SENTENCE, BULK, BOTH)
 
 
 class ReviewMethod(ABC):

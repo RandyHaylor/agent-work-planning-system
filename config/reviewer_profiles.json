@@ -2,7 +2,9 @@
   "reviewer_profiles": {
     "local": {"backend": "local_llm", "granularity": "per_sentence"},
     "local-bulk": {"backend": "local_llm", "granularity": "bulk"},
+    "local-compare": {"backend": "local_llm", "granularity": "both"},
     "haiku": {"backend": "claude_code", "model": "haiku", "granularity": "bulk"},
-    "haiku-per-sentence": {"backend": "claude_code", "model": "haiku", "granularity": "per_sentence"}
+    "haiku-per-sentence": {"backend": "claude_code", "model": "haiku", "granularity": "per_sentence"},
+    "haiku-compare": {"backend": "claude_code", "model": "haiku", "granularity": "both"}
   }
 }

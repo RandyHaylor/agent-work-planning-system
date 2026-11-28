@@ -81,7 +81,8 @@ COMMANDS: tuple[CommandSpec, ...] = (
         Arg("--project", "project_id", "int", required=True),
         Arg("--profile", "profile", help="reviewer profile from config/reviewer_profiles.json (default: local)"),
         Arg("--backend", "backend", help="overrides the profile: local_llm | claude_code"), Arg("--model", "model"),
-        Arg("--granularity", "granularity", help="overrides the profile: per_sentence | bulk "
+        Arg("--granularity", "granularity", help="overrides the profile: per_sentence | bulk | both (compare mode: "
+                                                 "each method in its own conversation; fails if either fails) "
                                                  "(default per_sentence for local_llm, else bulk)"),
         Arg("--poll-seconds", "poll_seconds", "float", default=5.0), Arg("--once", "once", "flag"))),
     CommandSpec(("review", "list"), TARGET_API, "list_reviews", (
