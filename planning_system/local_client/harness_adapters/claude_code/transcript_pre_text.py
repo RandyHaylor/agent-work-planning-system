@@ -11,7 +11,8 @@ from typing import Optional
 
 from planning_system.local_client.quote_capture.ports import HarnessAdapterPort
 
-from . import claude_cli_get_recent_agent_messages as extractor
+from . import transcript_events
+from .claude_cli_get_recent_agent_messages import parse_events
 
 
 class ClaudeCodeTranscriptPreText(HarnessAdapterPort):
@@ -30,7 +31,7 @@ class ClaudeCodeTranscriptPreText(HarnessAdapterPort):
         if not events:
             return ""
         try:
-            return extractor.build_pre_text_for_incoming_user_prompt(events, self._incoming_prompt_text)
+            return transcript_events.build_pre_text_for_incoming_user_prompt(events, self._incoming_prompt_text)
         except Exception:
             return ""
 
@@ -40,7 +41,7 @@ class ClaudeCodeTranscriptPreText(HarnessAdapterPort):
         if not events:
             return []
         try:
-            return list(extractor.find_user_messages_sent_while_agent_was_working(events,
+            return list(transcript_events.find_user_messages_sent_while_agent_was_working(events,
                                                                                   self._incoming_prompt_text))
         except Exception:
             return []
@@ -49,6 +50,6 @@ class ClaudeCodeTranscriptPreText(HarnessAdapterPort):
         if self._transcript_path is None or not self._transcript_path.exists():
             return []
         try:
-            return list(extractor.parse_events(self._transcript_path))
+            return list(parse_events(self._transcript_path))
         except Exception:
             return []
