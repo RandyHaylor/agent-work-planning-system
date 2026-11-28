@@ -22,6 +22,7 @@ import tempfile
 import threading
 import time
 import uuid
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -30,6 +31,53 @@ from ..ai_cli_adapter_interface import (
     PersistentReviewerSessionHandle,
 )
 from ..types import HeadlessSessionSpec
+
+
+STDOUT_EOF_SENTINEL = None
+
+
+class StreamDeadlineWatch:
+    """The per-call deadline and the silent-stream heartbeat, on an injectable monotonic clock (so the
+    wait loop's timing is testable without a subprocess)."""
+
+    def __init__(self, timeout_seconds: float, heartbeat_after_silent_seconds: float,
+                 clock: Callable[[], float] = time.monotonic) -> None:
+        self._clock = clock
+        self._heartbeat_after = heartbeat_after_silent_seconds
+        started = clock()
+        self._deadline = started + timeout_seconds
+        self._last_event = started
+        self._next_heartbeat = started + heartbeat_after_silent_seconds
+
+    def expired(self) -> bool:
+        return self._clock() > self._deadline
+
+    def heartbeat_message(self) -> Optional[str]:
+        """A message when a heartbeat is due (then schedules the next one), else None."""
+        now = self._clock()
+        if now <= self._next_heartbeat:
+            return None
+        self._next_heartbeat = now + self._heartbeat_after
+        return (f"no stream events for {round(now - self._last_event, 1)}s "
+                f"(timeout in {round(self._deadline - now, 1)}s)")
+
+    def event_arrived(self) -> None:
+        self._last_event = self._clock()
+        self._next_heartbeat = self._last_event + self._heartbeat_after
+
+
+@dataclass
+class _StreamOutcome:
+    final_result_text: Optional[str] = None
+    timed_out: bool = False
+    assistant_text_chunks: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class _PipeReaders:
+    stdout_lines: "queue.Queue[Optional[str]]"
+    stderr_thread: threading.Thread
+    stdout_thread: threading.Thread
 
 
 class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
@@ -145,7 +193,16 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
 
     def send_prompt_and_await_response(self, prompt_text: str) -> str:
         command = self._build_command()
+        process_handle = self._launch(command, prompt_text)
+        pipe_readers = self._start_pipe_readers(process_handle)
+        try:
+            outcome = self._await_result(pipe_readers.stdout_lines, process_handle.kill)
+        finally:
+            self._stop(process_handle, pipe_readers)
+        return self._result_or_fallback(outcome)
 
+    def _launch(self, command: list[str], prompt_text: str) -> "subprocess.Popen[str]":
+        """Starts claude and pipes the whole prompt to stdin (EOF makes it start)."""
         self._emit_streamed_event(
             "SUBPROCESS_LAUNCH",
             f"session_id={self._reviewer_session_id} "
@@ -164,7 +221,6 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
             errors="replace",
             bufsize=1,
         )
-        # Write the full prompt to stdin and close so claude sees EOF and starts.
         try:
             assert process_handle.stdin is not None
             process_handle.stdin.write(prompt_text)
@@ -175,22 +231,19 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
                 f"could not pipe prompt to subprocess: {stdin_exc}",
             )
         self._priming_already_done = True
+        return process_handle
 
-        # Drain stderr concurrently in a background thread so the child cannot
-        # deadlock on a full stderr pipe buffer (Linux pipes hold ~64KB).
+    def _start_pipe_readers(self, process_handle) -> "_PipeReaders":
+        """stderr is drained into the log (a full pipe would deadlock the child); stdout lines go onto a
+        queue the wait loop polls with a timeout, so it can also check the deadline (cross-platform;
+        select() on pipes is Linux/macOS only). The queue ends with STDOUT_EOF_SENTINEL."""
         stderr_drainer_thread = threading.Thread(
             target=self._drain_stderr_into_log_until_eof,
             args=(process_handle.stderr,),
             daemon=True,
         )
         stderr_drainer_thread.start()
-
-        # Read stdout in a background thread that pushes each line onto a
-        # thread-safe queue. The main loop polls the queue with a timeout so it
-        # can also check the deadline and emit heartbeats. This pattern works
-        # cross-platform; select.select() on pipes is Linux/macOS only.
         stdout_line_queue: "queue.Queue[Optional[str]]" = queue.Queue()
-        STDOUT_EOF_SENTINEL = None
 
         def stdout_reader_into_queue() -> None:
             try:
@@ -200,78 +253,60 @@ class ClaudeCodeReviewerSessionHandleViaResume(PersistentReviewerSessionHandle):
             finally:
                 stdout_line_queue.put(STDOUT_EOF_SENTINEL)
 
-        stdout_reader_thread = threading.Thread(
-            target=stdout_reader_into_queue, daemon=True,
-        )
+        stdout_reader_thread = threading.Thread(target=stdout_reader_into_queue, daemon=True)
         stdout_reader_thread.start()
+        return _PipeReaders(stdout_line_queue, stderr_drainer_thread, stdout_reader_thread)
 
-        deadline_monotonic = time.monotonic() + self._per_call_timeout_seconds
-        last_event_arrived_monotonic = time.monotonic()
-        next_heartbeat_due_monotonic = (
-            last_event_arrived_monotonic + self._heartbeat_after_silent_seconds
-        )
-        accumulated_assistant_text_chunks: list[str] = []
-        final_result_text: Optional[str] = None
-        timed_out = False
-
-        try:
-            while True:
-                now_monotonic = time.monotonic()
-                if now_monotonic > deadline_monotonic:
-                    timed_out = True
-                    self._emit_streamed_event(
-                        "TIMEOUT",
-                        f"per_call_timeout_seconds={self._per_call_timeout_seconds} "
-                        f"exceeded; killing subprocess",
-                    )
-                    process_handle.kill()
-                    break
-                if now_monotonic > next_heartbeat_due_monotonic:
-                    silent_for_seconds = round(
-                        now_monotonic - last_event_arrived_monotonic, 1
-                    )
-                    self._emit_streamed_event(
-                        "WAITING_FOR_EVENT",
-                        f"no stream events for {silent_for_seconds}s "
-                        f"(timeout in {round(deadline_monotonic - now_monotonic, 1)}s)",
-                    )
-                    next_heartbeat_due_monotonic = (
-                        now_monotonic + self._heartbeat_after_silent_seconds
-                    )
-
-                try:
-                    queued_line = stdout_line_queue.get(timeout=0.5)
-                except queue.Empty:
-                    continue
-                if queued_line is STDOUT_EOF_SENTINEL:
-                    break
-                last_event_arrived_monotonic = time.monotonic()
-                next_heartbeat_due_monotonic = (
-                    last_event_arrived_monotonic + self._heartbeat_after_silent_seconds
+    def _await_result(self, stdout_lines: "queue.Queue[Optional[str]]",
+                      kill: Callable[[], None]) -> "_StreamOutcome":
+        """Reads stream lines until the result event, EOF or the deadline (then kills the process),
+        logging a heartbeat whenever the stream has been silent too long."""
+        watch = StreamDeadlineWatch(self._per_call_timeout_seconds, self._heartbeat_after_silent_seconds)
+        outcome = _StreamOutcome()
+        while True:
+            if watch.expired():
+                outcome.timed_out = True
+                self._emit_streamed_event(
+                    "TIMEOUT",
+                    f"per_call_timeout_seconds={self._per_call_timeout_seconds} "
+                    f"exceeded; killing subprocess",
                 )
-                final_result_text_or_none = self._handle_stdout_line(
-                    queued_line, accumulated_assistant_text_chunks
-                )
-                if final_result_text_or_none is not None:
-                    final_result_text = final_result_text_or_none
-                    break
-        finally:
-            if process_handle.poll() is None:
-                try:
-                    process_handle.kill()
-                except OSError:
-                    pass
-            stderr_drainer_thread.join(timeout=2.0)
-            stdout_reader_thread.join(timeout=2.0)
+                kill()
+                return outcome
+            heartbeat = watch.heartbeat_message()
+            if heartbeat is not None:
+                self._emit_streamed_event("WAITING_FOR_EVENT", heartbeat)
+            try:
+                queued_line = stdout_lines.get(timeout=0.5)
+            except queue.Empty:
+                continue
+            if queued_line is STDOUT_EOF_SENTINEL:
+                return outcome
+            watch.event_arrived()
+            final_text = self._handle_stdout_line(queued_line, outcome.assistant_text_chunks)
+            if final_text is not None:
+                outcome.final_result_text = final_text
+                return outcome
 
-        if timed_out:
+    @staticmethod
+    def _stop(process_handle, pipe_readers: "_PipeReaders") -> None:
+        if process_handle.poll() is None:
+            try:
+                process_handle.kill()
+            except OSError:
+                pass
+        pipe_readers.stderr_thread.join(timeout=2.0)
+        pipe_readers.stdout_thread.join(timeout=2.0)
+
+    def _result_or_fallback(self, outcome: "_StreamOutcome") -> str:
+        if outcome.timed_out:
             return (
                 f"[reviewer subprocess timed out after {self._per_call_timeout_seconds}s; "
                 f"see streamed events in the reviewer log]"
             )
-        if final_result_text is not None:
-            return final_result_text
-        return "".join(accumulated_assistant_text_chunks) or "[reviewer subprocess produced no parsable output]"
+        if outcome.final_result_text is not None:
+            return outcome.final_result_text
+        return "".join(outcome.assistant_text_chunks) or "[reviewer subprocess produced no parsable output]"
 
 
 class ClaudeCodeAdapter(AiCliAdapterInterface):
