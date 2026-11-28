@@ -36,6 +36,15 @@ class Node:
 
 
 @dataclass(frozen=True)
+class ProjectCitation:
+    """One citation inside one current content item of a node in a project."""
+    node_id: NodeId
+    content_reference_id: ReferenceId
+    tags: frozenset
+    citation: object                 # references.Citation (reference_id, start_line, end_line)
+
+
+@dataclass(frozen=True)
 class NodeContent:
     reference_id: ReferenceId        # text is a fixed reference (origin "node")
     tags: frozenset                  # descriptive

@@ -6,6 +6,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
+from .supersede_flow import open_quote_checks
+
 SUBMITTED_MESSAGE = "submitted for review (not approved)"
 NOT_REVIEWED_MESSAGE = "stored; open items are not reviewed (list them with `planning open-items`)"
 
@@ -37,7 +39,9 @@ def open_node_review(services, node_id: int) -> SubmittedReview:
 
 
 def submit(services, node_id: int, content, claim) -> SubmittedContent:
-    """claim: the gate's CheckedClaim."""
+    """claim: the gate's CheckedClaim. A user quote cited for the first time in the project also gets the
+    all-quotes check (supersede spec 2)."""
+    open_quote_checks(services, project_of(services, node_id), node_id, content.reference_id, claim.citations)
     if not claim.reviewed:
         return SubmittedContent(content.reference_id, content.tags, None, NOT_REVIEWED_MESSAGE,
                                 open_node_review(services, node_id))

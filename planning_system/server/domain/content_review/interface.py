@@ -20,6 +20,22 @@ class ReviewLedger(ABC):
         or failed node reviews become superseded (the node changed since)."""
 
     @abstractmethod
+    def open_trial(self, project_id: int, node_id: int, content_reference_id: str, claim_tag: str,
+                   replaces_reference_id: str, against_reference_id: str, candidate_id: str) -> ReviewRecord:
+        """A trial review (supersede spec 3): does the item's claim still hold against the newer copy? Never
+        blocks done."""
+
+    @abstractmethod
+    def open_quote_check(self, project_id: int, node_id: int, content_reference_id: str,
+                         new_quote_reference_id: str) -> ReviewRecord:
+        """The all-quotes check (supersede spec 2): does the new user quote change any user quote cited in the
+        project? content_reference_id = the item that first cites it here. Never blocks done."""
+
+    @abstractmethod
+    def for_candidate(self, candidate_id: str) -> list[ReviewRecord]:
+        """The trial reviews of one supersede candidate, oldest first."""
+
+    @abstractmethod
     def supersede_for(self, content_reference_id: str) -> None:
         """Every not-yet-superseded record of that content item -> superseded (on replace_content)."""
 
@@ -34,7 +50,8 @@ class ReviewLedger(ABC):
 
     @abstractmethod
     def blocking_for_node(self, node_id: int) -> list[ReviewRecord]:
-        """The node's pending, taken or failed records (a node can't be set done while any exist)."""
+        """The node's pending, taken or failed content and node reviews (a node can't be set done while any
+        exist); trial reviews and quote checks never block."""
 
     @abstractmethod
     def take_next(self, project_id: int, reviewer: str) -> Optional[ReviewPacket]:

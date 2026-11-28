@@ -46,7 +46,7 @@ def test_routes_and_bodies(reviewer, server, ids):
     decided = reviewer.submit_review_verdict(record["id"], False, "slice does not say X", "x choice")
     assert (server.requests[-1].path, server.requests[-1].body) == (
         f"/reviews/{record['id']}/verdict",
-        {"passed": False, "reason": "slice does not say X", "suggested_title": "x choice"})
+        {"passed": False, "reason": "slice does not say X", "suggested_title": "x choice", "findings": []})
     assert decided["status"] == "failed"
     assert reviewer.get_review(record["id"])["suggested_title"] == "x choice"
     assert server.requests[-1].path == f"/reviews/{record['id']}"
@@ -71,6 +71,32 @@ def test_open_items_route(client_class, server, ids):
     [item] = planner.open_items(ids[0])
     assert (server.requests[-1].method, server.requests[-1].path) == ("GET", f"/projects/{ids[0]}/open-items")
     assert item["node_id"] == ids[1] and item["lines"] == ["RESEARCH: x", "ASK USER: y"]
+
+
+def test_supersede_candidate_routes(client_class, server, ids):
+    planner = client_class(ClientSettings(BASE_URL, None, server.issue_token("planner", ids[0], None, "planner-1")),
+                           transport=server.transport())
+    candidate = planner.propose_supersede(ids[0], "ref-old", "ref-new", "newer docs")
+    assert (server.requests[-1].method, server.requests[-1].path, server.requests[-1].body) == (
+        "POST", "/supersede-candidates", {"project_id": ids[0], "old_reference_id": "ref-old",
+                                          "new_reference_id": "ref-new", "reason": "newer docs"})
+    assert [c["id"] for c in planner.supersede_candidates(ids[0], "proposed")] == [candidate["id"]]
+    assert server.requests[-1].params == {"project_id": str(ids[0]), "status": "proposed"}
+    assert planner.reject_supersede(candidate["id"], "same thing")["status"] == "rejected"
+    assert server.requests[-1].body == {"reason": "same thing"}
+    with pytest.raises(ApiError) as error:
+        planner.confirm_supersede(candidate["id"])
+    assert error.value.status == 409 and server.requests[-1].path == f"/supersede-candidates/{candidate['id']}/confirm"
+    planner.search_references("cache ttl", 3)
+    assert (server.requests[-1].path, server.requests[-1].params) == ("/references/search", {"q": "cache ttl",
+                                                                                           "limit": "3"})
+
+
+def test_verdict_findings_are_sent(reviewer, server, ids):
+    record = server.seed_review(*ids)
+    reviewer.take_review(ids[0])
+    assert reviewer.submit_review_verdict(record["id"], False, "changes U1", None, ["ref-1"])["findings"] == ["ref-1"]
+    assert server.requests[-1].body["findings"] == ["ref-1"]
 
 
 def test_verdict_by_non_holder_is_409(reviewer, server, ids):

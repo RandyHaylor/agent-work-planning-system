@@ -108,6 +108,18 @@ class VerdictBody(BaseModel):
     passed: bool
     reason: str
     suggested_title: Optional[str] = None
+    findings: list[str] = Field(default_factory=list)   # quote checks: the earlier quotes the new one changes
+
+
+class ProposeSupersedeBody(BaseModel):
+    project_id: int
+    old_reference_id: str
+    new_reference_id: str
+    reason: str = ""
+
+
+class RejectSupersedeBody(BaseModel):
+    reason: str
 
 
 def _run(runner, command, principal: Optional[Principal], shape: Callable[[Any], Any] = to_json) -> Any:
@@ -272,10 +284,34 @@ def get_review(review_id: str, principal: Principal = Who, runner=Runner):
 
 @router.post("/reviews/{review_id}/verdict")
 def submit_review_verdict(review_id: str, body: VerdictBody, principal: Principal = Who, runner=Runner):
-    return _run(runner, C.SubmitReviewVerdict(review_id, body.passed, body.reason, body.suggested_title),
-                principal)
+    return _run(runner, C.SubmitReviewVerdict(review_id, body.passed, body.reason, body.suggested_title,
+                                              tuple(body.findings)), principal)
 
 
 @router.post("/reviews/{review_id}/release")
 def release_review(review_id: str, principal: Principal = Who, runner=Runner):
     return _run(runner, C.ReleaseReview(review_id), principal)
+
+
+# ---- supersede candidates (05-spec-reference-supersede.md)
+
+@router.post("/supersede-candidates")
+def propose_supersede(body: ProposeSupersedeBody, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.ProposeSupersede(body.project_id, body.old_reference_id, body.new_reference_id,
+                                           body.reason), principal)
+
+
+@router.get("/supersede-candidates")
+def list_supersede_candidates(project_id: int, status: Optional[str] = None, principal: Principal = Who,
+                              runner=Runner):
+    return _run(runner, C.ListSupersedeCandidates(project_id, status), principal)
+
+
+@router.post("/supersede-candidates/{candidate_id}/confirm")
+def confirm_supersede(candidate_id: str, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.ConfirmSupersede(candidate_id), principal)
+
+
+@router.post("/supersede-candidates/{candidate_id}/reject")
+def reject_supersede(candidate_id: str, body: RejectSupersedeBody, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.RejectSupersede(candidate_id, body.reason), principal)

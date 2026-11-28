@@ -54,6 +54,7 @@ class FakePlanningServer:
         self.credentials: dict[int, dict] = {}
         self.reviews: dict[str, dict] = {}
         self.review_packets: dict[str, dict] = {}
+        self.candidates: dict[str, dict] = {}
         self._fail_next: Optional[tuple[int, Any]] = None
         self._routes = self._build_routes()
 
@@ -181,6 +182,17 @@ class FakePlanningServer:
             ("POST", "/references/render", True, lambda p, b, q: {"citation": b["citation"], "text": ""}),
             ("POST", "/references/user-exchange", True, self._user_exchange),
             ("GET", f"/projects/{n}/open-items", True, self._open_items),
+            ("GET", "/references/search", True, lambda p, b, q: [
+                {"id": f"ref-{i}", "origin": "document", "locator": None, "preview": r.get("citation", "")}
+                for i, r in self.references.items() if q["q"].lower() in str(r).lower()]),
+            ("POST", "/supersede-candidates", True, self._propose_supersede),
+            ("GET", "/supersede-candidates", True, lambda p, b, q: [
+                c for c in self.candidates.values() if c["project_id"] == int(q["project_id"])
+                and q.get("status") in (None, c["status"])]),
+            ("POST", f"/supersede-candidates/{rid}/confirm", True,
+             lambda p, b, q, i: {"candidate": self._decide(p, i, "confirmed", ""), "reopened_review_ids": []}),
+            ("POST", f"/supersede-candidates/{rid}/reject", True,
+             lambda p, b, q, i: self._decide(p, i, "rejected", b["reason"])),
             ("GET", "/reviews", True, self._list_reviews),
             ("POST", "/reviews/take", True, self._take_review),
             ("GET", f"/reviews/{rid}", True, lambda p, b, q, i: self.reviews[i]),
@@ -300,8 +312,27 @@ class FakePlanningServer:
     def _submit_verdict(self, principal, body, query, review_id):
         record = self._held(principal, review_id)
         record.update(status="passed" if body["passed"] else "failed", reason=body["reason"],
-                      suggested_title=body.get("suggested_title"), decided_at="2026-11-25T02:00:00+00:00")
+                      suggested_title=body.get("suggested_title"), findings=list(body.get("findings") or []),
+                      decided_at="2026-11-25T02:00:00+00:00")
         return record
+
+    # ---- supersede candidates (no permission checks in the fake)
+    def _propose_supersede(self, principal, body, query):
+        candidate_id = f"sup-{next(self._ids)}"
+        self.candidates[candidate_id] = {
+            "id": candidate_id, "project_id": body["project_id"], "old_reference_id": body["old_reference_id"],
+            "new_reference_id": body["new_reference_id"], "kind": "document", "found_by": "proposed",
+            "status": "proposed", "proposed_by": principal.get("agent_id"), "reason": body.get("reason", ""),
+            "decided_by": None, "request_node_id": None}
+        return self.candidates[candidate_id]
+
+    def _decide(self, principal, candidate_id, status, reason):
+        candidate = self.candidates[candidate_id]
+        if candidate["status"] not in ("proposed", "trial_reviewed"):
+            raise _Status(409, f"supersede candidate {candidate_id} is already {candidate['status']}")
+        candidate.update(status=status, decided_by=principal.get("agent_id") or principal["role"],
+                         reason=reason or candidate["reason"])
+        return candidate
 
     def _release_review(self, principal, body, query, review_id):
         record = self._held(principal, review_id)
@@ -472,6 +503,23 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def open_items(self, project_id):
         return self._call("GET", f"/projects/{project_id}/open-items")
 
+    def search_references(self, query, limit=10):
+        return self._call("GET", "/references/search", params={"q": query, "limit": limit})
+
+    def propose_supersede(self, project_id, old_reference_id, new_reference_id, reason=""):
+        return self._call("POST", "/supersede-candidates", {"project_id": project_id,
+                                                           "old_reference_id": old_reference_id,
+                                                           "new_reference_id": new_reference_id, "reason": reason})
+
+    def supersede_candidates(self, project_id, status=None):
+        return self._call("GET", "/supersede-candidates", params={"project_id": project_id, "status": status})
+
+    def confirm_supersede(self, candidate_id):
+        return self._call("POST", f"/supersede-candidates/{candidate_id}/confirm")
+
+    def reject_supersede(self, candidate_id, reason):
+        return self._call("POST", f"/supersede-candidates/{candidate_id}/reject", {"reason": reason})
+
     def list_reviews(self, project_id, status=None, node_id=None):
         return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})
 
@@ -481,9 +529,10 @@ class FakePlanningApiClient(PlanningApiClientInterface):
     def take_review(self, project_id):
         return self._call("POST", "/reviews/take", {"project_id": project_id}) or None
 
-    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None):
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=()):
         return self._call("POST", f"/reviews/{review_id}/verdict",
-                          {"passed": passed, "reason": reason, "suggested_title": suggested_title})
+                          {"passed": passed, "reason": reason, "suggested_title": suggested_title,
+                           "findings": list(findings or ())})
 
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")

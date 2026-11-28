@@ -101,6 +101,19 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(("references", "lines"), TARGET_API, "reference_lines", (
         Arg("id", "reference_id"), Arg("--start", "start", "int"), Arg("--end", "end", "int"))),
     CommandSpec(("references", "render"), TARGET_API, "render_citation", (Arg("citation", "citation"),)),
+    # Search first + supersede candidates (05-spec-reference-supersede.md)
+    CommandSpec(("references", "search"), TARGET_API, "search_references", (
+        Arg("query", "query"), Arg("--limit", "limit", "int", default=10))),
+    CommandSpec(("references", "propose-supersede"), TARGET_API, "propose_supersede", (
+        Arg("old", "old_reference_id"), Arg("new", "new_reference_id"),
+        Arg("--project", "project_id", "int", required=True), Arg("--reason", "reason", default=""))),
+    CommandSpec(("references", "candidates"), TARGET_API, "supersede_candidates", (
+        Arg("--project", "project_id", "int", required=True),
+        Arg("--status", "status", help="proposed | trial_reviewed | confirmed | rejected"))),
+    CommandSpec(("references", "confirm-supersede"), TARGET_API, "confirm_supersede",
+                (Arg("candidate_id", "candidate_id"),)),
+    CommandSpec(("references", "reject-supersede"), TARGET_API, "reject_supersede", (
+        Arg("candidate_id", "candidate_id"), Arg("--reason", "reason", required=True))),
     # Guidance (one subcommand per role, so the cli never branches on a role)
     *(CommandSpec(("guidance", role), TARGET_API, "guidance", fixed={"role": role}) for role in GUIDANCE_ROLES),
     CommandSpec(("guidance", "templates"), TARGET_API, "guidance_templates"),

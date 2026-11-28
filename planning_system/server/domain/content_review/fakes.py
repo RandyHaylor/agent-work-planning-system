@@ -12,6 +12,7 @@ from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, O
 
 from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort
+from .review_packet_builder import ReviewPacketBuilder
 from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, PASSED, PENDING, SUPERSEDED, TAKEN, TARGET_NODE,
                     PacketContentItem, ResolvedCitation, ReviewPacket, ReviewRecord)
 
@@ -42,14 +43,16 @@ class InMemoryReviewStorage(ReviewStoragePort):
     def save(self, record):
         self._records[record.id] = record
 
-    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None):
+    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None,
+             candidate_id=None):
         statuses = None if statuses is None else set(statuses)
         found = [r for r in self._records.values()
                  if (project_id is None or r.project_id == project_id)
                  and (statuses is None or r.status in statuses)
                  and (node_id is None or r.node_id == node_id)
                  and (content_reference_id is None or r.content_reference_id == content_reference_id)
-                 and (target_kind is None or r.target_kind == target_kind)]
+                 and (target_kind is None or r.target_kind == target_kind)
+                 and (candidate_id is None or r.candidate_id == candidate_id)]
         return sorted(found, key=lambda r: (r.created_at, r.id))
 
     def lock_oldest_pending(self, project_id):
@@ -83,6 +86,26 @@ class FakeReviewLedger(ReviewLedger):
         self._records[record.id] = record
         return record
 
+    def open_trial(self, project_id, node_id, content_reference_id, claim_tag, replaces_reference_id,
+                   against_reference_id, candidate_id):
+        return self._new(project_id, node_id, content_reference_id, claim_tag, target_kind="trial",
+                         replaces_reference_id=replaces_reference_id, against_reference_id=against_reference_id,
+                         candidate_id=candidate_id)
+
+    def open_quote_check(self, project_id, node_id, content_reference_id, new_quote_reference_id):
+        return self._new(project_id, node_id, content_reference_id, "", target_kind="quote_check",
+                         against_reference_id=new_quote_reference_id)
+
+    def for_candidate(self, candidate_id):
+        return sorted((r for r in self._records.values() if r.candidate_id == candidate_id),
+                      key=lambda r: (r.created_at, r.id))
+
+    def _new(self, project_id, node_id, content_reference_id, claim_tag, **kind):
+        record = ReviewRecord(f"rev-fake-{next(self._ids)}", project_id, node_id, content_reference_id, claim_tag,
+                              PENDING, None, None, "", None, self._clock.now(), None, **kind)
+        self._records[record.id] = record
+        return record
+
     def supersede_for(self, content_reference_id):
         for r in list(self._records.values()):
             if r.content_reference_id == content_reference_id and r.status != SUPERSEDED:
@@ -98,7 +121,8 @@ class FakeReviewLedger(ReviewLedger):
                 and (status is None or r.status == status) and (node_id is None or r.node_id == node_id)]
 
     def blocking_for_node(self, node_id):
-        return [r for r in self._records.values() if r.node_id == node_id and r.status in BLOCKING_STATUSES]
+        return [r for r in self._records.values() if r.node_id == node_id and r.status in BLOCKING_STATUSES
+                and r.target_kind in ("content", "node")]
 
     def take_next(self, project_id, reviewer):
         self.expire_leases(self._lease)
@@ -108,6 +132,8 @@ class FakeReviewLedger(ReviewLedger):
         record = dataclasses.replace(pending[0], status=TAKEN, reviewer=reviewer, taken_at=self._clock.now())
         self._records[record.id] = record
         node = self._tree.get(record.node_id)
+        if record.target_kind in ("trial", "quote_check"):        # reuses the real builder for these two
+            return ReviewPacketBuilder(self._references, self._tree).build(record)
         if record.target_kind == TARGET_NODE:
             items = tuple(PacketContentItem(c.reference_id, tuple(sorted(c.tags)),
                                             self._references.get(c.reference_id, follow_superseded=False).text)
@@ -131,7 +157,8 @@ class FakeReviewLedger(ReviewLedger):
     def submit(self, review_id, reviewer, verdict):
         record = self._held(review_id, reviewer)
         record = dataclasses.replace(record, status=PASSED if verdict.passed else FAILED, reason=verdict.reason,
-                                     suggested_title=verdict.suggested_title, decided_at=self._clock.now())
+                                     suggested_title=verdict.suggested_title, findings=tuple(verdict.findings),
+                                     decided_at=self._clock.now())
         self._records[record.id] = record
         return record
 

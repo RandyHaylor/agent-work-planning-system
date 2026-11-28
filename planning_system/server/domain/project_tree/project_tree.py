@@ -3,6 +3,7 @@ from .citing_nodes import CitingNodesFinder
 from .interface import ProjectTree
 from .node_content import NodeContentStore
 from .node_editor import NodeEditor
+from .project_citations import ProjectCitationsFinder
 from .tree_reader import TreeReader
 
 
@@ -12,9 +13,14 @@ class ProjectTreeService(ProjectTree):
         self._editor = NodeEditor(storage, clock)
         self._content = NodeContentStore(storage, references)
         self._citing = CitingNodesFinder(storage, references)
+        self._project_citations = ProjectCitationsFinder(storage, references)
 
     def citing_nodes(self, reference_id):
         return self._citing.find(reference_id)
+
+    def project_citations(self, project_id):
+        self._reader.get(project_id)
+        return self._project_citations.find(project_id)
 
     def get(self, node_id):
         return self._reader.get(node_id)

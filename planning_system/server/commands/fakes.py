@@ -22,7 +22,8 @@ from planning_system.server.domain.content_review.fakes import FakeReviewLedger
 from planning_system.server.domain.context_assembly.fakes import FakeContextAssembler
 from planning_system.server.domain.project_tree.fakes import FakeProjectTree, TickingClock
 from planning_system.server.domain.references.fakes import FakeClock as ReferenceClock
-from planning_system.server.domain.references.fakes import FakeReferenceLibrary, FakeTempCache
+from planning_system.server.domain.references.fakes import (FakeReferenceLibrary, FakeRelatedReferences,
+                                                            FakeSupersedeCandidates, FakeTempCache)
 from planning_system.server.domain.task_assignment.fakes import FakeTaskAssigner
 from planning_system.server.domain.references import Ingestion
 from planning_system.server.domain.references import ReaderService
@@ -51,7 +52,8 @@ def fake_services(stores=None) -> Services:
                     admin_sessions=auth, policy=policy,
                     task_assigner=FakeTaskAssigner(tree, auth, agents),
                     enforcement=FakeCitationEnforcement(references), reviews=FakeReviewLedger(references, tree),
-                    reader=reader)
+                    reader=reader, candidates=FakeSupersedeCandidates(references),
+                    related=FakeRelatedReferences(stores.references))
 
 
 class FixedServicesFactory(ServicesFactory):
@@ -124,6 +126,11 @@ class FakeRequestAuthorizer(RequestAuthorizerInterface):
                 s.reviews.get(perm.review_id).project_id
             own = node_facts(s, p.scope_node_id) if p.role == "worker" and p.scope_node_id is not None else None
             return policy.can_review(p, project_id, own)
+        if isinstance(perm, P.CanProposeSupersede):
+            return policy.can_propose_supersede(p, perm.project_id)
+        if isinstance(perm, P.CanDecideSupersede):
+            candidate = s.candidates.get(perm.candidate_id)
+            return policy.can_decide_supersede(p, candidate.project_id, candidate.kind == "user_quote")
         raise TypeError(f"unknown permission {perm!r}")
 
     def _can_read_item(self, p, reader_id, s) -> bool:

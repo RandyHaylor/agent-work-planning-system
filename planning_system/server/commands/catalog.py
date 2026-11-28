@@ -24,6 +24,9 @@ from .list_reviews import ListReviews
 from .release_review import ReleaseReview
 from .submit_review_verdict import SubmitReviewVerdict
 from .take_review import TakeReview
+from .search_references import SearchReferences
+from .supersede_candidates import (ConfirmSupersede, ListSupersedeCandidates, ProposeSupersede,
+                                   RejectSupersede)
 from .load_into_reader import LoadIntoReader
 from .mint_credential import MintCredential
 from .mint_quote_key import MintQuoteKey
@@ -71,6 +74,11 @@ CORE_ROUTES = {
     ("GET", "/reviews/{review_id}"): GetReview,
     ("POST", "/reviews/{review_id}/verdict"): SubmitReviewVerdict,
     ("POST", "/reviews/{review_id}/release"): ReleaseReview,
+    # supersede candidates (05-spec-reference-supersede.md)
+    ("POST", "/supersede-candidates"): ProposeSupersede,
+    ("GET", "/supersede-candidates"): ListSupersedeCandidates,
+    ("POST", "/supersede-candidates/{candidate_id}/confirm"): ConfirmSupersede,
+    ("POST", "/supersede-candidates/{candidate_id}/reject"): RejectSupersede,
 }
 
 REFERENCE_ROUTES = {
@@ -81,6 +89,7 @@ REFERENCE_ROUTES = {
     ("POST", "/reader/{reader_id}/json"): ReaderJson,
     ("GET", "/reader/{reader_id}/lines"): ReaderLines,
     ("POST", "/reader/cite"): CiteCacheItem,
+    ("GET", "/references/search"): SearchReferences,
     ("GET", "/references/{reference_id}"): GetReference,
     ("GET", "/references/{reference_id}/lines"): ReadReferenceLines,
     ("POST", "/references/render"): RenderCitation,

@@ -140,6 +140,23 @@ class PlanningApiClientInterface(ABC):
     @abstractmethod
     def open_items(self, project_id: int) -> list: ...                 # GET /projects/{id}/open-items (log #61)
 
+    # references search + supersede candidates (05-spec-reference-supersede.md)
+    @abstractmethod
+    def search_references(self, query: str, limit: int = 10) -> list: ...       # GET /references/search
+
+    @abstractmethod
+    def propose_supersede(self, project_id: int, old_reference_id: str, new_reference_id: str,
+                          reason: str = "") -> dict: ...                       # POST /supersede-candidates
+
+    @abstractmethod
+    def supersede_candidates(self, project_id: int, status: Optional[str] = None) -> list: ...
+
+    @abstractmethod
+    def confirm_supersede(self, candidate_id: str) -> dict: ...      # POST /supersede-candidates/{id}/confirm
+
+    @abstractmethod
+    def reject_supersede(self, candidate_id: str, reason: str) -> dict: ...   # .../{id}/reject
+
     # content reviews (05-spec-citation-enforcement-and-review.md "Routes")
     @abstractmethod
     def list_reviews(self, project_id: int, status: Optional[str] = None,
@@ -154,7 +171,8 @@ class PlanningApiClientInterface(ABC):
 
     @abstractmethod
     def submit_review_verdict(self, review_id: str, passed: bool, reason: str,
-                              suggested_title: Optional[str] = None) -> dict: ...  # POST /reviews/{id}/verdict
+                              suggested_title: Optional[str] = None,
+                              findings: Sequence[str] = ()) -> dict: ...   # POST /reviews/{id}/verdict
 
     @abstractmethod
     def release_review(self, review_id: str) -> dict: ...              # POST /reviews/{id}/release

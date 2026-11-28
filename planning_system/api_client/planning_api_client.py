@@ -151,6 +151,23 @@ class PlanningApiClient(PlanningApiClientInterface):
     def open_items(self, project_id):
         return self._call("GET", f"/projects/{project_id}/open-items")
 
+    def search_references(self, query, limit=10):
+        return self._call("GET", "/references/search", params={"q": query, "limit": limit})
+
+    def propose_supersede(self, project_id, old_reference_id, new_reference_id, reason=""):
+        return self._call("POST", "/supersede-candidates", {"project_id": project_id,
+                                                           "old_reference_id": old_reference_id,
+                                                           "new_reference_id": new_reference_id, "reason": reason})
+
+    def supersede_candidates(self, project_id, status=None):
+        return self._call("GET", "/supersede-candidates", params={"project_id": project_id, "status": status})
+
+    def confirm_supersede(self, candidate_id):
+        return self._call("POST", f"/supersede-candidates/{candidate_id}/confirm")
+
+    def reject_supersede(self, candidate_id, reason):
+        return self._call("POST", f"/supersede-candidates/{candidate_id}/reject", {"reason": reason})
+
     # content reviews
     def list_reviews(self, project_id, status=None, node_id=None):
         return self._call("GET", "/reviews", params={"project_id": project_id, "status": status, "node_id": node_id})
@@ -161,9 +178,10 @@ class PlanningApiClient(PlanningApiClientInterface):
     def take_review(self, project_id):
         return self._call("POST", "/reviews/take", {"project_id": project_id}) or None   # 204 -> ""
 
-    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None):
+    def submit_review_verdict(self, review_id, passed, reason, suggested_title=None, findings=()):
         return self._call("POST", f"/reviews/{review_id}/verdict",
-                          {"passed": passed, "reason": reason, "suggested_title": suggested_title})
+                          {"passed": passed, "reason": reason, "suggested_title": suggested_title,
+                           "findings": list(findings or ())})
 
     def release_review(self, review_id):
         return self._call("POST", f"/reviews/{review_id}/release")

@@ -109,6 +109,18 @@ class CanReviewProject(Permission):
 
 
 @dataclass(frozen=True)
+class CanProposeSupersede(Permission):
+    """Propose or list supersede candidates in a project: admin, or a planner/worker of the project."""
+    project_id: int
+
+
+@dataclass(frozen=True)
+class CanDecideSupersede(Permission):
+    """Confirm / reject one candidate: documents -> its project's planner or admin; user quotes -> admin."""
+    candidate_id: str
+
+
+@dataclass(frozen=True)
 class CanReviewRecord(Permission):
     """CanReviewProject for the record's project (the ledger then checks the caller holds it)."""
     review_id: str

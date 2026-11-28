@@ -38,7 +38,8 @@ class ReviewModeLoop(ReviewModeInterface):
             log.warning("review %s: no usable verdict after %d attempts; releasing", packet.review_id, ATTEMPTS)
             self._api.release_review(packet.review_id)
         else:
-            self._api.submit_review_verdict(packet.review_id, verdict.passed, verdict.reason, verdict.suggested_title)
+            self._api.submit_review_verdict(packet.review_id, verdict.passed, verdict.reason, verdict.suggested_title,
+                                            verdict.findings)
             log.info("review %s: %s (%s)", packet.review_id, "passed" if verdict.passed else "failed", verdict.reason)
         return packet.review_id
 

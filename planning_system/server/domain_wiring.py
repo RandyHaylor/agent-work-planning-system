@@ -19,7 +19,8 @@ from planning_system.server.domain.context_assembly import ContextAssemblerServi
 from planning_system.server.domain.project_tree import ProjectTreeService
 from planning_system.server.domain.task_assignment import TaskAssignerService
 from planning_system.server.domain.references import (Clock, Ingestion, ReaderService, ReferenceLibraryService,
-                                                      SourceFetcher, TempCacheLifecycle)
+                                                      RelatedReferenceFinder, SourceFetcher,
+                                                      SupersedeCandidateRegistry, TempCacheLifecycle)
 
 
 class SystemClock:
@@ -66,7 +67,9 @@ class DomainServicesFactory(ServicesFactory):
             policy=s.policy, task_assigner=TaskAssignerService(tree, issuer, agents),
             enforcement=CitationEnforcementService(references, s.claim_policy),
             reviews=ReviewLedgerService(stores.reviews, references, tree, s.clock, s.review_lease),
-            reader=ReaderService(temp_cache, references, ingestion, s.scanner_config, s.json_reader))
+            reader=ReaderService(temp_cache, references, ingestion, s.scanner_config, s.json_reader),
+            candidates=SupersedeCandidateRegistry(stores.supersede_candidates, references, s.clock),
+            related=RelatedReferenceFinder(stores.references))
 
 
 __all__ = ["DomainServicesFactory", "DomainSettings", "SystemClock"]

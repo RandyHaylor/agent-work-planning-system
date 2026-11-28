@@ -155,3 +155,16 @@ def test_can_review_admin_planner_or_worker_on_an_in_progress_review_task(policy
     assert not policy.can_review(WORKER, PROJECT, NodeFacts(SIBLING.node_id, PROJECT, "w2", frozenset({"review"}),
                                                             "in_progress"))              # not its own task
     assert not policy.can_review(QUOTE, PROJECT, None)
+
+
+def test_supersede_propose_by_project_agents_decide_by_planner_for_documents_admin_for_user_quotes(policy):
+    """05-spec-reference-supersede.md: documents "Planner, you can override"; user quotes: the user only."""
+    for p in (ADMIN, PLANNER, WORKER):
+        assert policy.can_propose_supersede(p, PROJECT)
+    assert not policy.can_propose_supersede(PLANNER, OTHER_PROJECT)
+    assert not policy.can_propose_supersede(QUOTE, PROJECT)
+    assert policy.can_decide_supersede(PLANNER, PROJECT, user_quote=False)
+    assert not policy.can_decide_supersede(PLANNER, PROJECT, user_quote=True)
+    assert not policy.can_decide_supersede(PLANNER, OTHER_PROJECT, user_quote=False)
+    assert not policy.can_decide_supersede(WORKER, PROJECT, user_quote=False)
+    assert policy.can_decide_supersede(ADMIN, PROJECT, user_quote=True)

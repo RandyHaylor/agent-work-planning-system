@@ -13,7 +13,7 @@ from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort
 from .review_packet_builder import ReviewPacketBuilder
 from .types import (BLOCKING_STATUSES, DEFAULT_LEASE, FAILED, PASSED, PENDING, STATUSES, SUPERSEDED, TAKEN,
-                    TARGET_NODE, ReviewRecord)
+                    NODE_GATING_KINDS, TARGET_NODE, TARGET_QUOTE_CHECK, TARGET_TRIAL, ReviewRecord)
 
 
 class ReviewLedgerService(ReviewLedger):
@@ -23,22 +23,33 @@ class ReviewLedgerService(ReviewLedger):
         self._packets = ReviewPacketBuilder(references, tree)
 
     def open(self, project_id, node_id, content_reference_id, claim_tag):
+        return self._add(project_id, node_id, content_reference_id, claim_tag)
+
+    def open_trial(self, project_id, node_id, content_reference_id, claim_tag, replaces_reference_id,
+                   against_reference_id, candidate_id):
+        return self._add(project_id, node_id, content_reference_id, claim_tag, target_kind=TARGET_TRIAL,
+                         replaces_reference_id=replaces_reference_id, against_reference_id=against_reference_id,
+                         candidate_id=candidate_id)
+
+    def open_quote_check(self, project_id, node_id, content_reference_id, new_quote_reference_id):
+        return self._add(project_id, node_id, content_reference_id, "", target_kind=TARGET_QUOTE_CHECK,
+                         against_reference_id=new_quote_reference_id)
+
+    def for_candidate(self, candidate_id):
+        return self._storage.find(candidate_id=candidate_id)
+
+    def _add(self, project_id, node_id, content_reference_id, claim_tag, **kind) -> ReviewRecord:
         record = ReviewRecord(id=f"rev-{uuid.uuid4()}", project_id=project_id, node_id=node_id,
                               content_reference_id=content_reference_id, claim_tag=claim_tag, status=PENDING,
                               reviewer=None, taken_at=None, reason="", suggested_title=None,
-                              created_at=self._clock.now(), decided_at=None)
+                              created_at=self._clock.now(), decided_at=None, **kind)
         self._storage.add(record)
         return record
 
     def open_node(self, project_id, node_id):
         for record in self._storage.find(statuses=BLOCKING_STATUSES, node_id=node_id, target_kind=TARGET_NODE):
             self._storage.save(dataclasses.replace(record, status=SUPERSEDED))
-        record = ReviewRecord(id=f"rev-{uuid.uuid4()}", project_id=project_id, node_id=node_id,
-                              content_reference_id=None, claim_tag="", status=PENDING, reviewer=None, taken_at=None,
-                              reason="", suggested_title=None, created_at=self._clock.now(), decided_at=None,
-                              target_kind=TARGET_NODE)
-        self._storage.add(record)
-        return record
+        return self._add(project_id, node_id, None, "", target_kind=TARGET_NODE)
 
     def supersede_for(self, content_reference_id):
         live = [s for s in STATUSES if s != SUPERSEDED]
@@ -56,7 +67,8 @@ class ReviewLedgerService(ReviewLedger):
                                   node_id=node_id)
 
     def blocking_for_node(self, node_id):
-        return self._storage.find(statuses=BLOCKING_STATUSES, node_id=node_id)
+        return [r for r in self._storage.find(statuses=BLOCKING_STATUSES, node_id=node_id)
+                if r.target_kind in NODE_GATING_KINDS]
 
     def take_next(self, project_id, reviewer):
         self.expire_leases(self._lease)
@@ -70,7 +82,7 @@ class ReviewLedgerService(ReviewLedger):
     def submit(self, review_id, reviewer, verdict):
         record = dataclasses.replace(self._held(review_id, reviewer), status=PASSED if verdict.passed else FAILED,
                                      reason=verdict.reason, suggested_title=verdict.suggested_title,
-                                     decided_at=self._clock.now())
+                                     findings=tuple(verdict.findings), decided_at=self._clock.now())
         self._storage.save(record)
         return record
 

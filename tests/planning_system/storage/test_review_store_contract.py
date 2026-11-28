@@ -63,6 +63,16 @@ def test_node_review_round_trip(review_store):
     assert [r.id for r in review_store.find(target_kind="node")] == ["rev-n"]
 
 
+def test_trial_and_quote_check_round_trip(review_store):
+    """Migration 0004: against_reference_id, candidate_id, findings."""
+    trial = record("rev-t", target_kind="trial", against_reference_id="ref-new", candidate_id="sup-1")
+    check = record("rev-q", target_kind="quote_check", against_reference_id="ref-q", findings=("ref-a", "ref-b"))
+    review_store.add(trial)
+    review_store.add(check)
+    assert review_store.get("rev-t") == trial and review_store.get("rev-q") == check
+    assert [r.id for r in review_store.find(candidate_id="sup-1")] == ["rev-t"]
+
+
 def test_two_connections_never_take_the_same_record(engine):
     project = secrets.randbits(40)
     with engine.begin() as conn:

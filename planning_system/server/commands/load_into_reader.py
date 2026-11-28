@@ -48,5 +48,14 @@ class LoadIntoReader(WriteCommand):
         return Authenticated()
 
     def run(self, services, principal: Optional[Principal]) -> Any:
-        return services.reader.load(principal, self.source_request(), self.strategy, self.line_start,
-                                    self.line_count)
+        loaded = services.reader.load(principal, self.source_request(), self.strategy, self.line_start,
+                                      self.line_count)
+        return [{**item, "related_references": self._related(services, item)} for item in loaded]
+
+    @staticmethod
+    def _related(services, item: dict) -> dict:
+        """Supersede spec "Search first": stored references from the same source and the top same-topic ones."""
+        text = services.temp_cache.get(item["cache_id"]).text
+        found = services.related.related((item.get("metadata") or {}).get("locator"), text,
+                                         exclude_id=item["cache_id"])
+        return {"same_source": list(found.same_source), "same_topic": list(found.same_topic)}

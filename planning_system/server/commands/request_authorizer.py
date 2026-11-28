@@ -9,6 +9,7 @@ from planning_system.contract import Forbidden, NotFound, Principal
 from planning_system.server.domain.access import (ADMIN, WORKER, CredentialScope, NodeFacts, ReferenceFacts,
                                                   TempEntryFacts)
 from planning_system.server.domain.content_review import TAKEN
+from planning_system.server.domain.references import KIND_USER_QUOTE
 from planning_system.server.domain.references.citation_syntax import cites, parse_citation
 
 from . import permissions as P
@@ -64,6 +65,8 @@ class RequestAuthorizer(RequestAuthorizerInterface):
             P.CanReviewProject: lambda p, perm, s: self._can_review(p, perm.project_id, s),
             P.CanReviewRecord: lambda p, perm, s: self._can_review(
                 p, s.reviews.get(perm.review_id).project_id, s),
+            P.CanProposeSupersede: lambda p, perm, s: s.policy.can_propose_supersede(p, perm.project_id),
+            P.CanDecideSupersede: self._can_decide_supersede,
         }
 
     def check(self, principal, permission, services):
@@ -123,15 +126,23 @@ class RequestAuthorizer(RequestAuthorizerInterface):
         return s.policy.can_review(p, project_id, own_task)
 
     @staticmethod
+    def _can_decide_supersede(p, perm, s) -> bool:
+        candidate = s.candidates.get(perm.candidate_id)
+        return s.policy.can_decide_supersede(p, candidate.project_id, candidate.kind == KIND_USER_QUOTE)
+
+    @staticmethod
     def _holds_review_citing(p, reference_id, s) -> bool:
-        """Build log #50: the review-task worker may read the content + quotes of a review it holds."""
+        """Build log #50: the review-task worker may read the content + quotes of a review it holds (for a
+        whole-node review: every item of the node; for trial / quote checks also the newer reference)."""
         if p.role != WORKER or p.agent_id is None or p.project_id is None:
             return False
         for record in s.reviews.list(p.project_id, TAKEN):
             if record.reviewer != p.agent_id:
                 continue
-            if record.content_reference_id == reference_id or cites(
-                    s.references.get(record.content_reference_id, follow_superseded=False).text, reference_id):
+            items = ([record.content_reference_id] if record.content_reference_id
+                     else [c.reference_id for c in s.tree.content(record.node_id)])
+            if reference_id in (*items, record.against_reference_id) or any(
+                    cites(s.references.get(i, follow_superseded=False).text, reference_id) for i in items):
                 return RequestAuthorizer._can_review(p, record.project_id, s)
         return False
 

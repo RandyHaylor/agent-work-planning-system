@@ -1,4 +1,4 @@
-"""Storage: what the server composition gets. Stores: all five stores bound to one connection."""
+"""Storage: what the server composition gets. Stores: every store bound to one connection."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,7 +9,8 @@ from planning_system.server.domain.agent_registry import AgentRegistryStoragePor
 from planning_system.server.domain.authentication import CredentialStoragePort
 from planning_system.server.domain.content_review import ReviewStoragePort
 from planning_system.server.domain.project_tree import TreeStoragePort
-from planning_system.server.domain.references import ReferenceStoragePort, TempCacheStoragePort
+from planning_system.server.domain.references import (ReferenceStoragePort, SupersedeCandidateStoragePort,
+                                                      TempCacheStoragePort)
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -19,6 +20,7 @@ from .postgres_agent_registry_store import PostgresAgentRegistryStore
 from .postgres_credential_store import PostgresCredentialStore
 from .postgres_reference_store import PostgresReferenceStore
 from .postgres_review_store import PostgresReviewStore
+from .postgres_supersede_candidate_store import PostgresSupersedeCandidateStore
 from .postgres_temp_cache_store import PostgresTempCacheStore
 from .postgres_tree_store import PostgresTreeStore
 
@@ -33,6 +35,7 @@ class Stores:
     credentials: CredentialStoragePort
     agent_registry: AgentRegistryStoragePort
     reviews: ReviewStoragePort
+    supersede_candidates: SupersedeCandidateStoragePort
 
 
 @dataclass(frozen=True)
@@ -42,7 +45,8 @@ class Storage:
     def stores_for(self, conn) -> Stores:
         return Stores(tree=PostgresTreeStore(conn), references=PostgresReferenceStore(conn),
                       temp_cache=PostgresTempCacheStore(conn), credentials=PostgresCredentialStore(conn),
-                      agent_registry=PostgresAgentRegistryStore(conn), reviews=PostgresReviewStore(conn))
+                      agent_registry=PostgresAgentRegistryStore(conn), reviews=PostgresReviewStore(conn),
+                      supersede_candidates=PostgresSupersedeCandidateStore(conn))
 
 
 def create_storage(section: ConfigSection) -> Storage:

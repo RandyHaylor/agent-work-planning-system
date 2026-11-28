@@ -167,6 +167,42 @@ def test_node_packet_holds_title_summary_every_item_and_all_their_references(mak
     assert (doc.origin, doc.quoted_text) == ("document", "TTL is 72 hours")
 
 
+# supersede (05-spec-reference-supersede.md): trial reviews and the all-quotes check are records too
+def test_trial_packet_compares_old_cited_lines_with_the_newer_copy(make_ledger, world):
+    world["references"].storage.save(Reference("ref-doc2", "document", "a\nnew intro\nTTL is 24 hours\nc", "sha-2"))
+    ledger = make_ledger()
+    record = ledger.open_trial(world["project"].id, world["node"].id, world["content"].reference_id,
+                               "requirement", "ref-doc", "ref-doc2", "sup-1")
+    assert (record.target_kind, record.against_reference_id, record.replaces_reference_id, record.candidate_id) == \
+        ("trial", "ref-doc2", "ref-doc", "sup-1")
+    assert ledger.blocking_for_node(world["node"].id) == []               # a trial never blocks done
+    assert [r.id for r in ledger.for_candidate("sup-1")] == [record.id]
+    packet = ledger.take_next(world["project"].id, "reviewer-a")
+    assert (packet.kind, packet.against_reference_id, packet.against_text) == \
+        ("trial", "ref-doc2", "a\nnew intro\nTTL is 24 hours\nc")
+    [comparison] = packet.comparisons
+    assert (comparison.old_text, comparison.new_text, comparison.new_start) == \
+        ("TTL is 72 hours", "new intro\nTTL is 24 hours", 2)
+    assert packet.claim_text.startswith("TTL is 72 hours") and len(packet.citations) == 2
+
+
+def test_quote_check_packet_lists_every_other_user_quote_cited_in_the_project(make_ledger, world):
+    references, tree = world["references"], world["tree"]
+    newer = references.store_user_exchange("s-2", "Make it 24 hours.", "Still 72 hours?")
+    other = tree.create(world["node"].id, "other", "walkthroughs", "o")
+    item = tree.add_content(other.id, f"Entries live 24 hours [{newer.id}:2-2]", ("requirement",))
+    ledger = make_ledger()
+    record = ledger.open_quote_check(world["project"].id, other.id, item.reference_id, newer.id)
+    assert record.target_kind == "quote_check" and ledger.blocking_for_node(other.id) == []
+    packet = ledger.take_next(world["project"].id, "reviewer-a")
+    assert (packet.kind, packet.subject.quoted_text, packet.subject.pre_text) == \
+        ("quote_check", "Make it 24 hours.", "Still 72 hours?")
+    assert [(c.citation.reference_id, c.quoted_text) for c in packet.citations] == \
+        [(world["user"].id, "Use 72 hours.")]
+    decided = ledger.submit(record.id, "reviewer-a", Verdict(False, "changes U1", findings=(world["user"].id,)))
+    assert decided.findings == (world["user"].id,)
+
+
 # 10
 def test_10_packet_inlines_the_quotes(make_ledger, world):
     ledger = make_ledger()

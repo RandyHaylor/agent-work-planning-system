@@ -80,6 +80,14 @@ class RulePermissionPolicy(PermissionPolicy):
         return (own_task is not None and _works_on(p, own_task) and own_task.project_id == project_id
                 and REVIEW_TASK_LABEL in own_task.labels and own_task.state == IN_PROGRESS)
 
+    # supersede candidates
+    def can_propose_supersede(self, p, project_id):
+        return _is_admin(p) or (p.role in (PLANNER, WORKER) and p.project_id is not None
+                                and p.project_id == project_id)
+
+    def can_decide_supersede(self, p, project_id, user_quote):
+        return _is_admin(p) or (not user_quote and _plans_project(p, project_id))
+
     # references
     def can_submit_user_quote(self, p):
         return p.role == QUOTE_CLIENT

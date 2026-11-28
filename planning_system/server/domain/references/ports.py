@@ -17,6 +17,16 @@ class ReferenceStoragePort(ABC):
     def save(self, reference: Reference) -> None:
         """Insert, or replace by id (only superseded_by ever changes)."""
 
+    @abstractmethod
+    def find_by_locator(self, locator: str) -> list[Reference]:
+        """Current (not superseded) references whose metadata "locator" (URL or file name) is that; oldest id
+        first."""
+
+    @abstractmethod
+    def search_text(self, terms: list[str], limit: int) -> list[Reference]:
+        """Current references whose text matches any of the terms, best match first (Postgres full-text in the
+        real store)."""
+
 
 class TempCacheStoragePort(ABC):
     @abstractmethod

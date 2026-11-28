@@ -66,9 +66,10 @@ class Reviews:
     def take(self, project_id):
         return self._http.post("/reviews/take", json={"project_id": project_id}, headers=self._headers)
 
-    def verdict(self, review_id, passed, reason, suggested_title=None):
+    def verdict(self, review_id, passed, reason, suggested_title=None, findings=()):
         return self._http.post(f"/reviews/{review_id}/verdict", headers=self._headers,
-                               json={"passed": passed, "reason": reason, "suggested_title": suggested_title})
+                               json={"passed": passed, "reason": reason, "suggested_title": suggested_title,
+                                     "findings": list(findings)})
 
 
 def test_walkthrough(api):
@@ -299,3 +300,112 @@ def test_citation_gate_and_content_review(api, http):
     assert reviewer.take(project["id"]).json()["review_id"] == last_node_review
     assert reviewer.verdict(last_node_review, True, "no guesses").json()["status"] == "passed"
     assert planner.set_state(task["id"], "done")["state"] == "done"
+
+
+def _supersede_world(api, http):
+    admin = api.with_token(api.start_admin_session(ADMIN_PASSWORD)["token"])
+    project = admin.create_project("Cache service", "We are building a caching service.")
+    parent = project
+    for title, level in (("Plan", "high-level plan"), ("Design", "design"), ("Modules", "module specs")):
+        parent = admin.create_node(parent["id"], title, level, f"{title} for the cache.")
+    first = admin.create_node(parent["id"], "cache lifetime", "build", "How long entries live.")
+    second = admin.create_node(parent["id"], "cache sizing", "build", "How big the cache is.")
+    planner = api.with_token(admin.mint_credential("planner", project["id"], None, "planner-1")["token"])
+    review_task = planner.create_node(parent["id"], "citation review", "build", "Review claims.", labels=["review"])
+    reviewer = Reviews(http, planner.assign(review_task["id"], "reviewer-1", "main")["worker_token"])
+    planner.set_state(review_task["id"], "in_progress")
+    quote = api.with_token(admin.mint_quote_key("laptop")["token"])
+    return admin, planner, reviewer, quote, project, first, second
+
+
+def _decide_all(reviewer, project_id, decide):
+    """Takes every pending review; decide(packet) -> (passed, reason, findings)."""
+    decided = []
+    while True:
+        taken = reviewer.take(project_id)
+        if taken.status_code == 204:
+            return decided
+        packet = taken.json()
+        passed, reason, findings = decide(packet)
+        assert reviewer.verdict(packet["review_id"], passed, reason, None, findings).status_code == 200
+        decided.append(packet)
+
+
+def test_user_quote_supersede_check_trial_request_and_confirm(api, http):
+    """05-spec-reference-supersede.md: a new user quote is checked against ALL cited user quotes in ONE review;
+    a change -> a candidate (never automatic) -> a trial review of every item citing the old quote -> a
+    requirement request before the earliest affected task -> only the user (admin) confirms -> superseded, and
+    the citing items' reviews reopen against the new version."""
+    admin, planner, reviewer, quote, project, first, second = _supersede_world(api, http)
+    old = quote.store_user_exchange("s-1", "Use 72 hours.", "How long should entries live?")["reference_id"]
+    planner.add_content(first["id"], f"Entries live 72 hours [{old}:2-2]", ["requirement"])
+    assert all(p["kind"] in ("content", "node") for p in _decide_all(reviewer, project["id"],
+                                                                         lambda p: (True, "ok", [])))
+    new = quote.store_user_exchange("s-1", "Make it 24 hours.", "Is 72 hours still right?")["reference_id"]
+    planner.add_content(second["id"], f"Cache size is 24 hours of entries [{new}:2-2]", ["requirement"])
+
+    def judge(packet):
+        if packet["kind"] == "quote_check":
+            assert packet["subject"]["quoted_text"] == "Make it 24 hours."
+            assert [c["quoted_text"] for c in packet["citations"]] == ["Use 72 hours."]
+            [candidates_before] = [planner.supersede_candidates(project["id"])]
+            assert candidates_before == []
+            return False, "replaces 72 hours with 24", [old]
+        if packet["kind"] == "trial":
+            [proposed] = planner.supersede_candidates(project["id"], "proposed")
+            assert (proposed["kind"], proposed["found_by"]) == ("user_quote", "quote_check")
+            assert planner.get_reference(old).get("superseded_note") is None      # nothing changed yet
+            assert "Make it 24 hours." in packet["against_text"]
+            assert packet["comparisons"][0]["old_text"] == "Use 72 hours."
+            return False, "the new quote says 24 hours", []
+        return True, "ok", []
+    kinds = [p["kind"] for p in _decide_all(reviewer, project["id"], judge)]
+    assert kinds.index("quote_check") < kinds.index("trial")
+    [candidate] = planner.supersede_candidates(project["id"], "trial_reviewed")
+    request = planner.get_node(candidate["request_node_id"])
+    assert "requirement request" in request["labels"] and request["parent_id"] == first["parent_id"]
+    assert request["id"] in planner.get_node(first["id"])["depends_on"]
+    assert candidate["id"] in request["context_summary"]
+    context = planner.context(request["id"])["context"]
+    assert "Discrepancy" in context and "the new quote says 24 hours" in context
+
+    with pytest.raises(Forbidden):
+        planner.confirm_supersede(candidate["id"])                            # user quotes: the user only
+    confirmed = admin.confirm_supersede(candidate["id"])
+    assert confirmed["candidate"]["status"] == "confirmed" and len(confirmed["reopened_review_ids"]) == 1
+    assert planner.get_reference(old)["superseded_note"]
+    reopened = reviewer.take(project["id"]).json()
+    assert reopened["review_id"] == confirmed["reopened_review_ids"][0]
+    assert "Make it 24 hours." in reopened["citations"][0]["quoted_text"]
+    with pytest.raises(Invalid):
+        planner.set_state(first["id"], "done")                                # reopened review pending
+
+
+def test_document_reload_candidate_search_and_reject(api, http, tmp_path):
+    """Same file loaded again with other content -> a candidate (never automatic); the load response lists the
+    stored copy (search first); the planner may reject a document candidate, and the pair stays rejected."""
+    admin, planner, reviewer, quote, project, first, second = _supersede_world(api, http)
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    (tmp_path / "a" / "guide.txt").write_text("Cache guide\nEntries expire after seventy two hours.\n")
+    (tmp_path / "b" / "guide.txt").write_text("Cache guide\nEntries expire after one day.\nDeprecated: TTL.\n")
+    [loaded] = planner.reader_load(file_path=tmp_path / "a" / "guide.txt")
+    cited = planner.reader_cite(loaded["cache_id"], 2, 2)
+    planner.add_content(second["id"], f"The guide says entries expire after 72 hours {cited['citation']}",
+                        ["documentation"])
+    assert [r["id"] for r in planner.search_references("seventy hours")] == [cited["reference_id"]]
+    [again] = planner.reader_load(file_path=tmp_path / "b" / "guide.txt")
+    assert [r["id"] for r in again["related_references"]["same_source"]] == [cited["reference_id"]]
+    assert planner.supersede_candidates(project["id"]) == []                  # loading alone proposes nothing
+    newer = planner.reader_cite(again["cache_id"], 2, 2)
+    [candidate] = planner.supersede_candidates(project["id"])
+    assert (candidate["old_reference_id"], candidate["new_reference_id"], candidate["kind"], candidate["found_by"]) \
+        == (cited["reference_id"], newer["reference_id"], "document", "same_source")
+    trials = [p for p in _decide_all(reviewer, project["id"], lambda p: (True, "ok", [])) if p["kind"] == "trial"]
+    assert len(trials) == 1 and trials[0]["comparisons"][0]["new_text"].startswith("Entries expire after one day.")
+    assert "Deprecated: TTL." in trials[0]["against_text"]                   # the whole newer copy too
+    rejected = planner.reject_supersede(candidate["id"], "the old page was right for our version")
+    assert (rejected["status"], rejected["reason"]) == ("rejected", "the old page was right for our version")
+    assert planner.propose_supersede(project["id"], cited["reference_id"], newer["reference_id"])["status"] == \
+        "rejected"
+    assert planner.get_reference(cited["reference_id"]).get("superseded_note") is None

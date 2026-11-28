@@ -167,3 +167,17 @@ def test_17_list_nodes_by_state(tree):
     assert all_ids == {project.id, l2.id, l3.id, l4.id, t1.id}
     assert other.id not in all_ids
     assert [n.id for n in tree.list_nodes(project.id, state="done")] == [t1.id]
+
+
+def test_project_citations_lists_every_citation_of_current_items(env):
+    """Supersede spec: items citing a reference, and every user quote cited in the project."""
+    tree, refs = env
+    project, l2, l3, l4 = chain_to_level_4(tree)
+    a = tree.add_content(l2.id, "x [ref-a:1-2] and [ref-b:3-3]", ("requirement",))
+    tree.add_content(l4.id, "y [ref-a:4-4]", ("plan",))
+    tree.replace_content(l2.id, a.reference_id, "x [ref-c:1-1]")
+    other = tree.create(None, "other project", "what we're doing", "s")
+    tree.add_content(other.id, "z [ref-a:1-1]", ("note",))
+    found = [(c.node_id, c.citation.reference_id, c.citation.start_line, sorted(c.tags))
+             for c in tree.project_citations(project.id)]
+    assert found == [(l2.id, "ref-c", 1, ["requirement"]), (l4.id, "ref-a", 4, ["plan"])]

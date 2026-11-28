@@ -14,7 +14,8 @@ from planning_system.server.domain.citation_enforcement import CitationEnforceme
 from planning_system.server.domain.content_review import ReviewLedger
 from planning_system.server.domain.context_assembly import ContextAssembler
 from planning_system.server.domain.project_tree import ProjectTree
-from planning_system.server.domain.references import Reader, ReferenceLibrary, TempCache
+from planning_system.server.domain.references import (Reader, ReferenceLibrary, RelatedReferences,
+                                                      SupersedeCandidates, TempCache)
 from planning_system.server.domain.task_assignment import TaskAssigner
 from planning_system.server.storage.storage import Stores
 
@@ -33,6 +34,8 @@ class Services:
     enforcement: CitationEnforcement
     reviews: ReviewLedger
     reader: Optional[Reader] = None
+    candidates: Optional[SupersedeCandidates] = None     # supersede candidates (05-spec-reference-supersede.md)
+    related: Optional[RelatedReferences] = None          # same-source / same-topic lookup ("search first")
 
 
 class ServicesFactory(ABC):

@@ -27,7 +27,8 @@ class FakeReviewModeLoop(ReviewModeInterface):
                 verdict = self._backend.review(packet)
             except (ReviewerUnavailable, UnparseableVerdict):
                 continue
-            self._api.submit_review_verdict(packet.review_id, verdict.passed, verdict.reason, verdict.suggested_title)
+            self._api.submit_review_verdict(packet.review_id, verdict.passed, verdict.reason, verdict.suggested_title,
+                                            verdict.findings)
             return packet.review_id
         self._api.release_review(packet.review_id)
         return packet.review_id

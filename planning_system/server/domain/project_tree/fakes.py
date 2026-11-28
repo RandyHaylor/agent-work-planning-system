@@ -85,6 +85,14 @@ class FakeProjectTree(ProjectTree):
             chain.append(node)
         return list(reversed(chain))
 
+    def project_citations(self, project_id):
+        from planning_system.server.domain.references.citation_syntax import citations_in
+        from .types import ProjectCitation
+        self.get(project_id)
+        return [ProjectCitation(node.id, item.reference_id, frozenset(item.tags), c)
+                for node in self.list_nodes(project_id) for item in self.content(node.id)
+                for c in citations_in(self._refs.get(item.reference_id, follow_superseded=False).text)]
+
     def citing_nodes(self, reference_id):
         from .citing_nodes import CitingNodesFinder
         return CitingNodesFinder(self._s, self._refs).find(reference_id)

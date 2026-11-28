@@ -6,8 +6,8 @@ from .interface import ProjectTree
 from .ports import Clock, TreeStoragePort
 from .project_tree import ProjectTreeService
 from .types import (ABANDONED, AgentId, DONE, EDITABLE_FIELDS, LINEAR_LEVELS, Node, NodeContent, NodeId,
-    REQUIREMENT_REQUEST, ReferenceId, STATES, SUPPLEMENTARY_LABELS, TECH_SPIKE)
+    ProjectCitation, REQUIREMENT_REQUEST, ReferenceId, STATES, SUPPLEMENTARY_LABELS, TECH_SPIKE)
 
 __all__ = ["ABANDONED", "AgentId", "Clock", "DONE", "EDITABLE_FIELDS", "LINEAR_LEVELS", "Node",
-           "NodeContent", "NodeId", "ProjectTree", "ProjectTreeService", "REQUIREMENT_REQUEST",
+           "NodeContent", "NodeId", "ProjectCitation", "ProjectTree", "ProjectTreeService", "REQUIREMENT_REQUEST",
            "ReferenceId", "STATES", "SUPPLEMENTARY_LABELS", "TECH_SPIKE", "TreeStoragePort"]

@@ -15,7 +15,10 @@ DEFAULT_LEASE = timedelta(minutes=10)
 # what a record is about
 TARGET_CONTENT = "content"           # one content item: its claim against its citations
 TARGET_NODE = "node"                 # the whole node: title + summary + every item (guess screen)
-TARGET_KINDS = (TARGET_CONTENT, TARGET_NODE)
+TARGET_TRIAL = "trial"               # a content item against a NEWER copy of a reference it cites (supersede)
+TARGET_QUOTE_CHECK = "quote_check"   # a new user quote against every user quote cited in the project
+TARGET_KINDS = (TARGET_CONTENT, TARGET_NODE, TARGET_TRIAL, TARGET_QUOTE_CHECK)
+NODE_GATING_KINDS = frozenset({TARGET_CONTENT, TARGET_NODE})   # only these keep a node from "done"
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,10 @@ class ReviewRecord:
     created_at: datetime
     decided_at: Optional[datetime]
     target_kind: str = TARGET_CONTENT
+    against_reference_id: Optional[str] = None   # trial: the newer copy; quote_check: the new user quote
+    replaces_reference_id: Optional[str] = None  # trial: the older reference the item cites
+    candidate_id: Optional[str] = None           # trial: the supersede candidate it tries out
+    findings: tuple[str, ...] = ()               # quote_check: the earlier quotes (reference ids) it changes
 
 
 @dataclass(frozen=True)
@@ -53,6 +60,16 @@ class PacketContentItem:
 
 
 @dataclass(frozen=True)
+class Comparison:
+    """trial packets: one citation of the old reference and where its lines sit in the newer copy."""
+    citation: Citation
+    old_text: str
+    new_text: str                    # "" when every cited line was deleted
+    new_start: Optional[int]
+    new_end: Optional[int]
+
+
+@dataclass(frozen=True)
 class ReviewPacket:
     review_id: str
     node_title: str
@@ -62,6 +79,10 @@ class ReviewPacket:
     citations: tuple[ResolvedCitation, ...]
     kind: str = TARGET_CONTENT
     content_items: tuple[PacketContentItem, ...] = ()   # node packets: every current item, in order
+    against_reference_id: Optional[str] = None          # trial / quote_check
+    against_text: str = ""                              # trial: the whole newer copy
+    comparisons: tuple[Comparison, ...] = ()            # trial: old cited lines -> lines in the newer copy
+    subject: Optional[ResolvedCitation] = None          # quote_check: the new user statement as cited
 
 
 @dataclass(frozen=True)
@@ -69,3 +90,4 @@ class Verdict:                       # SoT PerOperationVerdict, one op per revie
     passed: bool
     reason: str
     suggested_title: Optional[str] = None
+    findings: tuple[str, ...] = ()   # quote_check: reference ids of the earlier quotes the new one changes

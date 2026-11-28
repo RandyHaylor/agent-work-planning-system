@@ -110,6 +110,11 @@ def store_user_exchange(body: UserExchangeBody, principal: Principal = Who, runn
                 shapes.reference_id)
 
 
+@router.get("/references/search")
+def search_references(q: str, limit: int = 10, principal: Principal = Who, runner=Runner):
+    return _run(runner, C.SearchReferences(q, limit), principal)
+
+
 @router.get("/references/{reference_id}")
 def get_reference(reference_id: str, principal: Principal = Who, runner=Runner):
     return _run(runner, C.GetReference(reference_id), principal)

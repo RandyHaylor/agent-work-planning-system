@@ -39,6 +39,16 @@ class PermissionPolicy(ABC):
         """List/take/decide reviews in a project: admin, its planner, or a worker whose own task
         (own_task) is in that project, labelled "review" and in progress."""
 
+    # supersede candidates (05-spec-reference-supersede.md "Confirm")
+    @abstractmethod
+    def can_propose_supersede(self, p: Principal, project_id: int) -> bool:
+        """Any agent of the project (planner or worker) or admin: "the agent or user proposes it"."""
+
+    @abstractmethod
+    def can_decide_supersede(self, p: Principal, project_id: int, user_quote: bool) -> bool:
+        """Confirm / reject: documents -> the project's planner or admin ("Planner, you can override");
+        user quotes -> admin only ("only the user confirms")."""
+
     # references
     @abstractmethod
     def can_submit_user_quote(self, p: Principal) -> bool: ...

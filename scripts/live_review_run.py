@@ -150,6 +150,36 @@ def main() -> int:
         print("  whole-node guess screen decided:", node_screened)
         good = (statuses.count("passed") >= 1 + (0 if skip_claude else 1) and statuses.count("failed") == 1
                 and node_screened)
+
+        # supersede (05-spec-reference-supersede.md): a new user quote that changes the cited one -> the all-quotes
+        # check (one call) -> a candidate -> trial reviews of the items citing the old quote -> requirement request
+        newer = httpx.post(f"{url}/references/user-exchange", verify=str(CERT),
+                           headers={"Authorization": f"Bearer {quote_cred['token']}"},
+                           json={"session_id": "s-1", "user_message": "Make it 24 hours.",
+                                 "pre_text": "Is 72 hours still right for cache entries?"}).json()["reference_id"]
+        _, expiry = run(planner, "nodes", "create", "--parent", modules, "--title", "entry expiry", "--level",
+                        "build", "--summary", "When entries expire.")
+        run(planner, "content", "add", str(expiry["id"]), "--tags", "requirement",
+            "--text", f"Cache entries expire after 24 hours [{newer}:2-2]")
+        for _ in range(8):
+            _, pending = run(planner, "review", "list", "--project", pid, "--status", "pending")
+            if not pending:
+                break
+            started = time.monotonic()
+            run(reviewer, "review", "serve", "--project", pid, "--backend", "local_llm", "--once")
+            print(f"  local_llm {pending[0].get('target_kind')} review took {time.monotonic() - started:.1f}s")
+        _, listed = run(planner, "review", "list", "--project", pid)
+        for r in listed:
+            if r.get("target_kind") in ("quote_check", "trial"):
+                print(f"  {r.get('target_kind')} {r.get('status')}: {str(r.get('reason'))[:140]!r}")
+        _, candidates = run(planner, "references", "candidates", "--project", pid)
+        for c in candidates:
+            print(f"  candidate {c['id']}: {c['old_reference_id']} -> {c['new_reference_id']} {c['kind']} "
+                  f"{c['found_by']} {c['status']} request node {c.get('request_node_id')}")
+        supersede_ok = any(c["found_by"] == "quote_check" and c["old_reference_id"] == user_ref
+                           and c["status"] == "trial_reviewed" for c in candidates)
+        print("  supersede candidate found and trial reviewed:", supersede_ok)
+        good = good and supersede_ok
         print("LIVE REVIEW RUN", "PASSED" if good and code != 0 else "CHECK RESULTS")
         return 0 if good and code != 0 else 1
     finally:

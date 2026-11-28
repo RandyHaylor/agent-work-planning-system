@@ -13,14 +13,22 @@ from .library import ReferenceLibraryService
 from .line_range_mapping import map_line_range
 from .ports import Clock, ReferenceStoragePort, TempCacheStoragePort
 from .reader import ReaderService, numbered
+from .related import ReferenceSummary, RelatedFound, RelatedReferenceFinder, RelatedReferences
+from .supersede import (CANDIDATE_STATUSES, FOUND_PROPOSED, FOUND_QUOTE_CHECK, FOUND_SAME_SOURCE, KIND_DOCUMENT,
+    KIND_USER_QUOTE, SupersedeCandidate, SupersedeCandidateRegistry, SupersedeCandidateStoragePort,
+    SupersedeCandidates)
 from .temp_cache import TempCacheLifecycle
 from .types import (AgentId, CacheId, Citation, NodeId, ORIGIN_DOCUMENT, ORIGIN_KNOWLEDGE_BASE, ORIGIN_NODE,
     ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, Reference, ReferenceId, TempCacheEntry)
 
-__all__ = ["AgentId", "CacheId", "Citation", "Clock", "FetchFailed", "Ingestion", "NodeId",
+__all__ = ["CANDIDATE_STATUSES", "FOUND_PROPOSED", "FOUND_QUOTE_CHECK", "FOUND_SAME_SOURCE", "KIND_DOCUMENT",
+           "KIND_USER_QUOTE", "SupersedeCandidate", "SupersedeCandidateRegistry", "SupersedeCandidateStoragePort",
+           "SupersedeCandidates",
+           "AgentId", "CacheId","Citation", "Clock", "FetchFailed", "Ingestion", "NodeId",
            "ORIGIN_DOCUMENT", "ORIGIN_KNOWLEDGE_BASE", "ORIGIN_NODE", "ORIGIN_PROPOSAL_RESPONSE",
            "ORIGIN_USER_EXCHANGE", "Reader", "ReaderService", "Reference", "ReferenceId", "ReferenceLibrary",
-           "ReferenceLibraryService", "ReferenceStoragePort", "SourceFetcher", "SourceRequest", "TempCache",
+           "ReferenceLibraryService", "ReferenceStoragePort", "ReferenceSummary", "RelatedFound",
+           "RelatedReferenceFinder", "RelatedReferences", "SourceFetcher", "SourceRequest", "TempCache",
            "TempCacheEntry", "TempCacheLifecycle", "TempCacheStoragePort", "UploadRequest", "UrlRequest",
            "WebSearchRequest", "citations_in", "cites", "format_citation", "map_line_range", "numbered",
            "parse_citation", "slice_lines"]

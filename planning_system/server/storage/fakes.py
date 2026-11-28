@@ -10,6 +10,7 @@ from planning_system.server.domain.authentication.fakes import InMemoryCredentia
 from planning_system.server.domain.content_review.fakes import InMemoryReviewStorage
 from planning_system.server.domain.project_tree.fakes import InMemoryTreeStorage
 from planning_system.server.domain.references.fakes import (InMemoryReferenceStorage,
+                                                            InMemorySupersedeCandidateStorage,
                                                             InMemoryTempCacheStorage)
 
 from .engine_setup import TransactionsInterface
@@ -51,7 +52,8 @@ class RecordingTransactions(TransactionsInterface):
 def in_memory_stores() -> Stores:
     return Stores(tree=InMemoryTreeStorage(), references=InMemoryReferenceStorage(),
                   temp_cache=InMemoryTempCacheStorage(), credentials=InMemoryCredentialStorage(),
-                  agent_registry=InMemoryAgentRegistryStorage(), reviews=InMemoryReviewStorage())
+                  agent_registry=InMemoryAgentRegistryStorage(), reviews=InMemoryReviewStorage(),
+                  supersede_candidates=InMemorySupersedeCandidateStorage())
 
 
 @dataclass(frozen=True)

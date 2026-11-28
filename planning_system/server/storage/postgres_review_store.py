@@ -2,7 +2,7 @@
 lock_oldest_pending is SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1 so two reviewers never get one record."""
 from __future__ import annotations
 
-from sqlalchemy import BigInteger, Column, DateTime, Index, Table, Text, select, update
+from sqlalchemy import JSON, BigInteger, Column, DateTime, Index, Table, Text, select, update
 from sqlalchemy.engine import Connection
 
 from planning_system.server.domain.content_review import ReviewStoragePort
@@ -25,11 +25,16 @@ CONTENT_REVIEWS = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("decided_at", DateTime(timezone=True)),
     Column("target_kind", Text, nullable=False, server_default="content"),
+    Column("against_reference_id", Text),                         # migration 0004
+    Column("replaces_reference_id", Text),                        # migration 0004
+    Column("candidate_id", Text, index=True),                     # migration 0004
+    Column("findings", JSON, nullable=False, server_default="[]"),  # migration 0004
     Index("ix_content_reviews_project_status", "project_id", "status"),
 )
 
 _FIELDS = ("id", "project_id", "node_id", "content_reference_id", "claim_tag", "status", "reviewer", "taken_at",
-           "reason", "suggested_title", "created_at", "decided_at", "target_kind")
+           "reason", "suggested_title", "created_at", "decided_at", "target_kind", "against_reference_id",
+           "replaces_reference_id", "candidate_id")
 _ORDER = (CONTENT_REVIEWS.c.created_at, CONTENT_REVIEWS.c.id)
 
 
@@ -49,7 +54,8 @@ class PostgresReviewStore(ReviewStoragePort):
         self._conn.execute(update(CONTENT_REVIEWS).where(CONTENT_REVIEWS.c.id == record.id)
                            .values(**{k: v for k, v in row.items() if k != "id"}))
 
-    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None):
+    def find(self, project_id=None, statuses=None, node_id=None, content_reference_id=None, target_kind=None,
+             candidate_id=None):
         c = CONTENT_REVIEWS.c
         statement = select(CONTENT_REVIEWS)
         if project_id is not None:
@@ -62,6 +68,8 @@ class PostgresReviewStore(ReviewStoragePort):
             statement = statement.where(c.content_reference_id == content_reference_id)
         if target_kind is not None:
             statement = statement.where(c.target_kind == target_kind)
+        if candidate_id is not None:
+            statement = statement.where(c.candidate_id == candidate_id)
         return self._records(statement.order_by(*_ORDER))
 
     def lock_oldest_pending(self, project_id):
@@ -77,8 +85,9 @@ class PostgresReviewStore(ReviewStoragePort):
                              .order_by(*_ORDER))
 
     def _records(self, statement):
-        return [ReviewRecord(**{f: r._mapping[f] for f in _FIELDS}) for r in self._conn.execute(statement)]
+        return [ReviewRecord(**{f: r._mapping[f] for f in _FIELDS}, findings=tuple(r._mapping["findings"] or ()))
+                for r in self._conn.execute(statement)]
 
 
 def _row(record: ReviewRecord) -> dict:
-    return {f: getattr(record, f) for f in _FIELDS}
+    return {**{f: getattr(record, f) for f in _FIELDS}, "findings": list(record.findings)}

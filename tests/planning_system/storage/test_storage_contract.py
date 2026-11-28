@@ -20,12 +20,15 @@ from planning_system.server.domain.authentication.types import KIND_AGENT, Store
 from planning_system.server.domain.project_tree.fakes import InMemoryTreeStorage
 from planning_system.server.domain.project_tree.ports import TreeStoragePort
 from planning_system.server.domain.project_tree.types import Node, NodeContent
+from planning_system.server.domain.references import SupersedeCandidate, SupersedeCandidateStoragePort
 from planning_system.server.domain.references.fakes import (InMemoryReferenceStorage,
+                                                            InMemorySupersedeCandidateStorage,
                                                             InMemoryTempCacheStorage)
 from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
 from planning_system.server.domain.references.types import Reference, TempCacheEntry
 from planning_system.server.storage import (PostgresAgentRegistryStore, PostgresCredentialStore,
-                                            PostgresReferenceStore, PostgresReviewStore, PostgresTempCacheStore,
+                                            PostgresReferenceStore, PostgresReviewStore,
+                                            PostgresSupersedeCandidateStore, PostgresTempCacheStore,
                                             PostgresTreeStore, Storage, Stores, Transactions)
 from planning_system.server.storage.fakes import InMemoryStorage, RecordingTransactions
 from planning_system.server.storage.metadata import METADATA
@@ -48,6 +51,7 @@ reference_store = store_fixture(InMemoryReferenceStorage, PostgresReferenceStore
 temp_store = store_fixture(InMemoryTempCacheStorage, PostgresTempCacheStore)
 credential_store = store_fixture(InMemoryCredentialStorage, PostgresCredentialStore)
 agent_store = store_fixture(InMemoryAgentRegistryStorage, PostgresAgentRegistryStore)
+candidate_store = store_fixture(InMemorySupersedeCandidateStorage, PostgresSupersedeCandidateStore)
 
 
 def node(id, parent=None, position=0, **kw):
@@ -86,7 +90,7 @@ def test_stores_for_binds_all_six_stores_to_one_connection():
     bound = [getattr(stores, f.name) for f in dataclasses.fields(stores)]
     assert {type(s) for s in bound} == {
         PostgresTreeStore, PostgresReferenceStore, PostgresTempCacheStore, PostgresCredentialStore,
-        PostgresAgentRegistryStore, PostgresReviewStore}
+        PostgresAgentRegistryStore, PostgresReviewStore, PostgresSupersedeCandidateStore}
     assert all(s._conn is marker for s in bound)
 
 
@@ -168,6 +172,39 @@ def test_references_round_trip_find_by_sha_and_supersede(reference_store):
     reference_store.save(dataclasses.replace(ref, superseded_by="r2"))
     assert reference_store.get("r1").superseded_by == "r2"
     assert not hasattr(reference_store, "delete")
+
+
+def test_references_by_locator_and_full_text(reference_store):
+    """Supersede spec "Search first": same source (metadata locator) and same topic (full text, any term)."""
+    reference_store.save(Reference("loc-a", "document", "Cache entries expire after hours.", "sha-la",
+                                   {"locator": "https://x/a"}))
+    reference_store.save(Reference("loc-b", "document", "Queue messages retry twice.", "sha-lb",
+                                   {"locator": "https://x/a"}, superseded_by="loc-a"))
+    reference_store.save(Reference("loc-c", "document", "Queue messages retry twice. Messages messages.", "sha-lc",
+                                   {"locator": "https://x/c"}))
+    assert [r.id for r in reference_store.find_by_locator("https://x/a")] == ["loc-a"]
+    assert reference_store.find_by_locator("https://x/none") == []
+    assert [r.id for r in reference_store.search_text(["messages", "zebra"], 5)] == ["loc-c"]
+    assert [r.id for r in reference_store.search_text(["entries", "expire"], 5)] == ["loc-a"]
+    assert reference_store.search_text(["zebra"], 5) == []
+    assert reference_store.search_text([], 5) == []
+
+
+def test_supersede_candidates_round_trip_and_find(candidate_store):
+    assert issubclass(PostgresSupersedeCandidateStore, SupersedeCandidateStoragePort)
+    first = SupersedeCandidate("sup-1", 7, "old", "new", "document", "same_source", "proposed", None, "", T0)
+    second = SupersedeCandidate("sup-2", 7, "q-old", "q-new", "user_quote", "quote_check", "proposed", None, "",
+                                T0 + timedelta(seconds=1))
+    candidate_store.add(second)
+    candidate_store.add(first)
+    assert candidate_store.get("sup-1") == first and candidate_store.get("sup-x") is None
+    assert [c.id for c in candidate_store.find(project_id=7)] == ["sup-1", "sup-2"]
+    assert [c.id for c in candidate_store.find(old_reference_id="q-old", new_reference_id="q-new")] == ["sup-2"]
+    decided = dataclasses.replace(first, status="rejected", decided_by="admin", reason="no", decided_at=T0,
+                                  request_node_id=12)
+    candidate_store.save(decided)
+    assert candidate_store.get("sup-1") == decided
+    assert [c.id for c in candidate_store.find(status="rejected")] == ["sup-1"]
 
 
 # ---- temp cache (6)

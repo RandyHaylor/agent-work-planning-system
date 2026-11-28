@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Optional
 
-from .types import AgentId, Node, NodeContent, NodeId, ReferenceId
+from .types import AgentId, Node, NodeContent, NodeId, ProjectCitation, ReferenceId
 
 
 class ProjectTree(ABC):
@@ -28,6 +28,10 @@ class ProjectTree(ABC):
     @abstractmethod
     def citing_nodes(self, reference_id: ReferenceId) -> list[Node]:
         """Nodes whose content is that reference or whose content text cites it (build log #40)."""
+
+    @abstractmethod
+    def project_citations(self, project_id: NodeId) -> list[ProjectCitation]:
+        """Every citation in the current content items of the project's nodes (node id order, then item order)."""
 
     @abstractmethod
     def list_nodes(self, project_id: NodeId, state: Optional[str] = None) -> list[Node]:

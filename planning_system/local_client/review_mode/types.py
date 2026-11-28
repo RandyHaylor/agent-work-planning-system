@@ -29,9 +29,28 @@ class ResolvedCitation:
                    str(data.get("quoted_text") or ""), str(data.get("pre_text") or ""),
                    str(data.get("full_text") or ""))
 
+    @property
+    def reference_id(self) -> str:
+        return self.citation.strip("[]").rsplit(":", 1)[0]
+
 
 KIND_CONTENT = "content"      # one content item's claim against its citations
 KIND_NODE = "node"            # the whole node, guess screen (build log #60 (5))
+KIND_TRIAL = "trial"          # an item's claim against a newer copy of a reference (supersede trial review)
+KIND_QUOTE_CHECK = "quote_check"   # a new user quote against every user quote cited in the project
+
+
+@dataclass(frozen=True)
+class Comparison:
+    """trial packets: one citation of the older reference and its diff-matched lines in the newer copy."""
+    citation: str
+    old_text: str
+    new_text: str             # "" when every cited line was deleted
+
+    @classmethod
+    def from_json(cls, data: dict) -> "Comparison":
+        return cls(_citation_text(data.get("citation")), str(data.get("old_text") or ""),
+                   str(data.get("new_text") or ""))
 
 
 @dataclass(frozen=True)
@@ -56,6 +75,10 @@ class ReviewPacket:
     citations: tuple[ResolvedCitation, ...]
     kind: str = KIND_CONTENT
     content_items: tuple[PacketContentItem, ...] = ()     # node packets: every current content item
+    against_reference_id: str = ""                        # trial: the newer copy; quote_check: the new quote
+    against_text: str = ""                                # trial: the whole newer copy
+    comparisons: tuple[Comparison, ...] = ()              # trial: old cited lines -> lines in the newer copy
+    subject: Optional[ResolvedCitation] = None            # quote_check: the new user statement as cited
 
     @classmethod
     def from_json(cls, data: dict) -> "ReviewPacket":
@@ -64,7 +87,10 @@ class ReviewPacket:
                    str(data.get("claim_text") or ""),
                    tuple(ResolvedCitation.from_json(c) for c in data.get("citations") or ()),
                    str(data.get("kind") or KIND_CONTENT),
-                   tuple(PacketContentItem.from_json(i) for i in data.get("content_items") or ()))
+                   tuple(PacketContentItem.from_json(i) for i in data.get("content_items") or ()),
+                   str(data.get("against_reference_id") or ""), str(data.get("against_text") or ""),
+                   tuple(Comparison.from_json(c) for c in data.get("comparisons") or ()),
+                   ResolvedCitation.from_json(data["subject"]) if data.get("subject") else None)
 
 
 @dataclass(frozen=True)
@@ -72,10 +98,13 @@ class Verdict:                 # SoT PerOperationVerdict, one content item per r
     passed: bool
     reason: str
     suggested_title: Optional[str] = None
+    findings: tuple[str, ...] = ()     # quote_check: reference ids of the earlier quotes the new one changes
 
 
 def _citation_text(value: Any) -> str:
     """The server sends the citation string; a structured citation is rendered in the same format."""
     if isinstance(value, dict) and {"reference_id", "start", "end"} <= value.keys():
         return f"[{value['reference_id']}:{value['start']}-{value['end']}]"
+    if isinstance(value, dict) and {"reference_id", "start_line", "end_line"} <= value.keys():   # server's Citation
+        return f"[{value['reference_id']}:{value['start_line']}-{value['end_line']}]"
     return value if isinstance(value, str) else json.dumps(value)

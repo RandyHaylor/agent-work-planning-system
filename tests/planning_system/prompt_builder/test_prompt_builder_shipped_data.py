@@ -68,6 +68,8 @@ def test_planner_dev_manager_and_worker_get_the_claim_tag_rule(catalog, name):
     for prefix in ("RESEARCH:", "ASK USER:", "VERIFY WITH USER:", "planning open-items"):   # build log #61
         assert prefix in text
     assert "a user quote (the why) AND a document reference (the proof)" in text
+    for command in ("planning references search", "propose-supersede", "confirm-supersede"):   # supersede spec
+        assert command in text
 
 
 def test_session_injections_are_the_repo_file_as_is():
