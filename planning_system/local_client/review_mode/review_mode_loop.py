@@ -8,7 +8,7 @@ from threading import Event
 from typing import Optional
 
 from planning_system.api_client import ApiError, PlanningApiClientInterface
-from planning_system.contract import DomainError
+from planning_system.errors import DomainError
 
 from .interface import ReviewModeInterface
 from .reviewer_backends.interface import ReviewerBackend

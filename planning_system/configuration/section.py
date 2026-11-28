@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Mapping
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 MISSING = object()
 

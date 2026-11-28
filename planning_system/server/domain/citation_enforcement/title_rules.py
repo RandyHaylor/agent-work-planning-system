@@ -1,6 +1,6 @@
 """title_rules (private): SoT's deterministic title checks plus no citation and not a sentence. The
 semantic ones (1-5 word noun phrase, no detail beyond the slice) are the reviewer's."""
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.server.domain.references import citations_in
 
 from .types import MAX_TITLE_LENGTH

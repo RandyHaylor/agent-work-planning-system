@@ -1,7 +1,7 @@
 """The real agent registry: a running list of agent sessions keyed by agent_id. Never deletes."""
 from dataclasses import replace
 
-from planning_system.contract import Invalid, NotFound
+from planning_system.errors import Invalid, NotFound
 
 from .interface import AgentRegistry
 from .types import METADATA_FIELDS, AgentSession

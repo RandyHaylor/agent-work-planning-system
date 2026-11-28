@@ -1,5 +1,5 @@
 """raw_input_log_reader: reads exchanges by local id."""
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 
 from .ports import LocalExchangeCachePort
 from .types import Exchange

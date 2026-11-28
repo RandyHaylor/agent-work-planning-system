@@ -2,7 +2,7 @@
 resolved and inlined (SoT's "no Read needed" pattern), so a reviewer needs no tools."""
 from __future__ import annotations
 
-from planning_system.contract import DomainError
+from planning_system.errors import DomainError
 from planning_system.server.domain.references import citations_in
 from planning_system.server.domain.references import slice_lines
 from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, Citation

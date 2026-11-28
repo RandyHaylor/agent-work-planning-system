@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence, TextIO
 
 from planning_system.api_client import ApiError
-from planning_system.contract import DomainError
+from planning_system.errors import DomainError
 from planning_system.local_client.task_runner import TaskStartRequest
 
 from .command_table import COMMANDS

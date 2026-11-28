@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.model_calls import ModelEndpointFactory, load_model_endpoints
 
 from ...review_worker import ReviewWorkerInterface

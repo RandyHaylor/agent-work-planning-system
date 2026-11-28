@@ -1,5 +1,5 @@
 """Reads of the tree: get, children in order, ancestors root first, ready siblings, nodes by state."""
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 
 from .node import NodeReadiness
 

@@ -1,5 +1,5 @@
 """node_content: content on a node; text stored as fixed references (superseded-by chain on edit)."""
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 
 from .types import NodeContent
 

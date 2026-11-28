@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 
 from planning_system.configuration import ConfigSection
-from planning_system.contract import DomainError
+from planning_system.errors import DomainError
 
 from .admin_password_setup import PasswordHashSetup
 from .database_creation import PostgresDatabaseSetup

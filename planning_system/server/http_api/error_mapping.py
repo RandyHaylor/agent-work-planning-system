@@ -7,7 +7,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from planning_system.contract import Conflict, DomainError, Forbidden, Invalid, NotFound
+from planning_system.errors import Conflict, DomainError, Forbidden, Invalid, NotFound
 
 ERROR_STATUS = {NotFound: 404, Forbidden: 403, Invalid: 422, Conflict: 409}
 

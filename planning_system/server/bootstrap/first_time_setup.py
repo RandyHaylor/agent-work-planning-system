@@ -6,7 +6,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .ports import AuthenticationSetup, DatabaseSetup, PasswordPrompt
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 
 def read_config_folder(folder: Path) -> dict:

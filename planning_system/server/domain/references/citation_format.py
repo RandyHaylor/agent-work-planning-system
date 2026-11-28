@@ -2,7 +2,7 @@
 (1-based, inclusive lines; build log #40). Parse, format, and find the citations inside a text."""
 import re
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .types import Citation
 

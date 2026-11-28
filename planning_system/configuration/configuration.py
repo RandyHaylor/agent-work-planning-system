@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Mapping, Optional
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .config_file_reader import read_config_file, read_config_folder
 from .environment_substitution import EnvironmentSubstitution, read_dotenv

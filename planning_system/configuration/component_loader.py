@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Any, Callable, Protocol
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .section import ConfigSection
 

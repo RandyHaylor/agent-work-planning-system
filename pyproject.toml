@@ -126,3 +126,9 @@ allow_indirect_imports = true
 # The references router is mounted from its module (build log #4, #14).
 ignore_imports = ["planning_system.server.domain.references.http_routes -> planning_system.server.commands",
                   "planning_system.server.domain.references.http_routes -> planning_system.server.http_api.*"]
+
+[[tool.importlinter.contracts]]
+name = "generic modules do not depend on the planning contract"
+type = "forbidden"
+source_modules = ["planning_system.configuration", "planning_system.model_calls", "planning_system.errors"]
+forbidden_modules = ["planning_system.contract"]

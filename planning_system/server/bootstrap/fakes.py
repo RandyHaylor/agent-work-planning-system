@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .first_time_setup import BootstrapperInterface, BootstrapResult
 from .ports import AuthenticationSetup, DatabaseSetup, PasswordPrompt

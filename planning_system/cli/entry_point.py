@@ -9,7 +9,7 @@ import sys
 from typing import Any, Mapping, Optional, Sequence, TextIO
 
 from planning_system.api_client import ApiError
-from planning_system.contract import DomainError
+from planning_system.errors import DomainError
 
 from .argument_mappers import MAPPERS
 from .argument_parser import UsageError, build_parser

@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import httpx
 
-from planning_system.contract import Forbidden, Invalid, NotFound
+from planning_system.errors import Forbidden, Invalid, NotFound
 
 from .client_settings import tls_verify_for
 from .types import ApiError, ClientSettings

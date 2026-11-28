@@ -12,7 +12,7 @@ from typing import Callable, Mapping, Optional
 import httpx
 
 from planning_system.configuration import ConfigSection, load_config_file
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .interface import ChatModelCall
 from .openai_compatible_chat_call import OpenAiCompatibleChatCall

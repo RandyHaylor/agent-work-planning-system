@@ -3,7 +3,7 @@ import dataclasses
 import itertools
 from datetime import datetime, timedelta, timezone
 
-from planning_system.contract import Invalid, NotFound
+from planning_system.errors import Invalid, NotFound
 
 from .interface import ProjectTree
 from .ports import Clock, TreeStoragePort

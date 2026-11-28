@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 from planning_system.prompt_builder.ai_prompt_builder import ruleset
 from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCatalog, SHIPPED_DATA_FOLDER, read_json
 from planning_system.prompt_builder.guidance_interface import GuidanceService

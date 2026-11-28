@@ -1,9 +1,12 @@
 """Shared contract every module builds against (fixed before parallel work).
 
-See planning/BUILD-PLAN.md, "Shared contract".
+See planning/BUILD-PLAN.md, "Shared contract". The error family lives in planning_system/errors.py
+(re-exported here so existing imports keep working).
 """
 from dataclasses import dataclass, field
 from typing import Optional
+
+from planning_system.errors import Conflict, DomainError, Forbidden, Invalid, NotFound
 
 ROLES = ("admin", "planner", "worker", "quote_client")
 
@@ -21,21 +24,4 @@ class Principal:
     credential_id: Optional[str] = field(default=None, compare=False)
 
 
-class DomainError(Exception):
-    """Base for errors http_api maps to HTTP status codes."""
-
-
-class NotFound(DomainError):
-    """-> 404"""
-
-
-class Forbidden(DomainError):
-    """-> 403"""
-
-
-class Invalid(DomainError):
-    """-> 422"""
-
-
-class Conflict(DomainError):
-    """-> 409 (e.g. a review verdict from someone not holding the review)"""
+__all__ = ["Conflict", "DomainError", "Forbidden", "Invalid", "NotFound", "Principal", "ROLES"]

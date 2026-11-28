@@ -7,7 +7,7 @@ import dataclasses
 import uuid
 from datetime import timedelta
 
-from planning_system.contract import Conflict, NotFound
+from planning_system.errors import Conflict, NotFound
 
 from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort

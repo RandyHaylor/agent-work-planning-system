@@ -1,5 +1,5 @@
 """Test support: a working TaskAssigner over the collaborators' fakes."""
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.server.domain.project_tree import ABANDONED, DONE
 
 from .interface import TaskAssigner

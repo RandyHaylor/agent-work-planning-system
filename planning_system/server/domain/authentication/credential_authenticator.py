@@ -1,7 +1,7 @@
 """credential_authenticator: presented token -> Principal."""
 from dataclasses import replace
 
-from planning_system.contract import Forbidden
+from planning_system.errors import Forbidden
 
 from .interface import CredentialAuthenticator
 from .token_hashing import TokenHasher

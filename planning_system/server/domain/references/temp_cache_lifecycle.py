@@ -3,7 +3,7 @@ import hashlib
 import uuid
 from datetime import timedelta
 
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 
 from .citing_and_rendering import slice_lines
 from .interface import TempCache

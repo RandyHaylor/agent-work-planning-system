@@ -7,7 +7,7 @@ import os
 import sys
 from typing import Callable, Mapping, Optional, TextIO
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .ports import PasswordPrompt
 

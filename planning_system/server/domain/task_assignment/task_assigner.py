@@ -3,7 +3,7 @@ AgentRegistry.register as the "touch").
 
 Order: check the node, mint, then write the node. Minting first means a refused or failed mint
 leaves the node untouched even without a rollback; the caller's transaction covers the rest."""
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.server.domain.project_tree import ABANDONED, DONE
 
 from .interface import TaskAssigner

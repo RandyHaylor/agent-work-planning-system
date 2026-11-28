@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.document_extraction.extraction_types import ExtractionFailed, UnknownStrategy
 from planning_system.fastreader.commands.cite import InvalidLineRange, run_cite
 from planning_system.fastreader.commands.get import run_get

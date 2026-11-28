@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from planning_system.contract import Forbidden, Invalid, NotFound
+from planning_system.errors import Forbidden, Invalid, NotFound
 
 from .interface import PlanningApiClientInterface
 from .types import ApiError, ClientSettings

@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 
 from planning_system.api_client import PlanningApiClientInterface
-from planning_system.contract import Forbidden
+from planning_system.errors import Forbidden
 
 from ..client_credentials import ClientCredentialsInterface
 from .ports import ClientCredentialsPort, Clock, ServerReferencesPort

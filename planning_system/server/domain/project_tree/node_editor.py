@@ -1,7 +1,7 @@
 """node_editor: create, update, move, state, assign (never delete); last_verified on every change."""
 from dataclasses import replace
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .level_placement_rules import LevelPlacementRules
 from .node import NodeReadiness

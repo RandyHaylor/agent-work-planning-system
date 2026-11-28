@@ -1,7 +1,7 @@
 """citing_and_rendering: pointer validation, server-rendered quoted text, superseded-by chain."""
 import dataclasses
 
-from planning_system.contract import Invalid, NotFound
+from planning_system.errors import Invalid, NotFound
 
 from .ports import ReferenceStoragePort
 from .types import Citation, Reference

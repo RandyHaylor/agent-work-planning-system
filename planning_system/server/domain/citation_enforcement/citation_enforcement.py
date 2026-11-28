@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 from planning_system.server.domain.references import ReferenceLibrary
 
 from . import title_rules

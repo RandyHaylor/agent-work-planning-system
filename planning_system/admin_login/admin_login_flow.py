@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from planning_system.api_client import PlanningApiClientInterface
-from planning_system.contract import Forbidden
+from planning_system.errors import Forbidden
 
 from .interface import AdminLoginInterface, PasswordPrompt
 from .types import MAX_PASSWORD_ATTEMPTS, LoginCancelled, LoginFailed

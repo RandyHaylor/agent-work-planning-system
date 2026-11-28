@@ -1,5 +1,5 @@
 """level_placement_rules: levels 1-4 linear, branching from 5; supplementary tasks exempt at any level."""
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 from .types import ABANDONED, LINEAR_LEVELS, SUPPLEMENTARY_LABELS
 

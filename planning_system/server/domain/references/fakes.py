@@ -4,7 +4,7 @@ import hashlib
 import itertools
 from datetime import datetime, timedelta, timezone
 
-from planning_system.contract import Invalid, NotFound
+from planning_system.errors import Invalid, NotFound
 
 from .interface import ReferenceLibrary, TempCache
 from .ports import Clock, ReferenceStoragePort, TempCacheStoragePort

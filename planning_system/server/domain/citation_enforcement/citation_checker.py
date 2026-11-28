@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from planning_system.contract import Invalid, NotFound
+from planning_system.errors import Invalid, NotFound
 from planning_system.server.domain.references import citations_in, format_citation
 from planning_system.server.domain.references import ReferenceLibrary
 from planning_system.server.domain.references import Citation

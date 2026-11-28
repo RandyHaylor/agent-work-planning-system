@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-from planning_system.contract import Invalid
+from planning_system.errors import Invalid
 
 _PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 

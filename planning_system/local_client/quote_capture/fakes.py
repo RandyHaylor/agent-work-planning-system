@@ -3,7 +3,7 @@ import hashlib
 import itertools
 from datetime import datetime, timezone
 
-from planning_system.contract import NotFound
+from planning_system.errors import NotFound
 
 from .interface import ExchangeCapture, ReferenceSync
 from .ports import (ClientCredentialsPort, Clock, HarnessAdapterPort, LocalExchangeCachePort,
