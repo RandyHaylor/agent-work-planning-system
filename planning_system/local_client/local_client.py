@@ -9,6 +9,7 @@ from planning_system.api_client import ClientSettings
 
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceId,
                         ReferenceSyncPort, ReviewModeFactory)
+from .review_mode import ReviewerChoice
 from .review_mode.serve_until_signalled import run_review_mode
 from .review_worker import ReviewWorkerInterface
 from .task_runner import RunningSession, TaskRunnerInterface, TaskStartRequest
@@ -48,10 +49,12 @@ class LocalClient(LocalClientInterface):
         return self._review_worker.ask(question, [Path(p) for p in context_paths])
 
     def serve_reviews(self, project_id: int, backend: Optional[str] = None, model: Optional[str] = None,
-                      poll_seconds: float = 5.0, once: bool = False) -> dict:
+                      poll_seconds: float = 5.0, once: bool = False, profile: Optional[str] = None,
+                      granularity: Optional[str] = None) -> dict:
         if self._review_mode_factory is None:
             raise RuntimeError("this local client was built without review mode")
-        return run_review_mode(self._review_mode_factory(project_id, backend, model, poll_seconds), once)
+        choice = ReviewerChoice(profile, backend, model, granularity)
+        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once)
 
 
 def build_local_client(settings: ClientSettings) -> LocalClientInterface:
@@ -66,7 +69,7 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
     from .quote_capture.production_ports import ApiServerReferences, StoredQuoteKey
     from .quote_capture.reference_sync import ReferenceSyncService
     from .quote_capture_bridge import CachedExchangeReader, ReferenceSyncAdapter
-    from .review_mode import ReviewerBackendFactory, ReviewModeLoop
+    from .review_mode import ReviewerBackendFactory, ReviewModeLoop, load_reviewer_profiles
     from .review_worker import ReviewWorker
     from .task_runner import RunningSessionsRegistry, TaskRunner, TaskSessionLauncher
 
@@ -82,6 +85,7 @@ def build_local_client(settings: ClientSettings) -> LocalClientInterface:
             cache, ApiServerReferences(api), StoredQuoteKey(FileClientCredentials(paths.home)))),
         exchange_reader=CachedExchangeReader(cache),
         hook_installer=ClaudeCodeHookInstaller(),
-        review_mode_factory=lambda project_id, backend, model, poll_seconds: ReviewModeLoop(
-            api, ReviewerBackendFactory().create(backend, model), project_id, poll_seconds),
+        review_mode_factory=lambda project_id, choice, poll_seconds: ReviewModeLoop(
+            api, ReviewerBackendFactory().create_from_profile(choice.resolve(load_reviewer_profiles())),
+            project_id, poll_seconds),
     )

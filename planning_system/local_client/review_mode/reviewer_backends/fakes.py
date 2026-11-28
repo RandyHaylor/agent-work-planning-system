@@ -19,9 +19,11 @@ def verdict_json(passed: bool, reason: str = "ok", suggested_title=None) -> str:
 
 
 def turn_reply(unsupported_claim: bool = False, reason: str = "", suggested_title=None) -> str:
-    """One JSON object every review turn accepts (opening, each sentence, title): handy for fake transports."""
+    """One JSON object every review turn accepts (opening, each sentence, title, bulk): handy for fake transports.
+    In bulk, unsupported_claim marks sentence 1 only."""
     return json.dumps({"ready": True, "answer": "yes" if unsupported_claim else "no", "reason": reason,
-                       "suggested_title": suggested_title})
+                       "suggested_title": suggested_title,
+                       "unsupported": [{"sentence": 1, "reason": reason}] if unsupported_claim else []})
 
 
 class FakeReviewerBackend(ReviewerBackend):

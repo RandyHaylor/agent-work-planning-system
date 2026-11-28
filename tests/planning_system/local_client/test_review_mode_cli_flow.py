@@ -42,8 +42,8 @@ class Setup:
             return FakePlanningApiClient(settings, transport=self.server.transport())
 
         def local_for(settings):
-            def review_mode(project_id, backend, model, poll_seconds):
-                self.factory_calls.append((project_id, backend, model, poll_seconds))
+            def review_mode(project_id, choice, poll_seconds):
+                self.factory_calls.append((project_id, choice.backend, choice.model, poll_seconds))
                 return ReviewModeLoop(api_for(settings), self.backend, project_id, poll_seconds)
             api = api_for(settings)
             return facade_class(FakeTaskRunner(api, FakeAiCliAdapter(), settings),

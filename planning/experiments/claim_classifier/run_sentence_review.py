@@ -12,6 +12,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[2]))
 
 from planning_system.local_client.review_mode import ReviewPacket  # noqa: E402
+from planning_system.local_client.review_mode.bulk_review import BulkReview  # noqa: E402
 from planning_system.local_client.review_mode.reviewer_backends import OneShotReviewerBackend  # noqa: E402
 from planning_system.model_calls import load_model_endpoints  # noqa: E402
 
@@ -25,10 +26,15 @@ def packet(case: dict) -> ReviewPacket:
 
 
 def main() -> None:
+    """argv[1]: per_sentence (default) | bulk."""
+    granularity = sys.argv[1] if len(sys.argv) > 1 else "per_sentence"
     cases = [c for c in json.loads((HERE / "cases.json").read_text()) if c["type"] != "summary"]
     backend = OneShotReviewerBackend(load_model_endpoints(HERE.parents[2] / "config" / "model_endpoints.json").create("local_gemma4"))
+    if granularity == "bulk":
+        backend.use_review_method(BulkReview())
     tp = fn = ff = tn = 0
-    with (HERE / "results_sentence_gemma.jsonl").open("w") as out:
+    suffix = "" if granularity == "per_sentence" else "_bulk"
+    with (HERE / f"results_sentence_gemma{suffix}.jsonl").open("w") as out:
         for case in cases:
             start = time.time()
             try:

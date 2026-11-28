@@ -9,6 +9,7 @@ from planning_system.api_client import PlanningApiClientInterface
 from .client_credentials import ClientCredentialsInterface
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceId,
                         ReferenceSyncPort, ReviewModeFactory)
+from .review_mode import ReviewerChoice
 from .review_mode.serve_until_signalled import run_review_mode
 from .review_worker import ReviewWorkerInterface
 from .task_runner import RunningSession, TaskRunnerInterface, TaskStartRequest
@@ -82,8 +83,10 @@ class FakeLocalClient(LocalClientInterface):
     def ask_reviewer(self, question: str, context_paths: Sequence[Path] = ()) -> str:
         return self._review_worker.ask(question, context_paths)
 
-    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False):
-        return run_review_mode(self._review_mode_factory(project_id, backend, model, poll_seconds), once)
+    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False, profile=None,
+                      granularity=None):
+        choice = ReviewerChoice(profile, backend, model, granularity)
+        return run_review_mode(self._review_mode_factory(project_id, choice, poll_seconds), once)
 
 
 class RecordingLocalClient(LocalClientInterface):
@@ -117,6 +120,7 @@ class RecordingLocalClient(LocalClientInterface):
     def ask_reviewer(self, question, context_paths=()):
         return self._record("ask_reviewer", question=question, context_paths=tuple(context_paths))
 
-    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False):
+    def serve_reviews(self, project_id, backend=None, model=None, poll_seconds=5.0, once=False, profile=None,
+                      granularity=None):
         return self._record("serve_reviews", project_id=project_id, backend=backend, model=model,
-                            poll_seconds=poll_seconds, once=once)
+                            poll_seconds=poll_seconds, once=once, profile=profile, granularity=granularity)

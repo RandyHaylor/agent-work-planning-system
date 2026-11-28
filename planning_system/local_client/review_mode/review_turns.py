@@ -20,26 +20,26 @@ class SentenceAnswer:
     reason: str
 
 
+_RULES = (
+    "Rules:\n"
+    " - A brief confirmation ('yes', 'A', 'ok', 'go') supports exactly what the PRE-INPUT CONTEXT "
+    "question or proposal offered, nothing more.\n"
+    " - Any detail (number, version, product, extra item, extra behaviour, stronger wording) not stated in "
+    "an included reference is not supported.\n"
+    " - A sentence that contradicts a reference makes an unsupported claim.\n"
+    " - Citation markers such as [ref-1:2-3] are not claims themselves.\n"
+)
+
+
 def opening_turn(packet: ReviewPacket) -> str:
     return (
         f"NEW REVIEW {packet.review_id}. Ignore every earlier review in this session.\n"
         "You check a planning item's claim against its included references. I will send the claim's sentences "
         f"one at a time. For each I ask: {SENTENCE_QUESTION}\n"
-        "Rules:\n"
-        " - A brief confirmation ('yes', 'A', 'ok', 'go') supports exactly what the PRE-INPUT CONTEXT "
-        "question or proposal offered, nothing more.\n"
-        " - Any detail (number, version, product, extra item, extra behaviour, stronger wording) not stated in "
-        "an included reference is not supported.\n"
-        " - A sentence that contradicts a reference makes an unsupported claim.\n"
-        " - Citation markers such as [ref-1:2-3] are not claims themselves.\n"
-        'Answer every sentence with exactly one JSON object, nothing else: '
+        + _RULES
+        + 'Answer every sentence with exactly one JSON object, nothing else: '
         '{"answer": "yes"|"no", "reason": "<=15 words: what is unsupported; empty when no"}\n\n'
-        f"CLAIM TAG: {packet.claim_tag}\n"
-        f"NODE TITLE: {packet.node_title}\n"
-        f"NODE CONTEXT SUMMARY: {packet.node_context_summary}\n"
-        f"FULL CLAIM:\n{packet.claim_text}\n\n"
-        "INCLUDED REFERENCES:\n"
-        + ("\n".join(_reference_block(i, c) for i, c in enumerate(packet.citations)) or "(none)\n")
+        + _claim_and_references(packet)
         + '\nReply now with exactly {"ready": true}.'
     )
 
@@ -50,16 +50,68 @@ def sentence_turn(number: int, total: int, sentence: str) -> str:
 
 
 def title_turn(node_title: str) -> str:
+    return (_title_rules(node_title, "Last: ")
+            + 'Reply with exactly {"suggested_title": null} if the title is fine, else '
+            '{"suggested_title": "<noun phrase>"}.')
+
+
+def bulk_turn(packet: ReviewPacket, sentences: list[str]) -> str:
+    """One turn: the same rules and question as the per-sentence turns, asked of every numbered sentence at once,
+    plus the title check."""
+    numbered = "\n".join(f"{number}. {sentence}" for number, sentence in enumerate(sentences, start=1))
     return (
-        f'Last: the node title is "{node_title}". It must be a 1-5 word NOUN PHRASE naming the TOPIC (1-50 chars), '
+        f"NEW REVIEW {packet.review_id}. Ignore every earlier review in this session.\n"
+        "You check a planning item's claim against its included references. Ask of EVERY numbered sentence "
+        f"below: {SENTENCE_QUESTION}\n"
+        + _RULES + "\n"
+        + _claim_and_references(packet)
+        + f"\nNUMBERED SENTENCES OF THE CLAIM:\n{numbered}\n\n"
+        + _title_rules(packet.node_title, "Also: ")
+        + 'Reply with exactly one JSON object, nothing else: {"unsupported": [{"sentence": <number>, '
+        '"reason": "<=15 words: what is unsupported"}], "suggested_title": null|"<noun phrase>"} '
+        '(an empty "unsupported" list when every sentence is supported).'
+    )
+
+
+def _claim_and_references(packet: ReviewPacket) -> str:
+    return (f"CLAIM TAG: {packet.claim_tag}\n"
+            f"NODE TITLE: {packet.node_title}\n"
+            f"NODE CONTEXT SUMMARY: {packet.node_context_summary}\n"
+            f"FULL CLAIM:\n{packet.claim_text}\n\n"
+            "INCLUDED REFERENCES:\n"
+            + ("\n".join(_reference_block(i, c) for i, c in enumerate(packet.citations)) or "(none)\n"))
+
+
+def _title_rules(node_title: str, lead: str) -> str:
+    return (
+        f'{lead}the node title is "{node_title}". It must be a 1-5 word NOUN PHRASE naming the TOPIC (1-50 chars), '
         "staying within what the references say. Sentences and rules are the wrong shape.\n"
         '  Good: "vendor placement", "phrase character voice", "back end stack"\n'
         '  Bad shape: "Phrases must be in-character" -> "phrase character voice"\n'
         '  Bad scope: cited "yes [to vendor on even floors]", title "vendor every other floor with stair '
         'exclusion" -> "vendor placement"\n'
-        'Reply with exactly {"suggested_title": null} if the title is fine, else '
-        '{"suggested_title": "<noun phrase>"}.'
     )
+
+
+@dataclass(frozen=True)
+class BulkAnswer:
+    unsupported: dict[int, str]          # sentence number -> reason
+    suggested_title: Optional[str]
+
+
+def read_bulk_answer(answer: str, sentence_count: int) -> BulkAnswer:
+    data = find_json_object(answer, lambda d: isinstance(d.get("unsupported"), list))
+    if data is None:
+        raise UnparseableVerdict(f"no bulk answer from reviewer: {answer[:300]!r}")
+    unsupported = {}
+    for item in data["unsupported"]:
+        number = item.get("sentence") if isinstance(item, dict) else None
+        if not isinstance(number, int) or not 1 <= number <= sentence_count:
+            raise UnparseableVerdict(f"bulk answer names no valid sentence: {item!r}")
+        reason = item.get("reason")
+        unsupported[number] = reason.strip() if isinstance(reason, str) else ""
+    title = data.get("suggested_title")
+    return BulkAnswer(unsupported, title.strip() if isinstance(title, str) and title.strip() else None)
 
 
 def read_sentence_answer(answer: str) -> SentenceAnswer:

@@ -5,13 +5,14 @@ from __future__ import annotations
 from typing import Optional
 
 from .review_conversation import ReviewConversation
+from .review_method import ReviewMethod
 from .review_turns import (SentenceAnswer, opening_turn, read_sentence_answer, read_title_answer, sentence_turn,
                            title_turn)
 from .sentence_splitter import SentenceSplitter
 from .types import ReviewPacket, Verdict
 
 
-class SentenceBySentenceReview:
+class SentenceBySentenceReview(ReviewMethod):
 
     def __init__(self, splitter: Optional[SentenceSplitter] = None):
         self._splitter = splitter or SentenceSplitter()

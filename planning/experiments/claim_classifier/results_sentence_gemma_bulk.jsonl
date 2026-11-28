@@ -1,0 +1,31 @@
+{"case": "g01", "defect": "none", "passed": true, "reason": "all 1 sentences supported", "latency_s": 1.23}
+{"case": "g02", "defect": "none", "passed": true, "reason": "all 1 sentences supported", "latency_s": 1.27}
+{"case": "g03", "defect": "none", "passed": false, "reason": "sentence 1 unsupported: Reference says 'gemma4', claim says 'Gemma'", "latency_s": 1.96}
+{"case": "g04", "defect": "none", "passed": true, "reason": "all 1 sentences supported", "latency_s": 1.3}
+{"case": "g05", "defect": "none", "passed": true, "reason": "all 1 sentences supported", "latency_s": 1.32}
+{"case": "g06", "defect": "none", "passed": false, "reason": "sentence 1 unsupported: No references provided to support the claim", "latency_s": 1.71}
+{"case": "g07", "defect": "none", "passed": false, "reason": "sentence 1 unsupported: No references provided to support the claim.", "latency_s": 1.7}
+{"case": "g08", "defect": "none", "passed": true, "reason": "all 2 sentences supported", "latency_s": 1.28}
+{"case": "g09", "defect": "none", "passed": true, "reason": "all 2 sentences supported", "latency_s": 1.38}
+{"case": "g10", "defect": "none", "passed": true, "reason": "all 1 sentences supported", "latency_s": 1.33}
+{"case": "d01", "defect": "adds_detail", "passed": false, "reason": "sentence 1 unsupported: session expiration time not mentioned in references", "latency_s": 1.81}
+{"case": "d02", "defect": "adds_detail", "passed": false, "reason": "sentence 1 unsupported: PDF export is not mentioned in references", "latency_s": 1.82}
+{"case": "d03", "defect": "adds_detail", "passed": false, "reason": "sentence 1 unsupported: HTTP/3 is not mentioned; only HTTP/1.1 and HTTP/2 are supported.", "latency_s": 2.17}
+{"case": "d04", "defect": "contradicts", "passed": false, "reason": "sentence 1 unsupported: Reference explicitly forbids SQLite; requires Postgres.", "latency_s": 1.78}
+{"case": "d05", "defect": "contradicts", "passed": false, "reason": "sentence 1 unsupported: Reverses default and fallback roles compared to proposal", "latency_s": 1.85}
+{"case": "d06", "defect": "contradicts", "passed": false, "reason": "sentence 1 unsupported: Reference states jsonb is significantly faster to process than json.", "latency_s": 1.95}
+{"case": "d07", "defect": "multi_sentence_uncited", "passed": false, "reason": "sentence 2 unsupported: load time and device requirements not mentioned in references", "latency_s": 1.86}
+{"case": "d08", "defect": "multi_sentence_uncited", "passed": false, "reason": "sentence 2 unsupported: Postgres 16, logical replication, and hot standby are not mentioned", "latency_s": 2.07}
+{"case": "d09", "defect": "multi_sentence_uncited", "passed": false, "reason": "sentence 2 unsupported: Reference says 'where possible', not 'each question'.; sentence 3 unsupported: Timeout duration not mentioned in references.", "latency_s": 3.24}
+{"case": "d10", "defect": "multi_sentence_uncited", "passed": false, "reason": "sentence 2 unsupported: Reference does not mention speed or being the fastest", "latency_s": 1.92}
+{"case": "d11", "defect": "multi_sentence_uncited", "passed": false, "reason": "sentence 2 unsupported: retry count and exponential backoff not mentioned in references", "latency_s": 1.93}
+{"case": "d12", "defect": "mislabelled_note", "passed": false, "reason": "sentence 1 unsupported: No references provided to support this requirement", "latency_s": 1.72}
+{"case": "d13", "defect": "mislabelled_note", "passed": false, "reason": "sentence 1 unsupported: No references provided to support the claim", "latency_s": 1.7}
+{"case": "d14", "defect": "mislabelled_note", "passed": false, "reason": "sentence 1 unsupported: No reference provided to support comparison of libraries.; sentence 2 unsupported: No reference provided to support use of Celery and RabbitMQ.", "latency_s": 2.37}
+{"case": "d15", "defect": "wrong_origin", "passed": false, "reason": "sentence 1 unsupported: Reference is a question, not a statement of fact.", "latency_s": 1.85}
+{"case": "d16", "defect": "wrong_origin", "passed": false, "reason": "sentence 2 unsupported: no mention of 'out of the box' or 'no extra install'", "latency_s": 2.03}
+{"case": "h01", "defect": "contradicts", "passed": false, "reason": "sentence 1 unsupported: Reference states 24 hours, not 12 hours", "latency_s": 1.92}
+{"case": "h02", "defect": "adds_detail", "passed": false, "reason": "sentence 1 unsupported: GIN indexes are not mentioned in the reference", "latency_s": 1.85}
+{"case": "h03", "defect": "contradicts", "passed": false, "reason": "sentence 1 unsupported: Reference specifies postgres, not Celery or RabbitMQ", "latency_s": 1.89}
+{"case": "h04", "defect": "wrong_origin", "passed": false, "reason": "sentence 1 unsupported: Reference does not mention Postgres or a user request for a job queue", "latency_s": 1.98}
+{"case": "h06", "defect": "none", "passed": false, "reason": "sentence 1 unsupported: No reference for backup retention periods; sentence 2 unsupported: No reference for asking the user", "latency_s": 2.17}

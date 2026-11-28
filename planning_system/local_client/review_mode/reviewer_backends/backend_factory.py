@@ -9,6 +9,10 @@ from planning_system.errors import Invalid
 from planning_system.model_calls import ModelEndpointFactory, load_model_endpoints
 
 from ...review_worker import ReviewWorkerInterface
+from ..bulk_review import BulkReview
+from ..review_method import BULK, ReviewMethod
+from ..reviewer_profiles import ReviewerProfile
+from ..sentence_review import SentenceBySentenceReview
 from .claude_code_backend import DEFAULT_CLAUDE_REVIEWER_MODEL, ClaudeCodeBackend
 from .interface import ReviewerBackend
 from .one_shot_backend import OneShotReviewerBackend
@@ -20,6 +24,10 @@ DEFAULT_LOCAL_ENDPOINT = "local_gemma4"
 DEFAULT_MODEL_ENDPOINTS_FILE = Path(__file__).resolve().parents[4] / "config" / "model_endpoints.json"
 
 ReviewWorkerFactory = Callable[[str], ReviewWorkerInterface]   # model name -> review worker
+
+
+def review_method_for(granularity: str) -> ReviewMethod:
+    return BulkReview() if granularity == BULK else SentenceBySentenceReview()
 
 
 def claude_code_review_worker(model: str) -> ReviewWorkerInterface:
@@ -51,11 +59,18 @@ class ReviewerBackendFactory:
                 self._review_worker_factory(model or DEFAULT_CLAUDE_REVIEWER_MODEL)),
         }
 
-    def create(self, name: Optional[str] = None, model: Optional[str] = None) -> ReviewerBackend:
-        builder = self._builders.get(name or DEFAULT_BACKEND)
+    def create(self, name: Optional[str] = None, model: Optional[str] = None,
+               granularity: Optional[str] = None) -> ReviewerBackend:
+        """granularity: per_sentence | bulk; default per_sentence for local_llm, bulk otherwise."""
+        backend_name = name or DEFAULT_BACKEND
+        builder = self._builders.get(backend_name)
         if builder is None:
             raise Invalid(f"unknown reviewer backend {name!r}; choose one of {', '.join(BACKEND_NAMES)}")
-        return builder(model)
+        profile = ReviewerProfile("(flags)", backend_name, model, granularity)
+        return builder(model).use_review_method(review_method_for(profile.resolved_granularity()))
+
+    def create_from_profile(self, profile: ReviewerProfile) -> ReviewerBackend:
+        return self.create(profile.backend, profile.model, profile.granularity)
 
     def _endpoints(self) -> ModelEndpointFactory:
         if self._model_endpoints is None:

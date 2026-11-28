@@ -151,14 +151,16 @@ def test_1_local_commands_call_local_client_only(harness, argv, method):
 
 
 def test_review_serve_calls_local_client_with_options(harness):
-    assert harness.run("review", "serve", "--project", "4", "--backend", "pi", "--model", "m",
-                       "--poll-seconds", "0.5", "--once") == 0
+    assert harness.run("review", "serve", "--project", "4", "--profile", "haiku", "--backend", "pi",
+                       "--model", "m", "--granularity", "bulk", "--poll-seconds", "0.5", "--once") == 0
     assert harness.local.calls == [("serve_reviews", {"project_id": 4, "backend": "pi", "model": "m",
-                                                      "poll_seconds": 0.5, "once": True})]
+                                                      "poll_seconds": 0.5, "once": True, "profile": "haiku",
+                                                      "granularity": "bulk"})]
     assert harness.api.calls == []
     assert harness.run("review", "serve", "--project", "4") == 0
     assert harness.local.calls[-1] == ("serve_reviews", {"project_id": 4, "backend": None, "model": None,
-                                                         "poll_seconds": 5.0, "once": False})
+                                                         "poll_seconds": 5.0, "once": False, "profile": None,
+                                                         "granularity": None})
 
 
 def test_review_serve_needs_a_token(harness):

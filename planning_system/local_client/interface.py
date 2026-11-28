@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from .review_mode import ReviewModeInterface
+from .review_mode import ReviewerChoice, ReviewModeInterface
 from .task_runner import RunningSession, TaskStartRequest
 
 ReferenceId = int
@@ -61,11 +61,13 @@ class LocalClientInterface(ABC):
 
     @abstractmethod
     def serve_reviews(self, project_id: int, backend: Optional[str] = None, model: Optional[str] = None,
-                      poll_seconds: float = 5.0, once: bool = False) -> dict:
-        """Review mode: takes the project's content reviews one at a time with the named reviewer backend.
+                      poll_seconds: float = 5.0, once: bool = False, profile: Optional[str] = None,
+                      granularity: Optional[str] = None) -> dict:
+        """Review mode: takes the project's content reviews one at a time with the reviewer the profile names
+        (default profile "local"); backend/model/granularity override the profile.
         once -> handles at most one and returns {"review_id": id or None}; else serves until SIGINT/SIGTERM
         (finishing the review in hand) and returns {"stopped": True}."""
 
 
-# (project_id, backend name, model, poll_seconds) -> a review-mode loop
-ReviewModeFactory = Callable[[int, Optional[str], Optional[str], float], ReviewModeInterface]
+# (project_id, reviewer choice, poll_seconds) -> a review-mode loop
+ReviewModeFactory = Callable[[int, ReviewerChoice, float], ReviewModeInterface]
