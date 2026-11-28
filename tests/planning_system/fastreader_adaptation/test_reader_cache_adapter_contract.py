@@ -14,8 +14,8 @@ from planning_system.server.domain.references.fakes import (FakeClock, FakeRefer
                                                             FakeTempCache,
                                                             InMemoryReferenceStorage,
                                                             InMemoryTempCacheStorage)
-from planning_system.server.domain.references.reader_cache_adapter import ReaderCacheAdapter
-from planning_system.server.domain.references.reader_cache_adapter_fakes import FakeReaderCacheAdapter
+from planning_system.server.domain.references.reader import ReaderCacheAdapter
+from planning_system.server.domain.references.reader.reader_cache_adapter_fakes import FakeReaderCacheAdapter
 
 CONFIG = load_config(DEFAULT_CONFIG_PATH)
 DOC = "# Title\n\n## Part one\nalpha\nbeta\n\n## Part two\ngamma\n"

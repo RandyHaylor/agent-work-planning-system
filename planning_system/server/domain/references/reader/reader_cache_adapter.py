@@ -14,8 +14,8 @@ from planning_system.fastreader.models import Document
 from planning_system.fastreader.reader_cache_port import CachedItem, ReaderCachePort, ReaderCitation
 from planning_system.fastreader.scanner import scan_document
 
-from .interface import ReferenceLibrary, TempCache
-from .types import AgentId, TempCacheEntry
+from ..interface import ReferenceLibrary, TempCache
+from ..types import AgentId, TempCacheEntry
 
 MANIFEST_METADATA_KEY = "manifest"
 ORIGIN_KIND_WEB_SEARCH = "web_search"

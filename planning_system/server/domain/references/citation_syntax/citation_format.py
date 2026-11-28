@@ -4,7 +4,7 @@ import re
 
 from planning_system.errors import Invalid
 
-from .types import Citation
+from ..types import Citation
 
 _CITATION = re.compile(r"\[(?P<ref>[A-Za-z0-9_.-]+):(?P<start>\d+)-(?P<end>\d+)\]")
 

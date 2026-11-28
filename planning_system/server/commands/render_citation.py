@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Principal
-from planning_system.server.domain.references import parse_citation
+from planning_system.server.domain.references.citation_syntax import parse_citation
 
 from .command import ReadCommand
 from .permissions import CanRenderCitation, Permission

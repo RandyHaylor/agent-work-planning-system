@@ -9,7 +9,7 @@ from planning_system.contract import Forbidden, NotFound, Principal
 from planning_system.server.domain.access import (ADMIN, WORKER, CredentialScope, NodeFacts, ReferenceFacts,
                                                   TempEntryFacts)
 from planning_system.server.domain.content_review import TAKEN
-from planning_system.server.domain.references import cites, parse_citation
+from planning_system.server.domain.references.citation_syntax import cites, parse_citation
 
 from . import permissions as P
 from .permissions import Permission

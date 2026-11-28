@@ -3,16 +3,9 @@ import dataclasses
 
 from planning_system.errors import Invalid, NotFound
 
+from .citation_syntax import slice_lines
 from .ports import ReferenceStoragePort
 from .types import Citation, Reference
-
-
-def slice_lines(text: str, start: int, end: int) -> str:
-    """Lines start..end (1-based, inclusive); raises Invalid when the range is outside the text."""
-    lines = text.splitlines()
-    if start < 1 or end < start or end > len(lines):
-        raise Invalid(f"lines {start}-{end} outside 1-{len(lines)}")
-    return "\n".join(lines[start - 1:end])
 
 
 class CitingAndRendering:

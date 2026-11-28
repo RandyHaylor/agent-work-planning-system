@@ -3,8 +3,8 @@ resolved and inlined (SoT's "no Read needed" pattern), so a reviewer needs no to
 from __future__ import annotations
 
 from planning_system.errors import DomainError
-from planning_system.server.domain.references import citations_in
-from planning_system.server.domain.references import slice_lines
+from planning_system.server.domain.references.citation_syntax import citations_in
+from planning_system.server.domain.references.citation_syntax import slice_lines
 from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, Citation
 
 from .types import ResolvedCitation, ReviewPacket, ReviewRecord

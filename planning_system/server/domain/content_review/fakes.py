@@ -7,7 +7,7 @@ import itertools
 from datetime import datetime, timedelta, timezone
 
 from planning_system.errors import Conflict, NotFound
-from planning_system.server.domain.references import citations_in
+from planning_system.server.domain.references.citation_syntax import citations_in
 from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE
 
 from .interface import ReviewLedger

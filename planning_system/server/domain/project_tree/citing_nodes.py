@@ -1,7 +1,7 @@
 """citing_nodes: which nodes cite a reference. A node cites reference X when X is one of its content
 items, or when one of its content texts carries a citation `[X:start-end]` (build log #40; the
 reference read rule is "anyone who can read a citing node")."""
-from planning_system.server.domain.references import cites
+from planning_system.server.domain.references.citation_syntax import cites
 
 
 class CitingNodesFinder:

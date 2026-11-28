@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from planning_system.errors import NotFound
 
-from .citing_and_rendering import slice_lines
+from .citation_syntax import slice_lines
 from .interface import TempCache
 from .ports import Clock, ReferenceStoragePort, TempCacheStoragePort
 from .types import ORIGIN_DOCUMENT, Citation, Reference, TempCacheEntry

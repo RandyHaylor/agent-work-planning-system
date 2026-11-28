@@ -15,11 +15,11 @@ from planning_system.fastreader.commands.search import run_search
 from planning_system.fastreader.commands.toc import run_toc
 from planning_system.quick_json_reader import JsonReaderInputError, JsonReaderInterface, JsonReaderUsageError
 
-from .ingestion import Ingestion
-from .interface import Reader, ReferenceLibrary, TempCache
+from ..ingestion import Ingestion
+from ..interface import Reader, ReferenceLibrary, TempCache
 from .reader_cache_adapter import ReaderCacheAdapter
-from .source_fetcher_port import FetchFailed
-from .types import Citation
+from ..source_fetcher_port import FetchFailed
+from ..types import Citation
 
 ADMIN = "admin"
 GET_MARKERS = ("chapter", "section", "subsection", "page", "block")
