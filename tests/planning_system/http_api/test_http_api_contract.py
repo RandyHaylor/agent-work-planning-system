@@ -26,6 +26,7 @@ from planning_system.server.domain.authentication.types import IssuedCredential
 from planning_system.server.domain.context_assembly.types import AssembledContext
 from planning_system.server.domain.references.types import Citation, Reference
 from planning_system.server.http_api import create_app, serve
+from planning_system.server.http_api.dependencies import authenticated_principal
 from planning_system.server.http_api.tls import ensure_self_signed_cert
 
 ROUTERS = [
@@ -60,7 +61,8 @@ def server():
     auth = FakeAuthentication(InMemoryCredentialStorage(), TablePermissionPolicy(), FakeClock())
     runner = RecordingCommandRunner(respond=lambda command, _: SAMPLE_RESULTS.get(type(command), {"ok": True}))
     app = create_app(ConfigSection("http_api", {"routers": ROUTERS}), runner, auth,
-                     {guidance_routes.guidance_service: StubGuidance})
+                     {guidance_routes.guidance_service: StubGuidance,
+                      guidance_routes.current_principal: authenticated_principal})
     admin = auth.start("admin-pw")
     client = TestClient(app, raise_server_exceptions=False)
     client.headers["Authorization"] = f"Bearer {admin.token}"

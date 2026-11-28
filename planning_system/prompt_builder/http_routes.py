@@ -2,7 +2,8 @@
 
 Guidance is read from files, not the database, so these routes use the module's own
 `guidance_service` dependency (overridden by the server at mount time) rather than
-command_runner; auth is `current_principal` (any authenticated principal).
+command_runner; auth is this module's own `current_principal` placeholder (any authenticated
+principal), which the server overrides with its own, so this module never imports the server.
 """
 from __future__ import annotations
 
@@ -12,7 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from planning_system.contract import NotFound, Principal
 from planning_system.prompt_builder.guidance_interface import GuidanceService
-from planning_system.server.http_api.dependencies import current_principal
+
+
+def current_principal() -> Principal:  # filled in by the server (dependency_overrides)
+    raise NotImplementedError
 
 
 def guidance_service() -> GuidanceService:  # filled in by the server (dependency_overrides)

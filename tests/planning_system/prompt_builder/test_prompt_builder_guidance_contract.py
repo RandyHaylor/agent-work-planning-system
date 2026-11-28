@@ -16,7 +16,6 @@ from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCa
 from planning_system.prompt_builder.fakes import FakeGuidanceEditor, FakeGuidanceService
 from planning_system.prompt_builder.guidance_editor import GuidanceEditor
 from planning_system.prompt_builder.role_guidance import GuidanceComposer, RolePresetMap, SessionInjections
-from planning_system.server.http_api.dependencies import current_principal
 
 ROLE_PRESETS = json.loads((SHIPPED_DATA_FOLDER / "role-presets.json").read_text())["rolePresets"]
 INJECTIONS = json.loads((SHIPPED_DATA_FOLDER / "session-injections.json").read_text())["injections"]
@@ -46,7 +45,7 @@ def client(request, preset_folder):
     service = request.param(preset_folder)
     app = FastAPI()
     app.include_router(http_routes.router)
-    app.dependency_overrides[current_principal] = lambda: Principal(agent_id="a1", role="planner")
+    app.dependency_overrides[http_routes.current_principal] = lambda: Principal(agent_id="a1", role="planner")
     app.dependency_overrides[http_routes.guidance_service] = lambda: service
     return TestClient(app)
 

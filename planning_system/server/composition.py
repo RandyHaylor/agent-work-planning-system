@@ -36,6 +36,7 @@ from planning_system.server.domain.references.source_fetcher_port import (Source
                                                                           UrlRequest, WebSearchRequest)
 from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
 from planning_system.server.http_api import create_app, serve
+from planning_system.server.http_api.dependencies import authenticated_principal
 
 
 class SourceFetcherByRequest(SourceFetcher):
@@ -99,7 +100,8 @@ def build_app(section: ConfigSection, storage, settings: DomainSettings) -> Fast
     runner = CommandRunner(storage.transactions, storage.stores_for, DomainServicesFactory(settings),
                            RequestAuthorizer())
     return create_app(_child(section, "http_api"), runner, TransactionalAuthenticator(storage, settings.clock),
-                      {guidance_routes.guidance_service: guidance_service_factory(section)})
+                      {guidance_routes.guidance_service: guidance_service_factory(section),
+                       guidance_routes.current_principal: authenticated_principal})
 
 
 def purge_expired_temp_cache(storage, settings: DomainSettings) -> int:
