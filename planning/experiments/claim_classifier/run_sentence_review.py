@@ -26,7 +26,7 @@ def packet(case: dict) -> ReviewPacket:
 
 def main() -> None:
     cases = [c for c in json.loads((HERE / "cases.json").read_text()) if c["type"] != "summary"]
-    backend = OneShotReviewerBackend(load_model_endpoints().create("local_gemma4"))
+    backend = OneShotReviewerBackend(load_model_endpoints(HERE.parents[2] / "config" / "model_endpoints.json").create("local_gemma4"))
     tp = fn = ff = tn = 0
     with (HERE / "results_sentence_gemma.jsonl").open("w") as out:
         for case in cases:

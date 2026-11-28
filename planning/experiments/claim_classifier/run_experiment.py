@@ -116,7 +116,7 @@ class Gemma:
     def __init__(self):
         from planning_system.model_calls.endpoint_factory import load_model_endpoints
         from planning_system.model_calls.types import OneShotRequest
-        self._call = load_model_endpoints().create("local_gemma4")
+        self._call = load_model_endpoints(HERE.parents[2] / "config" / "model_endpoints.json").create("local_gemma4")
         self._req = OneShotRequest
 
     def ask(self, prompt: str) -> str:

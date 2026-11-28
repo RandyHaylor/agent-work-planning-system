@@ -29,7 +29,7 @@ CHILD_CWD = Path(tempfile.mkdtemp(prefix="node-validation-"))   # headless sessi
 class GemmaSession:
     def __init__(self):
         from planning_system.model_calls import ChatMessage, ChatRequest, load_model_endpoints
-        self._call = load_model_endpoints().create("local_gemma4")
+        self._call = load_model_endpoints(HERE.parents[2] / "config" / "model_endpoints.json").create("local_gemma4")
         self._msg, self._req = ChatMessage, ChatRequest
         self._messages, self.calls = [], 0
 
