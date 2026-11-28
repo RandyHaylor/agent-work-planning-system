@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
-from planning_system.server.domain.project_tree.types import DONE
+from planning_system.server.domain.project_tree import DONE
 
 from .command import WriteCommand
 from .permissions import CanSetState, Permission

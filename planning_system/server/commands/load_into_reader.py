@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
-from planning_system.server.domain.references.source_fetcher_port import (SourceRequest, UploadRequest,
-                                                                          UrlRequest, WebSearchRequest)
+from planning_system.server.domain.references import (SourceRequest, UploadRequest, UrlRequest,
+                                                      WebSearchRequest)
 
 from .command import WriteCommand
 from .permissions import Authenticated, Permission

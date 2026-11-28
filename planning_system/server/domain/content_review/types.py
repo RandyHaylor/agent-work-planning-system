@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
-from planning_system.server.domain.references.types import Citation
+from planning_system.server.domain.references import Citation
 
 PENDING, TAKEN, PASSED, FAILED, SUPERSEDED = "pending", "taken", "passed", "failed", "superseded"
 STATUSES = (PENDING, TAKEN, PASSED, FAILED, SUPERSEDED)

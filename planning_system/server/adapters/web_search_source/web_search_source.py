@@ -6,9 +6,8 @@ import urllib.parse
 from datetime import datetime, timezone
 
 from planning_system.server.adapters.web_search_source.ddg_result_parser import parse_results
-from planning_system.server.domain.references.source_fetcher_port import (
-    SourceFetcher, SourceRequest, UrlRequest, WebSearchRequest,
-)
+from planning_system.server.domain.references import (SourceFetcher, SourceRequest, UrlRequest,
+                                                      WebSearchRequest)
 from planning_system.document_extraction.extraction_types import SourceDocument
 
 DUCKDUCKGO_HTML_URL = "https://html.duckduckgo.com/html/"

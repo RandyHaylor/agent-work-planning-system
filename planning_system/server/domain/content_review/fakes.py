@@ -7,8 +7,8 @@ import itertools
 from datetime import datetime, timedelta, timezone
 
 from planning_system.contract import Conflict, NotFound
-from planning_system.server.domain.references.citation_format import citations_in
-from planning_system.server.domain.references.types import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE
+from planning_system.server.domain.references import citations_in
+from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE
 
 from .interface import ReviewLedger
 from .ports import Clock, ReviewStoragePort

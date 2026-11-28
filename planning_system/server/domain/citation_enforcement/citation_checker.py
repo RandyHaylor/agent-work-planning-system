@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 
 from planning_system.contract import Invalid, NotFound
-from planning_system.server.domain.references.citation_format import citations_in, format_citation
-from planning_system.server.domain.references.interface import ReferenceLibrary
-from planning_system.server.domain.references.types import Citation
+from planning_system.server.domain.references import citations_in, format_citation
+from planning_system.server.domain.references import ReferenceLibrary
+from planning_system.server.domain.references import Citation
 
 from .claim_policy import ClaimRule
 

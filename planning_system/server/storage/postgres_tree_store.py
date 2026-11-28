@@ -7,8 +7,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
-from planning_system.server.domain.project_tree.ports import TreeStoragePort
-from planning_system.server.domain.project_tree.types import Node, NodeContent
+from planning_system.server.domain.project_tree import TreeStoragePort
+from planning_system.server.domain.project_tree import Node, NodeContent
 
 from .metadata import METADATA
 

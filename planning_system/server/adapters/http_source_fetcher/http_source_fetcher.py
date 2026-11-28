@@ -6,9 +6,7 @@ import httpx
 
 from planning_system.document_extraction.extraction_types import SourceDocument
 from planning_system.server.adapters.http_source_fetcher.failure_markers import failure_reason
-from planning_system.server.domain.references.source_fetcher_port import (
-    FetchFailed, SourceFetcher, SourceRequest, UrlRequest,
-)
+from planning_system.server.domain.references import FetchFailed, SourceFetcher, SourceRequest, UrlRequest
 
 _KEPT_HEADERS = ("etag", "last-modified")
 

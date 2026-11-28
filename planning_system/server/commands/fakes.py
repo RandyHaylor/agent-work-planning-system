@@ -12,8 +12,7 @@ from typing import Any, Callable, Optional
 
 from planning_system.contract import Forbidden, NotFound, Principal
 from planning_system.server.domain.access.fakes import TablePermissionPolicy
-from planning_system.server.domain.access.types import (CredentialScope, NodeFacts, ReferenceFacts,
-                                                        TempEntryFacts)
+from planning_system.server.domain.access import CredentialScope, NodeFacts, ReferenceFacts, TempEntryFacts
 from planning_system.server.domain.agent_registry.fakes import FakeAgentRegistry
 from planning_system.server.domain.agent_registry.fakes import FakeClock as RegistryClock
 from planning_system.server.domain.authentication.fakes import FakeAuthentication
@@ -25,8 +24,8 @@ from planning_system.server.domain.project_tree.fakes import FakeProjectTree, Ti
 from planning_system.server.domain.references.fakes import FakeClock as ReferenceClock
 from planning_system.server.domain.references.fakes import FakeReferenceLibrary, FakeTempCache
 from planning_system.server.domain.task_assignment.fakes import FakeTaskAssigner
-from planning_system.server.domain.references.ingestion import Ingestion
-from planning_system.server.domain.references.reader_service import ReaderService
+from planning_system.server.domain.references import Ingestion
+from planning_system.server.domain.references import ReaderService
 from planning_system.server.storage.fakes import in_memory_stores
 from planning_system.fastreader.cli import DEFAULT_CONFIG_PATH as SCANNER_CONFIG_PATH
 from planning_system.fastreader.scanner import load_config

@@ -13,8 +13,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
 from planning_system.contract import Forbidden, Principal
-from planning_system.server.domain.authentication.ports import CredentialStoragePort
-from planning_system.server.domain.authentication.types import StoredCredential
+from planning_system.server.domain.authentication import CredentialStoragePort
+from planning_system.server.domain.authentication import StoredCredential
 
 from .metadata import METADATA
 

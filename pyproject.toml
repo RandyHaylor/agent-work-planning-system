@@ -29,7 +29,11 @@ planning-server = "planning_system.main:main"
 planning = "planning_system.cli.entry_point:main"
 
 [project.optional-dependencies]
-test = ["pytest>=8", "httpx>=0.27"]
+test = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "import-linter>=2.15",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "ai_project_planning_server"]
@@ -41,3 +45,84 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ai_project_planning_server", "planning_system"]
+
+# Module boundaries (modularity review 2026-11-27, fix 2). Run: uv run --extra test lint-imports
+# (also run by tests/planning_system/test_import_contracts.py). Each domain package is imported only
+# through its __init__; `fakes` (test support) and references.http_routes (mounted by config) are the
+# allowed submodules.
+[tool.importlinter]
+root_packages = ["planning_system"]
+
+[[tool.importlinter.contracts]]
+name = "domain.access is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.access.interface", "planning_system.server.domain.access.permission_policy", "planning_system.server.domain.access.principal", "planning_system.server.domain.access.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.agent_registry is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.agent_registry.interface", "planning_system.server.domain.agent_registry.ports", "planning_system.server.domain.agent_registry.registry", "planning_system.server.domain.agent_registry.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.authentication is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.authentication.admin_session", "planning_system.server.domain.authentication.agent_session_keys", "planning_system.server.domain.authentication.credential_authenticator", "planning_system.server.domain.authentication.credential_issuer", "planning_system.server.domain.authentication.interface", "planning_system.server.domain.authentication.issuing", "planning_system.server.domain.authentication.password_hashing", "planning_system.server.domain.authentication.ports", "planning_system.server.domain.authentication.token_hashing", "planning_system.server.domain.authentication.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.citation_enforcement is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.citation_enforcement.citation_checker", "planning_system.server.domain.citation_enforcement.citation_enforcement", "planning_system.server.domain.citation_enforcement.claim_policy", "planning_system.server.domain.citation_enforcement.interface", "planning_system.server.domain.citation_enforcement.title_rules", "planning_system.server.domain.citation_enforcement.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.content_review is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.content_review.interface", "planning_system.server.domain.content_review.ports", "planning_system.server.domain.content_review.review_ledger", "planning_system.server.domain.content_review.review_packet_builder", "planning_system.server.domain.content_review.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.context_assembly is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.project_tree", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.context_assembly.context_assembler", "planning_system.server.domain.context_assembly.interface", "planning_system.server.domain.context_assembly.ports", "planning_system.server.domain.context_assembly.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.project_tree is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.references", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.project_tree.citing_nodes", "planning_system.server.domain.project_tree.interface", "planning_system.server.domain.project_tree.level_placement_rules", "planning_system.server.domain.project_tree.node", "planning_system.server.domain.project_tree.node_content", "planning_system.server.domain.project_tree.node_editor", "planning_system.server.domain.project_tree.ports", "planning_system.server.domain.project_tree.project_tree", "planning_system.server.domain.project_tree.tree_reader", "planning_system.server.domain.project_tree.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.references is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.task_assignment"]
+forbidden_modules = ["planning_system.server.domain.references.citation_format", "planning_system.server.domain.references.citing_and_rendering", "planning_system.server.domain.references.ingestion", "planning_system.server.domain.references.interface", "planning_system.server.domain.references.line_range_mapping", "planning_system.server.domain.references.ports", "planning_system.server.domain.references.reader_cache_adapter", "planning_system.server.domain.references.reader_cache_adapter_fakes", "planning_system.server.domain.references.reader_service", "planning_system.server.domain.references.reference_library", "planning_system.server.domain.references.source_fetcher_port", "planning_system.server.domain.references.temp_cache_lifecycle", "planning_system.server.domain.references.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain.task_assignment is imported only through its package"
+type = "forbidden"
+source_modules = ["planning_system.server.commands", "planning_system.server.http_api", "planning_system.server.storage", "planning_system.server.adapters", "planning_system.server.bootstrap", "planning_system.server.composition", "planning_system.server.domain.access", "planning_system.server.domain.agent_registry", "planning_system.server.domain.authentication", "planning_system.server.domain.citation_enforcement", "planning_system.server.domain.content_review", "planning_system.server.domain.context_assembly", "planning_system.server.domain.project_tree", "planning_system.server.domain.references"]
+forbidden_modules = ["planning_system.server.domain.task_assignment.interface", "planning_system.server.domain.task_assignment.ports", "planning_system.server.domain.task_assignment.task_assigner", "planning_system.server.domain.task_assignment.types"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "domain does not depend on the layers above it"
+type = "forbidden"
+source_modules = ["planning_system.server.domain"]
+forbidden_modules = ["planning_system.server.commands", "planning_system.server.http_api",
+                     "planning_system.server.storage", "planning_system.server.composition"]
+allow_indirect_imports = true
+# The references router is mounted from its module (build log #4, #14).
+ignore_imports = ["planning_system.server.domain.references.http_routes -> planning_system.server.commands",
+                  "planning_system.server.domain.references.http_routes -> planning_system.server.http_api.*"]

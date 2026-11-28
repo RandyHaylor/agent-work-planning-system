@@ -1,8 +1,8 @@
 """Types for task_assignment."""
 from dataclasses import dataclass
 
-from planning_system.server.domain.authentication.types import CredentialId
-from planning_system.server.domain.project_tree.types import Node
+from planning_system.server.domain.authentication import CredentialId
+from planning_system.server.domain.project_tree import Node
 
 
 @dataclass(frozen=True)

@@ -3,9 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from planning_system.server.domain.references.source_fetcher_port import (
-    FetchFailed, SourceFetcher, SourceRequest, UploadRequest,
-)
+from planning_system.server.domain.references import FetchFailed, SourceFetcher, SourceRequest, UploadRequest
 from planning_system.document_extraction.extraction_types import SourceDocument
 
 

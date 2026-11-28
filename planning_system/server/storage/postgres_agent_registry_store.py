@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
-from planning_system.server.domain.agent_registry.ports import AgentRegistryStoragePort
-from planning_system.server.domain.agent_registry.types import METADATA_FIELDS, AgentSession
+from planning_system.server.domain.agent_registry import AgentRegistryStoragePort
+from planning_system.server.domain.agent_registry import METADATA_FIELDS, AgentSession
 
 from .metadata import METADATA
 

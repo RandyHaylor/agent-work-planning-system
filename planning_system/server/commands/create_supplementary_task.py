@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
-from planning_system.server.domain.project_tree.types import REQUIREMENT_REQUEST, TECH_SPIKE
+from planning_system.server.domain.project_tree import REQUIREMENT_REQUEST, TECH_SPIKE
 
 from .command import WriteCommand
 from .permissions import CanCreateSupplementaryTask, Permission

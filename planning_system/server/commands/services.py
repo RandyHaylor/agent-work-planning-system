@@ -7,28 +7,28 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping, Optional
 
-from planning_system.server.domain.access.interface import PermissionPolicy
-from planning_system.server.domain.access.permission_policy import RulePermissionPolicy
-from planning_system.server.domain.agent_registry.interface import AgentRegistry
-from planning_system.server.domain.agent_registry.registry import AgentRegistryService
-from planning_system.server.domain.authentication.admin_session import AdminSessionService
-from planning_system.server.domain.authentication.credential_issuer import CredentialIssuerService
-from planning_system.server.domain.authentication.interface import AdminSessions, CredentialIssuer
+from planning_system.server.domain.access import PermissionPolicy
+from planning_system.server.domain.access import RulePermissionPolicy
+from planning_system.server.domain.agent_registry import AgentRegistry
+from planning_system.server.domain.agent_registry import AgentRegistryService
+from planning_system.server.domain.authentication import AdminSessionService
+from planning_system.server.domain.authentication import CredentialIssuerService
+from planning_system.server.domain.authentication import AdminSessions, CredentialIssuer
 from planning_system.server.domain.citation_enforcement import (CitationEnforcement, CitationEnforcementService,
                                                                 ClaimPolicy)
 from planning_system.server.domain.content_review import ReviewLedger, ReviewLedgerService
-from planning_system.server.domain.content_review.types import DEFAULT_LEASE
-from planning_system.server.domain.context_assembly.context_assembler import ContextAssemblerService
-from planning_system.server.domain.context_assembly.interface import ContextAssembler
-from planning_system.server.domain.project_tree.interface import ProjectTree
-from planning_system.server.domain.project_tree.project_tree import ProjectTreeService
-from planning_system.server.domain.references.ingestion import Ingestion
-from planning_system.server.domain.references.interface import Reader, ReferenceLibrary, TempCache
-from planning_system.server.domain.references.reader_service import ReaderService
-from planning_system.server.domain.references.reference_library import ReferenceLibraryService
-from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
-from planning_system.server.domain.task_assignment.interface import TaskAssigner
-from planning_system.server.domain.task_assignment.task_assigner import TaskAssignerService
+from planning_system.server.domain.content_review import DEFAULT_LEASE
+from planning_system.server.domain.context_assembly import ContextAssemblerService
+from planning_system.server.domain.context_assembly import ContextAssembler
+from planning_system.server.domain.project_tree import ProjectTree
+from planning_system.server.domain.project_tree import ProjectTreeService
+from planning_system.server.domain.references import Ingestion
+from planning_system.server.domain.references import Reader, ReferenceLibrary, TempCache
+from planning_system.server.domain.references import ReaderService
+from planning_system.server.domain.references import ReferenceLibraryService
+from planning_system.server.domain.references import TempCacheLifecycle
+from planning_system.server.domain.task_assignment import TaskAssigner
+from planning_system.server.domain.task_assignment import TaskAssignerService
 from planning_system.server.storage.storage import Stores
 
 

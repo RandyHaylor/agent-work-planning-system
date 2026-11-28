@@ -1,5 +1,5 @@
 """Test support: a fake ContextAssembler."""
-from planning_system.server.domain.project_tree.types import ABANDONED
+from planning_system.server.domain.project_tree import ABANDONED
 
 from .interface import ContextAssembler
 from .types import AssembledContext

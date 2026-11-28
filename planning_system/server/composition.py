@@ -30,11 +30,11 @@ from planning_system.server.adapters.web_search_source import WebSearchSource
 from planning_system.server.commands import CommandRunner, RequestAuthorizer
 from planning_system.server.commands.services import DomainServicesFactory, DomainSettings
 from planning_system.server.domain.citation_enforcement import ClaimPolicy
-from planning_system.server.domain.authentication.credential_authenticator import CredentialAuthenticatorService
-from planning_system.server.domain.authentication.interface import CredentialAuthenticator
-from planning_system.server.domain.references.source_fetcher_port import (SourceFetcher, UploadRequest,
-                                                                          UrlRequest, WebSearchRequest)
-from planning_system.server.domain.references.temp_cache_lifecycle import TempCacheLifecycle
+from planning_system.server.domain.authentication import CredentialAuthenticatorService
+from planning_system.server.domain.authentication import CredentialAuthenticator
+from planning_system.server.domain.references import (SourceFetcher, UploadRequest, UrlRequest,
+                                                      WebSearchRequest)
+from planning_system.server.domain.references import TempCacheLifecycle
 from planning_system.server.http_api import create_app, serve
 from planning_system.server.http_api.dependencies import authenticated_principal
 

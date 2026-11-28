@@ -5,11 +5,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from planning_system.configuration import ConfigSection
-from planning_system.server.domain.agent_registry.ports import AgentRegistryStoragePort
-from planning_system.server.domain.authentication.ports import CredentialStoragePort
-from planning_system.server.domain.content_review.ports import ReviewStoragePort
-from planning_system.server.domain.project_tree.ports import TreeStoragePort
-from planning_system.server.domain.references.ports import ReferenceStoragePort, TempCacheStoragePort
+from planning_system.server.domain.agent_registry import AgentRegistryStoragePort
+from planning_system.server.domain.authentication import CredentialStoragePort
+from planning_system.server.domain.content_review import ReviewStoragePort
+from planning_system.server.domain.project_tree import TreeStoragePort
+from planning_system.server.domain.references import ReferenceStoragePort, TempCacheStoragePort
 
 from alembic import command
 from alembic.config import Config as AlembicConfig

@@ -6,7 +6,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 from planning_system.contract import Forbidden, NotFound, Principal
-from planning_system.server.domain.access.types import CredentialScope
+from planning_system.server.domain.access import CredentialScope
 
 from .interface import AdminSessions, CredentialAuthenticator, CredentialIssuer
 from .ports import Clock, CredentialStoragePort

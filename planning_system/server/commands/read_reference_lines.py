@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Principal
-from planning_system.server.domain.references.line_range_mapping import map_line_range
-from planning_system.server.domain.references.reader_service import numbered
+from planning_system.server.domain.references import map_line_range
+from planning_system.server.domain.references import numbered
 
 from .command import ReadCommand
 from .get_reference import superseded_note

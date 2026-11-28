@@ -11,9 +11,8 @@ from typing import Mapping
 from planning_system.document_extraction.extraction_types import SourceDocument
 from planning_system.fastreader.web import html_to_text
 from planning_system.server.adapters.web_search_source import DUCKDUCKGO_HTML_URL
-from planning_system.server.domain.references.source_fetcher_port import (
-    FetchFailed, SourceFetcher, SourceRequest, UploadRequest, UrlRequest, WebSearchRequest,
-)
+from planning_system.server.domain.references import (FetchFailed, SourceFetcher, SourceRequest,
+                                                      UploadRequest, UrlRequest, WebSearchRequest)
 
 
 @dataclass(frozen=True)

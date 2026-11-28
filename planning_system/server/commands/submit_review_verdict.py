@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Principal
-from planning_system.server.domain.content_review.types import Verdict
+from planning_system.server.domain.content_review import Verdict
 
 from .command import WriteCommand
 from .permissions import CanReviewRecord, Permission

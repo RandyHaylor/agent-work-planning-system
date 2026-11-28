@@ -6,10 +6,10 @@ from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from planning_system.contract import Forbidden, NotFound, Principal
-from planning_system.server.domain.access.types import (ADMIN, WORKER, CredentialScope, NodeFacts,
-                                                        ReferenceFacts, TempEntryFacts)
-from planning_system.server.domain.content_review.types import TAKEN
-from planning_system.server.domain.references.citation_format import cites, parse_citation
+from planning_system.server.domain.access import (ADMIN, WORKER, CredentialScope, NodeFacts, ReferenceFacts,
+                                                  TempEntryFacts)
+from planning_system.server.domain.content_review import TAKEN
+from planning_system.server.domain.references import cites, parse_citation
 
 from . import permissions as P
 from .permissions import Permission

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from planning_system.server.domain.references.citation_format import format_citation
+from planning_system.server.domain.references import format_citation
 
 from .json_encoding import to_json
 

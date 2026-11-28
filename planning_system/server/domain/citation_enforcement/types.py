@@ -1,7 +1,7 @@
 """Types for citation_enforcement (spec: planning/05-spec-citation-enforcement-and-review.md)."""
 from dataclasses import dataclass
 
-from planning_system.server.domain.references.types import Citation
+from planning_system.server.domain.references import Citation
 
 CLAIM_TAGS = ("requirement", "decision", "technical", "documentation", "plan", "note")
 MAX_TITLE_LENGTH = 50

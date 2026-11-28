@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
 
-from planning_system.server.domain.references.interface import ReferenceLibrary  # noqa: F401
+from planning_system.server.domain.references import ReferenceLibrary
 
 from .types import Node, NodeContent, NodeId, ReferenceId
 

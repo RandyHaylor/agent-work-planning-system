@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
-from planning_system.server.domain.references.ports import ReferenceStoragePort
-from planning_system.server.domain.references.types import Reference
+from planning_system.server.domain.references import ReferenceStoragePort
+from planning_system.server.domain.references import Reference
 
 from .metadata import METADATA
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from planning_system.contract import Invalid, Principal
-from planning_system.server.domain.content_review.types import STATUSES
+from planning_system.server.domain.content_review import STATUSES
 
 from .command import ReadCommand
 from .permissions import CanReviewProject, Permission

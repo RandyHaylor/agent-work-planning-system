@@ -7,7 +7,7 @@ from typing import Callable, Optional
 from fastapi import Header
 
 from planning_system.contract import Forbidden, Principal
-from planning_system.server.domain.authentication.interface import CredentialAuthenticator
+from planning_system.server.domain.authentication import CredentialAuthenticator
 
 
 def bearer_token(authorization: Optional[str] = Header(default=None)) -> str:

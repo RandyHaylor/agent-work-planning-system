@@ -3,10 +3,9 @@ resolved and inlined (SoT's "no Read needed" pattern), so a reviewer needs no to
 from __future__ import annotations
 
 from planning_system.contract import DomainError
-from planning_system.server.domain.references.citation_format import citations_in
-from planning_system.server.domain.references.citing_and_rendering import slice_lines
-from planning_system.server.domain.references.types import (ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE,
-                                                            Citation)
+from planning_system.server.domain.references import citations_in
+from planning_system.server.domain.references import slice_lines
+from planning_system.server.domain.references import ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE, Citation
 
 from .types import ResolvedCitation, ReviewPacket, ReviewRecord
 

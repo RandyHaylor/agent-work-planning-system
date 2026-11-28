@@ -5,9 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional
 
-from planning_system.server.domain.references.types import (ORIGIN_DOCUMENT, ORIGIN_KNOWLEDGE_BASE,
-                                                            ORIGIN_NODE, ORIGIN_PROPOSAL_RESPONSE,
-                                                            ORIGIN_USER_EXCHANGE)
+from planning_system.server.domain.references import (ORIGIN_DOCUMENT, ORIGIN_KNOWLEDGE_BASE, ORIGIN_NODE,
+                                                      ORIGIN_PROPOSAL_RESPONSE, ORIGIN_USER_EXCHANGE)
 
 EVIDENCE_ORIGINS = (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE, ORIGIN_DOCUMENT, ORIGIN_KNOWLEDGE_BASE)
 USER_ORIGINS = (ORIGIN_USER_EXCHANGE, ORIGIN_PROPOSAL_RESPONSE)

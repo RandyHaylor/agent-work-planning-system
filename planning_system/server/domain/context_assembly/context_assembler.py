@@ -2,7 +2,7 @@
 
 Reads the tree on every call (nothing cached), so a changed summary shows up next time.
 """
-from planning_system.server.domain.project_tree.types import ABANDONED
+from planning_system.server.domain.project_tree import ABANDONED
 
 from .interface import ContextAssembler
 from .types import AssembledContext

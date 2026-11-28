@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from planning_system.contract import Principal
-from planning_system.server.domain.access.types import CredentialScope
+from planning_system.server.domain.access import CredentialScope
 
 from .types import CredentialId, IssuedCredential
 

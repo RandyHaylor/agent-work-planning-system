@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection
 
-from planning_system.server.domain.references.ports import TempCacheStoragePort
-from planning_system.server.domain.references.types import TempCacheEntry
+from planning_system.server.domain.references import TempCacheStoragePort
+from planning_system.server.domain.references import TempCacheEntry
 
 from .metadata import METADATA
 

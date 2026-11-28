@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from planning_system.configuration import ConfigSection
 from planning_system.server.commands.command_runner import CommandRunnerInterface
-from planning_system.server.domain.authentication.interface import CredentialAuthenticator
+from planning_system.server.domain.authentication import CredentialAuthenticator
 
 from . import dependencies
 from .credential_dependency import principal_dependency

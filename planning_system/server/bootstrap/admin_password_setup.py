@@ -2,7 +2,7 @@
 credential store's admin-password row (PostgresCredentialStore.set_admin_password_hash)."""
 from __future__ import annotations
 
-from planning_system.server.domain.authentication.password_hashing import PasswordHasher
+from planning_system.server.domain.authentication import PasswordHasher
 
 from .ports import AuthenticationSetup
 

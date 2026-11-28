@@ -5,8 +5,8 @@ from __future__ import annotations
 from sqlalchemy import BigInteger, Column, DateTime, Index, Table, Text, select, update
 from sqlalchemy.engine import Connection
 
-from planning_system.server.domain.content_review.ports import ReviewStoragePort
-from planning_system.server.domain.content_review.types import PENDING, TAKEN, ReviewRecord
+from planning_system.server.domain.content_review import ReviewStoragePort
+from planning_system.server.domain.content_review import PENDING, TAKEN, ReviewRecord
 
 from .metadata import METADATA
 

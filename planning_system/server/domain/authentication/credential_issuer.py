@@ -2,7 +2,7 @@
 from dataclasses import replace
 
 from planning_system.contract import Forbidden, NotFound, Principal
-from planning_system.server.domain.access.types import ADMIN, QUOTE_CLIENT, CredentialScope
+from planning_system.server.domain.access import ADMIN, QUOTE_CLIENT, CredentialScope
 
 from .agent_session_keys import AgentSessionKeys
 from .interface import CredentialIssuer
