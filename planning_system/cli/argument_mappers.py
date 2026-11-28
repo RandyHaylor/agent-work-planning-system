@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from planning_system.api_client import PlanningApiClientInterface
-from planning_system.local_client.task_runner import TASK_ROLES, TaskStartRequest
+from planning_system.local_client import TASK_ROLES, TaskStartRequest
 
 DEFAULT_ROLE = TASK_ROLES[0]
 

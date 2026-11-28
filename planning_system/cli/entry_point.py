@@ -72,8 +72,7 @@ def _launch_guidance_editor() -> None:
     """Starts prompt_builder's website on the local preset folder and blocks until Ctrl-C."""
     import threading
 
-    from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import resolve_user_rule_builder_folder
-    from planning_system.prompt_builder.guidance_editor import GuidanceEditor
+    from planning_system.prompt_builder import GuidanceEditor, resolve_user_rule_builder_folder
 
     editor = GuidanceEditor(resolve_user_rule_builder_folder())
     session = editor.launch()

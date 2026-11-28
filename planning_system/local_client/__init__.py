@@ -5,6 +5,7 @@ The children were ported from source-of-truth (commit d22d770); the raw carried 
 """
 from .interface import (ExchangeReaderPort, HookInstallerPort, LocalClientInterface, ReferenceSyncPort)
 from .local_client import LocalClient, build_local_client
+from .task_runner import TASK_ROLES, TaskStartRequest
 
 __all__ = ["LocalClient", "LocalClientInterface", "build_local_client", "ReferenceSyncPort",
-           "ExchangeReaderPort", "HookInstallerPort"]
+           "ExchangeReaderPort", "HookInstallerPort", "TASK_ROLES", "TaskStartRequest"]
