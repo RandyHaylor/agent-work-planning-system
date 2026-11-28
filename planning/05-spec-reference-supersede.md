@@ -1,4 +1,4 @@
-# Spec: superseding evidence references (DRAFT, not approved)
+# Spec: superseding evidence references (DRAFT: open points decided 2026-11-27; whole spec awaiting approval)
 
 ## The requirement (user, 2026-11-27)
 
@@ -19,9 +19,11 @@
 
 1. **Search first.** Agents search the project's stored references before loading a source or asking the user. Every load or capture response also lists stored references from the same source (URL or file name) and the top same-topic matches (Postgres full-text search), so the agent sees older evidence even if it didn't search.
 2. **Candidates, never automatic.** A new evidence reference becomes a *supersede candidate* for an old one when:
-   - it comes from the same source (same URL or file name) with different content, or
-   - the agent or user proposes it (`planning references propose-supersede OLD NEW`), e.g. a user correcting an earlier statement or newer docs for the same library.
-3. **Trial review.** For a candidate, every content item citing the old reference is reviewed against the new copy: each cited range is mapped into it (difflib, built) and reviewed with the normal reviewer. Nothing changes yet. Result: the list of claims that would no longer hold, and whether the new copy looks like an error or a placeholder page.
+   - (documents) it is the same URL or file loaded again later with different content, or
+   - (user quotes) the all-quotes check below says so, or
+   - the agent or user proposes it (`planning references propose-supersede OLD NEW`), e.g. newer docs for the same library.
+   **All-quotes check (user 2026-11-27: "User specs are critical, keyword search insufficient. Must review all cited user quotes"):** every new user quote is compared with EVERY user quote cited anywhere in the project. No keyword filter. Same session pattern as the reviewer: the new statement first, then one turn per cited quote, "Does the new statement change, replace or contradict this earlier quote?" yes/no + reason. Runs on review-mode clients.
+3. **Trial review** (approved 2026-11-27: "Trial review first"). For a candidate, every content item citing the old reference is reviewed against the new copy: each cited range is mapped into it (difflib, built) and reviewed with the normal reviewer. Nothing changes yet. Result: the list of claims that would no longer hold, and whether the new copy looks like an error or a placeholder page.
 4. **Confirm.** The candidate plus its trial results go into a **requirement request** task (one per candidate) inserted before the earliest affected task. Content items: old quote, new quote, each affected node and claim with the reviewer's reason.
    - Document reference: the planner may confirm or reject; it stays visible to the user, who can override.
    - User quote: only the user confirms.
@@ -40,6 +42,6 @@
 
 ## Open points for the user
 
-1. Is a trial review against the new copy the right gate, or should the requirement request be raised for every candidate before any review runs?
-2. The model check for "same point" between two user statements (to find candidates without anyone proposing them): include now, or only explicit proposals plus same-source at first?
-3. Does a superseded user quote stay citable as history (e.g. "the user first said X, then Y")? Today the citation gate rejects superseded citations.
+1. ~~Trial review gate~~: decided, trial review first.
+2. ~~Finding user-quote candidates~~: decided, every new user quote is checked against all cited user quotes.
+3. ~~Superseded quotes as history~~: decided, current only. Superseded references can be read (with the note) but never cited; the gate stays as it is.
