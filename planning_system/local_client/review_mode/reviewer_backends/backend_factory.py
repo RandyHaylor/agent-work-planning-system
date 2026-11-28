@@ -2,6 +2,7 @@
 plus one entry in _builders. pi is parked (user 2026-11-26) and not selectable here."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Callable, Optional
 
 from planning_system.errors import Invalid
@@ -15,6 +16,8 @@ from .one_shot_backend import OneShotReviewerBackend
 DEFAULT_BACKEND = "local_llm"
 BACKEND_NAMES = ("local_llm", "claude_code")
 DEFAULT_LOCAL_ENDPOINT = "local_gemma4"
+# This repo's endpoints file (model_calls itself knows no repo layout); $PLANNING_MODEL_ENDPOINTS_FILE overrides it.
+DEFAULT_MODEL_ENDPOINTS_FILE = Path(__file__).resolve().parents[4] / "config" / "model_endpoints.json"
 
 ReviewWorkerFactory = Callable[[str], ReviewWorkerInterface]   # model name -> review worker
 
@@ -32,7 +35,7 @@ def claude_code_review_worker(model: str) -> ReviewWorkerInterface:
 
 
 class ReviewerBackendFactory:
-    """model_endpoints defaults to load_model_endpoints() (read on first local_llm use); `model` for local_llm
+    """model_endpoints defaults to this repo's endpoints file (read on first local_llm use); `model` for local_llm
     overrides the endpoint's configured model."""
 
     def __init__(self, review_worker_factory: Optional[ReviewWorkerFactory] = None,
@@ -56,5 +59,5 @@ class ReviewerBackendFactory:
 
     def _endpoints(self) -> ModelEndpointFactory:
         if self._model_endpoints is None:
-            self._model_endpoints = load_model_endpoints()
+            self._model_endpoints = load_model_endpoints(default_path=DEFAULT_MODEL_ENDPOINTS_FILE)
         return self._model_endpoints

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import threading
 import time
 
@@ -11,6 +12,8 @@ import pytest
 from planning_system.contract import Invalid
 from planning_system.model_calls import (FakeOneShotModelCall, ModelCallFailed, OneShotRequest, OneShotResponse,
                                          OpenAiCompatibleChatCall, load_model_endpoints)
+
+REPO_ENDPOINTS_FILE = Path(__file__).resolve().parents[3] / "config" / "model_endpoints.json"
 
 
 class _Server:
@@ -115,7 +118,7 @@ def test_real_connection_error_raises_model_call_failed():
 
 def test_shipped_local_gemma4_endpoint():
     server = _Server()
-    endpoints = load_model_endpoints(environ={}, transport=httpx.MockTransport(server))
+    endpoints = load_model_endpoints(environ={}, transport=httpx.MockTransport(server), default_path=REPO_ENDPOINTS_FILE)
     assert "local_gemma4" in endpoints.names()
     endpoints.create("local_gemma4").complete(OneShotRequest(user_text="q", json_output=True))
     assert str(server.requests[0].url) == "http://127.0.0.1:8898/v1/chat/completions"
@@ -137,3 +140,8 @@ def test_endpoints_file_env_override_and_model_override(tmp_path):
     assert server.body()["model"] == "y"
     with pytest.raises(Invalid):
         endpoints.create("local_gemma4")
+
+
+def test_load_model_endpoints_needs_a_path_env_or_default():
+    with pytest.raises(Invalid):
+        load_model_endpoints(environ={})

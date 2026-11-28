@@ -24,6 +24,7 @@ from planning_system.local_client.review_mode.reviewer_backends import ClaudeCod
 from planning_system.model_calls import FakeOneShotModelCall, ModelCallFailed, load_model_endpoints
 from planning_system.local_client.review_mode.reviewer_backends.fakes import (FakeReviewerBackend, turn_reply,
                                                                               verdict_json)
+from planning_system.local_client.review_mode.reviewer_backends.backend_factory import DEFAULT_MODEL_ENDPOINTS_FILE
 from planning_system.local_client.review_mode.verdict_parser import parse_verdict
 from planning_system.local_client.review_worker import ReviewWorker
 
@@ -174,7 +175,7 @@ class _LlmServer:
 
 def LocalLlmBackend(transport, model=None):
     """local_llm as the CLI builds it: the factory, the shipped config/model_endpoints.json, a mock transport."""
-    endpoints = load_model_endpoints(environ={}, transport=transport)
+    endpoints = load_model_endpoints(environ={}, transport=transport, default_path=DEFAULT_MODEL_ENDPOINTS_FILE)
     return ReviewerBackendFactory(model_endpoints=endpoints).create("local_llm", model)
 
 

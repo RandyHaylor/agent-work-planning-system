@@ -10,6 +10,7 @@ import pytest
 from planning_system.local_client.review_mode import ReviewPacket, Verdict
 from planning_system.local_client.review_mode.reviewer_backends import OneShotReviewerBackend
 from planning_system.model_calls import load_model_endpoints
+from planning_system.local_client.review_mode.reviewer_backends.backend_factory import DEFAULT_MODEL_ENDPOINTS_FILE
 
 pytestmark = pytest.mark.skipif(os.environ.get("PLANNING_RUN_LOCAL_LLM") != "1",
                                 reason="live local llm call; set PLANNING_RUN_LOCAL_LLM=1")
@@ -22,7 +23,7 @@ def test_live_local_llm_passes_a_clearly_supported_requirement():
         "citations": [{"citation": "[ref-1:1-1]", "origin": "user_exchange",
                        "quoted_text": "Write the reports as CSV files.", "pre_text": "What format for reports?",
                        "full_text": "Write the reports as CSV files."}]})
-    model_call = load_model_endpoints().create("local_gemma4")
+    model_call = load_model_endpoints(default_path=DEFAULT_MODEL_ENDPOINTS_FILE).create("local_gemma4")
     verdict = OneShotReviewerBackend(model_call, max_tokens=128).review(packet)
     assert isinstance(verdict, Verdict)
     assert verdict.passed, verdict.reason

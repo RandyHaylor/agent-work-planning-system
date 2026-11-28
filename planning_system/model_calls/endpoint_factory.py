@@ -1,8 +1,8 @@
 """ModelEndpointFactory: endpoint name (from the `model_endpoints` config section) -> ChatModelCall.
 
 Each endpoint: {"kind": "openai_compatible_chat", "base_url", "model", "extra_body"?, "timeout_seconds"?,
-"max_concurrency"?}. load_model_endpoints() reads config/model_endpoints.json, or the file named by
-PLANNING_MODEL_ENDPOINTS_FILE."""
+"max_concurrency"?}. load_model_endpoints() reads the given path, else the file named by
+PLANNING_MODEL_ENDPOINTS_FILE, else the caller's default_path (this module knows no repo layout)."""
 from __future__ import annotations
 
 import os
@@ -19,7 +19,6 @@ from .openai_compatible_chat_call import OpenAiCompatibleChatCall
 
 SECTION = "model_endpoints"
 ENDPOINTS_FILE_ENV = "PLANNING_MODEL_ENDPOINTS_FILE"
-DEFAULT_ENDPOINTS_FILE = Path(__file__).resolve().parents[2] / "config" / "model_endpoints.json"
 
 
 class ModelEndpointFactory:
@@ -53,7 +52,11 @@ class ModelEndpointFactory:
 
 
 def load_model_endpoints(path: Optional[Path] = None, environ: Optional[Mapping[str, str]] = None,
-                         transport: Optional[httpx.BaseTransport] = None) -> ModelEndpointFactory:
+                         transport: Optional[httpx.BaseTransport] = None,
+                         default_path: Optional[Path] = None) -> ModelEndpointFactory:
     environ = os.environ if environ is None else environ
-    path = Path(path or environ.get(ENDPOINTS_FILE_ENV) or DEFAULT_ENDPOINTS_FILE)
+    chosen = path or environ.get(ENDPOINTS_FILE_ENV) or default_path
+    if not chosen:
+        raise Invalid(f"no model endpoints file: pass a path or set {ENDPOINTS_FILE_ENV}")
+    path = Path(chosen)
     return ModelEndpointFactory(load_config_file(path, environ=environ).section(SECTION), transport=transport)
