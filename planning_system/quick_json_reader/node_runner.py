@@ -6,8 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Callable, Sequence
 
-from planning_system.quick_json_reader.json_reader_interface import NodeRunnerInterface
-from planning_system.quick_json_reader.json_reader_types import NodeRunResult, NodeRunTimeout
+from .json_reader_interface import NodeRunnerInterface
+from .json_reader_types import NodeRunResult, NodeRunTimeout
 
 STDIN_RUNNER_SCRIPT = Path(__file__).parent / "src" / "stdin_runner.js"
 

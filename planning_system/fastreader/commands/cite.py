@@ -1,7 +1,7 @@
 from typing import Union
 
-from planning_system.fastreader.cache import as_reader_cache
-from planning_system.fastreader.reader_cache_port import ReaderCachePort, ReaderCitation
+from ..cache import as_reader_cache
+from ..reader_cache_port import ReaderCachePort, ReaderCitation
 
 
 class InvalidLineRange(ValueError):

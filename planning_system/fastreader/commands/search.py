@@ -1,8 +1,8 @@
 import os
 import re
 from typing import List, Dict, Any, Union
-from planning_system.fastreader.cache import as_reader_cache
-from planning_system.fastreader.reader_cache_port import CachedItem, ReaderCachePort
+from ..cache import as_reader_cache
+from ..reader_cache_port import CachedItem, ReaderCachePort
 
 CONTAINER_TYPES = ["chapter", "section", "subsection"]
 

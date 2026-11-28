@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 from typing import Mapping, Sequence
 
-from planning_system.quick_json_reader.json_reader_interface import JsonLineLocator
-from planning_system.quick_json_reader.json_reader_types import LineRange
+from .json_reader_interface import JsonLineLocator
+from .json_reader_types import LineRange
 
 ADDRESS = re.compile(r"\[(\d+(?:-\d+)*)\]")  # quick-json-reader's "[1-0]" address
 

@@ -2,7 +2,7 @@
 from dataclasses import asdict
 from typing import Any, Dict, List
 
-from planning_system.fastreader.models import Manifest, Marker
+from .models import Manifest, Marker
 
 
 def manifest_to_dict(manifest: Manifest) -> Dict[str, Any]:

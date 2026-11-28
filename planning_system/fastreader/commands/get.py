@@ -1,6 +1,6 @@
 from typing import Optional, Union
-from planning_system.fastreader.cache import as_reader_cache
-from planning_system.fastreader.reader_cache_port import ReaderCachePort
+from ..cache import as_reader_cache
+from ..reader_cache_port import ReaderCachePort
 
 def run_get(
     manifest_hash: str,

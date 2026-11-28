@@ -1,8 +1,8 @@
 from typing import Dict, Any, Mapping, Optional, Union
-from planning_system.fastreader.models import Document
-from planning_system.fastreader.scanner import scan_document
-from planning_system.fastreader.cache import as_reader_cache
-from planning_system.fastreader.reader_cache_port import ReaderCachePort
+from ..models import Document
+from ..scanner import scan_document
+from ..cache import as_reader_cache
+from ..reader_cache_port import ReaderCachePort
 
 
 def run_load(file_path: str, cache: Union[ReaderCachePort, str], config: Dict[str, Any], slice_starting_line: int = None, slice_line_count: int = None) -> Dict[str, Any]:

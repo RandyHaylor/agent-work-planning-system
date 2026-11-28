@@ -5,9 +5,9 @@ import json
 import os
 from typing import Mapping, Union
 
-from planning_system.fastreader.manifest_codec import manifest_from_dict, manifest_to_dict
-from planning_system.fastreader.models import Manifest
-from planning_system.fastreader.reader_cache_port import CachedItem, ReaderCachePort, ReaderCitation
+from .manifest_codec import manifest_from_dict, manifest_to_dict
+from .models import Manifest
+from .reader_cache_port import CachedItem, ReaderCachePort, ReaderCitation
 
 
 def generate_hash(content: str) -> str:

@@ -1,7 +1,7 @@
 import json
 import re
 from typing import Dict, List
-from planning_system.fastreader.models import Document, Manifest, Marker
+from .models import Document, Manifest, Marker
 
 
 def load_config(config_path: str) -> dict:

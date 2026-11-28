@@ -5,11 +5,11 @@ import json
 import re
 from typing import Mapping, Sequence
 
-from planning_system.quick_json_reader.json_reader import carries_tree_lines, output_format, show_node_steps
-from planning_system.quick_json_reader.json_reader_interface import (
+from .json_reader import carries_tree_lines, output_format, show_node_steps
+from .json_reader_interface import (
     JsonLineLocator, JsonLineLocatorFactory, JsonReaderInterface, NodeRunnerInterface,
 )
-from planning_system.quick_json_reader.json_reader_types import (
+from .json_reader_types import (
     JsonReaderInputError, JsonReaderOutput, JsonReaderUsageError, LineRange, NodeRunResult, TextKind,
 )
 

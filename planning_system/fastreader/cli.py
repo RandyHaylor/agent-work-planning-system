@@ -7,16 +7,16 @@ import os
 import sys
 from typing import List, Optional
 
-from planning_system.fastreader.argument_parsing import (  # noqa: F401  (re-exported)
+from .argument_parsing import (  # noqa: F401  (re-exported)
     VALID_SUBCOMMAND_NAMES, intercept_help_content_flags_before_argparse, parse_args,
     print_help_examples_for_subcommand, print_help_use_cases_for_subcommand)
-from planning_system.fastreader.cache import FileReaderCache
-from planning_system.fastreader.commands.get import run_get
-from planning_system.fastreader.commands.load import run_load
-from planning_system.fastreader.commands.search import run_search
-from planning_system.fastreader.commands.toc import run_toc
-from planning_system.fastreader import output_formatting
-from planning_system.fastreader.scanner import load_config
+from .cache import FileReaderCache
+from .commands.get import run_get
+from .commands.load import run_load
+from .commands.search import run_search
+from .commands.toc import run_toc
+from . import output_formatting
+from .scanner import load_config
 
 DEFAULT_CACHE_DIR = os.path.expanduser("~/.fastReader/cache")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")

@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from planning_system.quick_json_reader.json_reader_types import JsonReaderOutput, LineRange, NodeRunResult, TextKind
+from .json_reader_types import JsonReaderOutput, LineRange, NodeRunResult, TextKind
 
 
 class JsonReaderInterface(ABC):

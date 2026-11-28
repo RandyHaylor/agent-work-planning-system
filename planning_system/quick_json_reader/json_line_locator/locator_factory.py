@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from planning_system.quick_json_reader.json_line_locator.json_source_map import JsonSourceMap, JsonSourceMapLibrary
-from planning_system.quick_json_reader.json_line_locator.jsonl_locator import JsonlLocator
-from planning_system.quick_json_reader.json_line_locator.pretty_json_locator import PrettyJsonLocator
-from planning_system.quick_json_reader.json_reader_interface import JsonLineLocator, JsonLineLocatorFactory
-from planning_system.quick_json_reader.json_reader_types import TextKind
+from .json_source_map import JsonSourceMap, JsonSourceMapLibrary
+from .jsonl_locator import JsonlLocator
+from .pretty_json_locator import PrettyJsonLocator
+from ..json_reader_interface import JsonLineLocator, JsonLineLocatorFactory
+from ..json_reader_types import TextKind
 
 
 class StoredTextLocatorFactory(JsonLineLocatorFactory):

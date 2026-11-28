@@ -7,10 +7,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from planning_system.errors import NotFound
-from planning_system.prompt_builder.ai_prompt_builder import ruleset
-from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCatalog, SHIPPED_DATA_FOLDER, read_json
-from planning_system.prompt_builder.guidance_interface import GuidanceService
-from planning_system.prompt_builder.guidance_types import GuidanceRole, RoleGuidance
+from ..ai_prompt_builder import ruleset
+from ..ai_prompt_builder.rule_catalog import RuleCatalog, SHIPPED_DATA_FOLDER, read_json
+from ..guidance_interface import GuidanceService
+from ..guidance_types import GuidanceRole, RoleGuidance
 
 ROLE_PRESETS_FILE = SHIPPED_DATA_FOLDER / "role-presets.json"
 SESSION_INJECTIONS_FILE = SHIPPED_DATA_FOLDER / "session-injections.json"

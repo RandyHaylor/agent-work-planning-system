@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Mapping
 
-from planning_system.fastreader.models import Manifest
+from .models import Manifest
 
 
 @dataclass(frozen=True)

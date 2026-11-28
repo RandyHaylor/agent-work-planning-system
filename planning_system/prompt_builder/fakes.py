@@ -8,11 +8,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from planning_system.errors import NotFound
-from planning_system.prompt_builder.ai_prompt_builder import ruleset
-from planning_system.prompt_builder.ai_prompt_builder.local_web_server import RuleBuilderSession, start_server
-from planning_system.prompt_builder.ai_prompt_builder.rule_catalog import RuleCatalog
-from planning_system.prompt_builder.guidance_interface import GuidanceEditorLauncher, GuidanceService
-from planning_system.prompt_builder.guidance_types import EditorSession, GuidanceRole, RoleGuidance
+from .ai_prompt_builder import ruleset
+from .ai_prompt_builder.local_web_server import RuleBuilderSession, start_server
+from .ai_prompt_builder.rule_catalog import RuleCatalog
+from .guidance_interface import GuidanceEditorLauncher, GuidanceService
+from .guidance_types import EditorSession, GuidanceRole, RoleGuidance
 
 
 class FakeGuidanceService(GuidanceService):

@@ -12,7 +12,7 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, HTTPException
 
 from planning_system.contract import NotFound, Principal
-from planning_system.prompt_builder.guidance_interface import GuidanceService
+from .guidance_interface import GuidanceService
 
 
 def current_principal() -> Principal:  # filled in by the server (dependency_overrides)

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from planning_system.quick_json_reader.json_reader_interface import JsonLineLocator
-from planning_system.quick_json_reader.json_reader_types import LineRange
+from ..json_reader_interface import JsonLineLocator
+from ..json_reader_types import LineRange
 
 
 class JsonlLocator(JsonLineLocator):

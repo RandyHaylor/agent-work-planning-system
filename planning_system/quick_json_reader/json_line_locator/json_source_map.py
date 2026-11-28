@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Mapping
 
-from planning_system.quick_json_reader.json_reader_types import LineRange
+from ..json_reader_types import LineRange
 
 
 class JsonSourceMap(ABC):

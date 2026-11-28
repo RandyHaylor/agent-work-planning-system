@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from typing import Mapping, Sequence
 
-from planning_system.quick_json_reader.address_annotator import AddressAnnotator
-from planning_system.quick_json_reader.json_line_locator import StoredTextLocatorFactory
-from planning_system.quick_json_reader.json_reader_interface import JsonLineLocatorFactory, JsonReaderInterface, NodeRunnerInterface
-from planning_system.quick_json_reader.json_reader_types import (
+from .address_annotator import AddressAnnotator
+from .json_line_locator import StoredTextLocatorFactory
+from .json_reader_interface import JsonLineLocatorFactory, JsonReaderInterface, NodeRunnerInterface
+from .json_reader_types import (
     JsonReaderInputError, JsonReaderOutput, JsonReaderUsageError, OutputFormat, TextKind,
 )
-from planning_system.quick_json_reader.node_runner import NodeRunner
+from .node_runner import NodeRunner
 
 FULL_ADDRESSES_FLAG = "--show-full-addresses"
 SHOW_NODE_FLAG = "--show-node"

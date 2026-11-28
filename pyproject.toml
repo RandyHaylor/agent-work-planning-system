@@ -132,3 +132,14 @@ name = "generic modules do not depend on the planning contract"
 type = "forbidden"
 source_modules = ["planning_system.configuration", "planning_system.model_calls", "planning_system.errors"]
 forbidden_modules = ["planning_system.contract"]
+
+[[tool.importlinter.contracts]]
+name = "copied tools stay independent of the server and of each other"
+type = "independence"
+modules = ["planning_system.fastreader", "planning_system.quick_json_reader", "planning_system.prompt_builder"]
+
+[[tool.importlinter.contracts]]
+name = "copied tools do not import the server"
+type = "forbidden"
+source_modules = ["planning_system.fastreader", "planning_system.quick_json_reader", "planning_system.prompt_builder"]
+forbidden_modules = ["planning_system.server"]

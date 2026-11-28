@@ -5,9 +5,9 @@ import json
 from functools import cached_property
 from typing import Mapping, Sequence
 
-from planning_system.quick_json_reader.json_line_locator.json_source_map import JsonSourceMap
-from planning_system.quick_json_reader.json_reader_interface import JsonLineLocator
-from planning_system.quick_json_reader.json_reader_types import LineRange
+from .json_source_map import JsonSourceMap
+from ..json_reader_interface import JsonLineLocator
+from ..json_reader_types import LineRange
 
 
 class PrettyJsonLocator(JsonLineLocator):

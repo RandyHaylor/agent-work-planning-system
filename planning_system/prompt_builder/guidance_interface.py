@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from planning_system.prompt_builder.guidance_types import EditorSession, GuidanceRole, RoleGuidance
+from .guidance_types import EditorSession, GuidanceRole, RoleGuidance
 
 
 class GuidanceService(ABC):

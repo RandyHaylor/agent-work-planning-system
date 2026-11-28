@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional, Union
-from planning_system.fastreader.cache import as_reader_cache
-from planning_system.fastreader.reader_cache_port import ReaderCachePort
-from planning_system.fastreader.toc_cli import build_toc
+from ..cache import as_reader_cache
+from ..reader_cache_port import ReaderCachePort
+from ..toc_cli import build_toc
 
 def run_toc(
     manifest_hash: str,

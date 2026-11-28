@@ -13,10 +13,10 @@ import urllib.request
 import urllib.parse
 import re
 from html import unescape as html_unescape
-from planning_system.fastreader.html_parser import HTMLParser
+from .html_parser import HTMLParser
 
-from planning_system.fastreader.commands.load import run_load
-from planning_system.fastreader.scanner import load_config
+from .commands.load import run_load
+from .scanner import load_config
 
 DEFAULT_CACHE_DIR = os.path.expanduser("~/.fastReader/cache")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
