@@ -1,0 +1,47 @@
+{
+  "cited_quotes": {
+    "U1": {"pre_text": "How often should the database be backed up, and how many should we keep?", "text": "Nightly. Keep two weeks."},
+    "U2": {"pre_text": "How should users hear about finished jobs: email, in-app, or both?", "text": "in-app only for now"},
+    "U3": {"pre_text": "Any constraints on the storage stack?", "text": "Use Postgres for everything. No Redis."},
+    "U4": {"pre_text": "Should the CLI remember the login between runs, or ask every time?", "text": "Remember it. I don't want to type a password every time."},
+    "U5": {"pre_text": "What should the export produce?", "text": "CSV files, one per report."},
+    "U6": {"pre_text": "Who sets the admin password?", "text": "Only me, typed into a popup. No agent ever sees it."},
+    "U7": {"pre_text": "Which model should review claims by default?", "text": "Local gemma by default. Haiku only as a second opinion."},
+    "U8": {"pre_text": "Any limits on export size or speed?", "text": "Not that I know of. Just don't make it slow."}
+  },
+  "new_statements": [
+    {"id": "S01", "pre_text": "Anything to change about backups?", "text": "Actually keep backups for 30 days.", "changes": ["U1"]},
+    {"id": "S02", "pre_text": "Next feature?", "text": "Let's add email notifications too.", "changes": ["U2"]},
+    {"id": "S03", "pre_text": "The cache is slow. Options?", "text": "We can use Redis for the cache after all.", "changes": ["U3"]},
+    {"id": "S04", "pre_text": "Any other export formats?", "text": "Exports should also be available as XLSX.", "changes": ["U5"]},
+    {"id": "S05", "pre_text": "Should logins last forever?", "text": "Make the login expire after a week.", "changes": ["U4"]},
+    {"id": "S06", "pre_text": "Reviewer results look good. Keep the setup?", "text": "Use Haiku as the default reviewer from now on.", "changes": ["U7"]},
+    {"id": "S07", "pre_text": "The CSV parser fix is in. Anything else?", "text": "Nice work on the parser.", "changes": []},
+    {"id": "S08", "pre_text": "What should the settings page have?", "text": "The settings page needs a dark mode.", "changes": []},
+    {"id": "S09", "pre_text": "Is the backup schedule still right?", "text": "Every night is fine, but also take one before each deploy.", "changes": ["U1"]},
+    {"id": "S10", "pre_text": "Should we simplify the deployment?", "text": "Store everything in SQLite instead.", "changes": ["U3"]},
+    {"id": "S11", "pre_text": "Do exports have a time limit?", "text": "Exports must finish within 2 seconds.", "changes": ["U8"]},
+    {"id": "S12", "pre_text": "Keep CSV for exports?", "text": "Drop CSV; JSON only.", "changes": ["U5"]},
+    {"id": "S13", "pre_text": "Bootstrapping needs an admin password. How?", "text": "The planner can set the admin password when bootstrapping.", "changes": ["U6"]},
+    {"id": "S14", "pre_text": "Where should notifications show?", "text": "Keep notifications in the app.", "changes": []},
+    {"id": "S15", "pre_text": "Where should the reviewer run?", "text": "Run the reviewer on my GPU box.", "changes": []}
+  ],
+  "doc_cases": [
+    {"id": "B01", "kind": "moved, unchanged", "claim": "Requests time out after 15 seconds.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [3, 3],
+     "new": "Client settings\nNew in 2.1: HTTP/2 support.\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "holds": true, "broken_page": false},
+    {"id": "B02", "kind": "value changed", "claim": "Requests time out after 15 seconds.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [3, 3],
+     "new": "Client settings\nThe client retries twice.\nRequests time out after 30 seconds.\nProxies are read from HTTPS_PROXY.", "holds": false, "broken_page": false},
+    {"id": "B03", "kind": "section removed", "claim": "Proxies are read from the HTTPS_PROXY variable.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [4, 4],
+     "new": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.", "holds": false, "broken_page": false},
+    {"id": "B04", "kind": "error page", "claim": "Requests time out after 15 seconds.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [3, 3],
+     "new": "503 Service Unavailable\nThe server is temporarily unable to service your request. Please try again later.", "holds": false, "broken_page": true},
+    {"id": "B05", "kind": "placeholder page", "claim": "The client retries failed requests twice.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [2, 2],
+     "new": "Loading...\nPlease enable JavaScript to view this documentation.", "holds": false, "broken_page": true},
+    {"id": "B06", "kind": "reworded, same meaning", "claim": "The client retries failed requests twice.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "cited": [2, 2],
+     "new": "Client settings\nFailed requests are retried up to two times.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.", "holds": true, "broken_page": false},
+    {"id": "B07", "kind": "moved elsewhere, area replaced", "claim": "Proxies are read from the HTTPS_PROXY variable.", "old": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nProxies are read from HTTPS_PROXY.\nLogging\nLogs go to stderr.", "cited": [4, 4],
+     "new": "Client settings\nThe client retries twice.\nRequests time out after 15 seconds.\nConnection pooling keeps 10 connections.\nLogging\nLogs go to stderr.\nEnvironment\nProxies are read from HTTPS_PROXY.", "holds": true, "broken_page": false},
+    {"id": "B08", "kind": "deprecation added", "claim": "Use client.fetch() to download files.", "old": "Downloads\nUse client.fetch() to download files.\nIt streams to disk.", "cited": [2, 2],
+     "new": "Downloads\nUse client.fetch() to download files.\nDeprecated since 3.0: use client.download() instead; fetch() will be removed in 4.0.\nIt streams to disk.", "holds": false, "broken_page": false}
+  ]
+}

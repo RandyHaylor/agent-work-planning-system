@@ -1,0 +1,69 @@
+{"backend": "gemma", "variation": "Q1", "case": "S01", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 9, "seconds": 12.6}
+{"backend": "gemma", "variation": "Q1", "case": "S02", "error": null, "expected": ["U2"], "got": ["U2"], "calls": 9, "seconds": 13.3}
+{"backend": "gemma", "variation": "Q1", "case": "S03", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 9, "seconds": 13.8}
+{"backend": "gemma", "variation": "Q1", "case": "S04", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 9, "seconds": 12.4}
+{"backend": "gemma", "variation": "Q1", "case": "S05", "error": null, "expected": ["U4"], "got": ["U4"], "calls": 9, "seconds": 12.3}
+{"backend": "gemma", "variation": "Q1", "case": "S06", "error": null, "expected": ["U7"], "got": ["U7"], "calls": 9, "seconds": 12.4}
+{"backend": "gemma", "variation": "Q1", "case": "S07", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 12.1}
+{"backend": "gemma", "variation": "Q1", "case": "S08", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 12.3}
+{"backend": "gemma", "variation": "Q1", "case": "S09", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 9, "seconds": 12.3}
+{"backend": "gemma", "variation": "Q1", "case": "S10", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 9, "seconds": 11.9}
+{"backend": "gemma", "variation": "Q1", "case": "S11", "error": null, "expected": ["U8"], "got": ["U8"], "calls": 9, "seconds": 12.6}
+{"backend": "gemma", "variation": "Q1", "case": "S12", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 9, "seconds": 11.8}
+{"backend": "gemma", "variation": "Q1", "case": "S13", "error": null, "expected": ["U6"], "got": ["U6"], "calls": 9, "seconds": 12.1}
+{"backend": "gemma", "variation": "Q1", "case": "S14", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 11.5}
+{"backend": "gemma", "variation": "Q1", "case": "S15", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 12.2}
+{"backend": "gemma", "variation": "Q2", "case": "S01", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 1, "seconds": 2.1}
+{"backend": "gemma", "variation": "Q2", "case": "S02", "error": null, "expected": ["U2"], "got": ["U2"], "calls": 1, "seconds": 1.7}
+{"backend": "gemma", "variation": "Q2", "case": "S03", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 1, "seconds": 1.7}
+{"backend": "gemma", "variation": "Q2", "case": "S04", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "Q2", "case": "S05", "error": null, "expected": ["U4"], "got": ["U4"], "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "Q2", "case": "S06", "error": null, "expected": ["U7"], "got": ["U7"], "calls": 1, "seconds": 1.6}
+{"backend": "gemma", "variation": "Q2", "case": "S07", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.0}
+{"backend": "gemma", "variation": "Q2", "case": "S08", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.0}
+{"backend": "gemma", "variation": "Q2", "case": "S09", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "Q2", "case": "S10", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "Q2", "case": "S11", "error": null, "expected": ["U8"], "got": ["U8"], "calls": 1, "seconds": 1.9}
+{"backend": "gemma", "variation": "Q2", "case": "S12", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "Q2", "case": "S13", "error": null, "expected": ["U6"], "got": ["U6"], "calls": 1, "seconds": 1.7}
+{"backend": "gemma", "variation": "Q2", "case": "S14", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.0}
+{"backend": "gemma", "variation": "Q2", "case": "S15", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.0}
+{"backend": "gemma", "variation": "Q3", "case": "S01", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 8, "seconds": 9.3}
+{"backend": "gemma", "variation": "Q3", "case": "S02", "error": null, "expected": ["U2"], "got": ["U2"], "calls": 8, "seconds": 9.7}
+{"backend": "gemma", "variation": "Q3", "case": "S03", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 8, "seconds": 9.2}
+{"backend": "gemma", "variation": "Q3", "case": "S04", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 8, "seconds": 9.4}
+{"backend": "gemma", "variation": "Q3", "case": "S05", "error": null, "expected": ["U4"], "got": ["U4"], "calls": 8, "seconds": 9.4}
+{"backend": "gemma", "variation": "Q3", "case": "S06", "error": null, "expected": ["U7"], "got": ["U7"], "calls": 8, "seconds": 9.1}
+{"backend": "gemma", "variation": "Q3", "case": "S07", "error": null, "expected": [], "got": [], "calls": 8, "seconds": 8.9}
+{"backend": "gemma", "variation": "Q3", "case": "S08", "error": null, "expected": [], "got": [], "calls": 8, "seconds": 9.3}
+{"backend": "gemma", "variation": "Q3", "case": "S09", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 8, "seconds": 9.0}
+{"backend": "gemma", "variation": "Q3", "case": "S10", "error": null, "expected": ["U3"], "got": ["U1", "U3", "U5"], "calls": 8, "seconds": 8.8}
+{"backend": "gemma", "variation": "Q3", "case": "S11", "error": null, "expected": ["U8"], "got": ["U8"], "calls": 8, "seconds": 9.5}
+{"backend": "gemma", "variation": "Q3", "case": "S12", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 8, "seconds": 8.8}
+{"backend": "gemma", "variation": "Q3", "case": "S13", "error": null, "expected": ["U6"], "got": ["U6"], "calls": 8, "seconds": 9.3}
+{"backend": "gemma", "variation": "Q3", "case": "S14", "error": null, "expected": [], "got": [], "calls": 8, "seconds": 9.6}
+{"backend": "gemma", "variation": "Q3", "case": "S15", "error": null, "expected": [], "got": [], "calls": 8, "seconds": 8.9}
+{"backend": "gemma", "variation": "P1", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The text is identical in both versions.", "calls": 1, "seconds": 1.3}
+{"backend": "gemma", "variation": "P1", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Timeout value changed from 15 to 30 seconds.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P1", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "The cited text was deleted in the new version.", "calls": 1, "seconds": 1.3}
+{"backend": "gemma", "variation": "P1", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page, not the original content.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P1", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading/placeholder page, not actual content.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P1", "case": "B06", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The new text confirms requests are retried up to two times.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P1", "case": "B07", "error": null, "expected_holds": true, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "The new text discusses connection pooling, not proxy variables.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P1", "case": "B08", "error": null, "expected_holds": false, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The text is identical in both versions.", "calls": 1, "seconds": 1.3}
+{"backend": "gemma", "variation": "P2", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The claim is explicitly stated in the new copy.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Timeout changed from 15 to 30 seconds.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy does not mention HTTPS_PROXY or proxies.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page, not the original content.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P2", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading/placeholder page and contains no content.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B06", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "New copy confirms failed requests are retried up to two times.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B07", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The new copy contains the exact same proxy configuration text.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P2", "case": "B08", "error": null, "expected_holds": false, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The exact phrase is present in the new copy.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P3", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The claim is explicitly stated in the new copy.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P3", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Timeout value changed from 15 to 30 seconds.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P3", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "The specific information about proxies was removed from the new copy.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P3", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page, not the original content.", "calls": 1, "seconds": 1.6}
+{"backend": "gemma", "variation": "P3", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading/placeholder page and contains no actual content.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P3", "case": "B06", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The new text confirms requests are retried up to two times.", "calls": 1, "seconds": 1.4}
+{"backend": "gemma", "variation": "P3", "case": "B07", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "Claim is present in the Environment section of the new copy.", "calls": 1, "seconds": 1.5}
+{"backend": "gemma", "variation": "P3", "case": "B08", "error": null, "expected_holds": false, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The exact text of the claim is present in the new copy.", "calls": 1, "seconds": 1.5}

@@ -1,0 +1,54 @@
+{"backend": "haiku", "variation": "Q1", "case": "S01", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 9, "seconds": 13.8}
+{"backend": "haiku", "variation": "Q1", "case": "S02", "error": null, "expected": ["U2"], "got": ["U2"], "calls": 9, "seconds": 15.0}
+{"backend": "haiku", "variation": "Q1", "case": "S03", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 9, "seconds": 15.5}
+{"backend": "haiku", "variation": "Q1", "case": "S04", "error": "ValueError('no \\'changes\\' in answer: \\'<invoke name=\"Bash\">\\\\n<parameter name=\"command\">echo test</parameter>\\\\n</invoke>\\\\n## Exit code 1\\\\n\\\\n```\\\\n(eval):1: no such file or directory: test\\\\n```\\'')", "seconds": 6.7}
+{"backend": "haiku", "variation": "Q1", "case": "S05", "error": null, "expected": ["U4"], "got": ["U4"], "calls": 9, "seconds": 17.7}
+{"backend": "haiku", "variation": "Q1", "case": "S06", "error": null, "expected": ["U7"], "got": ["U7"], "calls": 9, "seconds": 13.4}
+{"backend": "haiku", "variation": "Q1", "case": "S07", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 17.7}
+{"backend": "haiku", "variation": "Q1", "case": "S08", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 15.0}
+{"backend": "haiku", "variation": "Q1", "case": "S09", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 9, "seconds": 19.7}
+{"backend": "haiku", "variation": "Q1", "case": "S10", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 9, "seconds": 14.6}
+{"backend": "haiku", "variation": "Q1", "case": "S11", "error": null, "expected": ["U8"], "got": ["U8"], "calls": 9, "seconds": 14.3}
+{"backend": "haiku", "variation": "Q1", "case": "S12", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 9, "seconds": 13.6}
+{"backend": "haiku", "variation": "Q1", "case": "S13", "error": null, "expected": ["U6"], "got": ["U6"], "calls": 9, "seconds": 15.4}
+{"backend": "haiku", "variation": "Q1", "case": "S14", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 17.3}
+{"backend": "haiku", "variation": "Q1", "case": "S15", "error": null, "expected": [], "got": [], "calls": 9, "seconds": 15.3}
+{"backend": "haiku", "variation": "Q2", "case": "S01", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 1, "seconds": 2.0}
+{"backend": "haiku", "variation": "Q2", "case": "S02", "error": null, "expected": ["U2"], "got": ["U2"], "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "Q2", "case": "S03", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 1, "seconds": 1.9}
+{"backend": "haiku", "variation": "Q2", "case": "S04", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 1, "seconds": 2.3}
+{"backend": "haiku", "variation": "Q2", "case": "S05", "error": null, "expected": ["U4"], "got": ["U4"], "calls": 1, "seconds": 2.1}
+{"backend": "haiku", "variation": "Q2", "case": "S06", "error": null, "expected": ["U7"], "got": ["U7"], "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "Q2", "case": "S07", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.4}
+{"backend": "haiku", "variation": "Q2", "case": "S08", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 2.0}
+{"backend": "haiku", "variation": "Q2", "case": "S09", "error": null, "expected": ["U1"], "got": ["U1"], "calls": 1, "seconds": 2.4}
+{"backend": "haiku", "variation": "Q2", "case": "S10", "error": null, "expected": ["U3"], "got": ["U3"], "calls": 1, "seconds": 2.7}
+{"backend": "haiku", "variation": "Q2", "case": "S11", "error": null, "expected": ["U8"], "got": ["U8"], "calls": 1, "seconds": 2.0}
+{"backend": "haiku", "variation": "Q2", "case": "S12", "error": null, "expected": ["U5"], "got": ["U5"], "calls": 1, "seconds": 1.9}
+{"backend": "haiku", "variation": "Q2", "case": "S13", "error": null, "expected": ["U6"], "got": ["U6"], "calls": 1, "seconds": 2.5}
+{"backend": "haiku", "variation": "Q2", "case": "S14", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "Q2", "case": "S15", "error": null, "expected": [], "got": [], "calls": 1, "seconds": 3.5}
+{"backend": "haiku", "variation": "P1", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "NEW copy's matched lines are identical to the cited claim text.", "calls": 1, "seconds": 1.4}
+{"backend": "haiku", "variation": "P1", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy states 30 seconds, contradicting the claimed 15-second timeout.", "calls": 1, "seconds": 1.4}
+{"backend": "haiku", "variation": "P1", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Cited line was deleted from the new copy; no evidence of an error or placeholder page.", "calls": 1, "seconds": 2.1}
+{"backend": "haiku", "variation": "P1", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page; no timeout value appears.", "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "P1", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading or JavaScript-required placeholder, not the retry lines.", "calls": 1, "seconds": 1.5}
+{"backend": "haiku", "variation": "P1", "case": "B06", "error": null, "expected_holds": true, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New text says up to two retries, not exactly two.", "calls": 1, "seconds": 2.8}
+{"backend": "haiku", "variation": "P1", "case": "B07", "error": null, "expected_holds": true, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy's matched line covers connection pooling, not proxies or HTTPS_PROXY.", "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "P1", "case": "B08", "error": null, "expected_holds": false, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "New copy's matched line is identical to the cited old line; no error or placeholder content.", "calls": 1, "seconds": 2.2}
+{"backend": "haiku", "variation": "P2", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "New copy still states the same 15-second timeout; content is real documentation.", "calls": 1, "seconds": 2.1}
+{"backend": "haiku", "variation": "P2", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy says 30 seconds; claim states 15 seconds.", "calls": 1, "seconds": 1.5}
+{"backend": "haiku", "variation": "P2", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy lacks any mention of HTTPS_PROXY or proxy configuration.", "calls": 1, "seconds": 1.5}
+{"backend": "haiku", "variation": "P2", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page; no timeout value stated.", "calls": 1, "seconds": 1.5}
+{"backend": "haiku", "variation": "P2", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading/JavaScript placeholder with no retry content.", "calls": 1, "seconds": 1.3}
+{"backend": "haiku", "variation": "P2", "case": "B06", "error": null, "expected_holds": true, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy says retries are 'up to two times', not exactly twice.", "calls": 1, "seconds": 2.8}
+{"backend": "haiku", "variation": "P2", "case": "B07", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "New copy states proxies are read from HTTPS_PROXY; real documentation content, not an error page.", "calls": 1, "seconds": 2.6}
+{"backend": "haiku", "variation": "P2", "case": "B08", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy deprecates fetch() since 3.0; recommends client.download() instead.", "calls": 1, "seconds": 2.1}
+{"backend": "haiku", "variation": "P3", "case": "B01", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "The matched line is identical in the new copy, and the page is real settings content.", "calls": 1, "seconds": 1.8}
+{"backend": "haiku", "variation": "P3", "case": "B02", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Claim says 15 seconds; new copy says 30 seconds. Detail changed.", "calls": 1, "seconds": 1.5}
+{"backend": "haiku", "variation": "P3", "case": "B03", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Cited HTTPS_PROXY line was deleted; new copy never mentions proxies.", "calls": 1, "seconds": 1.6}
+{"backend": "haiku", "variation": "P3", "case": "B04", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a 503 error page; the 15-second timeout detail is absent.", "calls": 1, "seconds": 1.6}
+{"backend": "haiku", "variation": "P3", "case": "B05", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": true, "got_broken": true, "reason": "New copy is a loading/JavaScript placeholder; no retry content visible.", "calls": 1, "seconds": 2.7}
+{"backend": "haiku", "variation": "P3", "case": "B06", "error": null, "expected_holds": true, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "New copy says 'up to two times', which allows fewer than two retries; not exactly twice.", "calls": 1, "seconds": 3.0}
+{"backend": "haiku", "variation": "P3", "case": "B07", "error": null, "expected_holds": true, "got_holds": true, "expected_broken": false, "got_broken": false, "reason": "Whole new copy still states proxies are read from HTTPS_PROXY, under Environment.", "calls": 1, "seconds": 2.0}
+{"backend": "haiku", "variation": "P3", "case": "B08", "error": null, "expected_holds": false, "got_holds": false, "expected_broken": false, "got_broken": false, "reason": "Cited line matches, but new copy deprecates fetch() in favor of download().", "calls": 1, "seconds": 2.0}
